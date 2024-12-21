@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="." target="_blank">
+    <title>Layout com Canvas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #categories-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 60px;
+            bottom: 0;
+            background-color: #0f3460;
+            z-index: 95;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            font-size: 17px;
+            letter-spacing: 2px;
+        }
+
+        .category-item {
+            flex: 1;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 10px 0;
+            transition: background-color 0.3s;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        }
+
+        .category-item:hover {
+            background-color: #1a4b8c;
+        }
+
+        .category-item.active {
+            background-color: #1a4b8c;
+        }
+
+        #left-menu {
+            position: fixed;
+            top: 0;
+            left: 63px;
+            width: 300px;
+            bottom: 0;
+            background-color: #0f3460;
+            z-index: 90;
+            padding: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #left-menu::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #left-menu::-webkit-scrollbar-track {
+            background: #0f3460;
+        }
+
+        #left-menu::-webkit-scrollbar-thumb {
+            background: #1a4b8c;
+            border-radius: 4px;
+        }
+
+        #left-menu::-webkit-scrollbar-thumb:hover {
+            background: #235ab4;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 366px;
+            right: 0;
+            bottom: 0;
+            background-color: transparent;
+            overflow: hidden;
+        }
+
+        .separator-vertical {
+            width: 2px;
+            height: 30px;
+            background-color: #92c1ff;
+            margin: 0 5px;
+        }
+
+        .separator {
+            height: 2px;
+            background-color: #92c1ff;
+            margin: 10px 0;
+        }
+
+        button, .menu-item {
+            background-color: #1a4b8c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 4px 0;
+            border-radius: 4px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover, .menu-item:hover {
+            background-color: #235ab4;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .menu-content {
+            display: none;
+        }
+
+        .menu-content.active {
+            display: block;
+        }
+
+        #menu-separator {
+            position: fixed;
+            top: 0;
+            left: 60px;
+            width: 3px;
+            bottom: 0;
+            background-color: #235ab4;
+            z-index: 92;
+        }
+
+        h3 {
+            font-size: 20px !important;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .dimension-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .dimension-input {
+            width: 60px;
+            padding: 4px;
+            border-radius: 4px;
+            border: 1px solid #235ab4;
+            background: #1a4b8c;
+            color: white;
+            font-size: 12px;
+        }
+
+        .dimension-label {
+            font-size: 12px;
+        }
+
+        .export-options {
+            display: none;
+            padding: 10px 0;
+        }
+
+        .export-options.active {
+            display: block;
+        }
+
+        .resolution-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .resolution-control input {
+            width: 80px;
+            padding: 4px;
+            border-radius: 4px;
+            border: 1px solid #235ab4;
+            background: #1a4b8c;
+            color: white;
+            font-size: 12px;
+        }
+
+        .export-btn {
+            margin: 5px 0;
+        }
+
+        .image-dimension-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            gap: 10px;
+        }
+
+        .image-dimension-input {
+            width: 60px;
+            padding: 4px;
+            border-radius: 4px;
+            border: 1px solid #235ab4;
+            background: #1a4b8c;
+            color: white;
+            font-size: 12px;
+        }
+
+        .image-dimension-label {
+            font-size: 12px;
+        }
+
+        .duplicate-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .duplicate-input {
+            width: 50px;
+            padding: 4px;
+            border-radius: 4px;
+            border: 1px solid #235ab4;
+            background: #1a4b8c;
+            color: white;
+            font-size: 12px;
+        }
+
+        .highlight-button {
+            background-color: #ffd700 !important;
+            height: 50px !important;
+            font-weight: bold;
+            margin: 10px 0 !important;
+            color: black !important;
+        }
+
+        .guides-menu {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .guides-menu.active {
+            display: block;
+        }
+
+        .guides-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .guides-options .menu-item.active {
+            background-color: #235ab4 !important;
+        }
+
+        .guides-options .menu-item {
+            flex: 1;
+            margin-right: 5px;
+        }
+
+        .guides-options .menu-item:last-child {
+            margin-right: 0;
+        }
+
+        .guides-position {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .guides-position span {
+            margin-right: 10px;
+        }
+		.version-badge {
+		position: fixed;
+		bottom: 5px;
+		right: 5px;
+		background-color: #ffd700;
+		color: Black;
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 20px;
+		font-family: Arial, sans-serif;
+		z-index: 100;
+		pointer-events: none;
+	}
+    </style>
+</head>
+<body>
+    <div id="categories-menu">
+        <div class="category-item" data-category="documento">DOCUMENTO</div>
+        <div class="category-item active" data-category="editar">EDITAR</div>
+        <div class="category-item" data-category="texto">TEXTO</div>
+        <div class="category-item" data-category="formas">FORMAS</div>
+        <div class="category-item" data-category="filtros">FILTROS</div>
+    </div>
+    <div id="menu-separator"></div>
+    <div id="left-menu">
+        <div id="menu-documento" class="menu-content">
+            <h3>Tamanho da Folha:</h3>
+            <div class="dimension-controls">
+                <span class="dimension-label">&#x2194;</span>
+                <input type="number" id="width-input" class="dimension-input" value="21" min="1" step="0.1">
+                <span class="dimension-label">&#x2195;</span>
+                <input type="number" id="height-input" class="dimension-input" value="29.7" min="1" step="0.1">
+            </div>
+            <div class="separator"></div>
+            <button class="menu-item">Abrir Documento</button>
+            <button class="menu-item">Salvar Documento</button>
+            <div class="separator"></div>
+            <button id="addGuidesBtn" class="menu-item">Adicionar Guias</button>
+            <div id="guidesMenu" class="guides-menu">
+                <div class="guides-options">
+                    <button id="horizontalGuideBtn" class="menu-item active">Horizontal</button>
+                    <button id="verticalGuideBtn" class="menu-item">Vertical</button>
+                </div>
+                <div class="guides-options">
+                    <button id="singleGuideBtn" class="menu-item active">Uma Guia</button>
+                    <button id="multipleGuidesBtn" class="menu-item">Várias Guias</button>
+                </div>
+                <div class="guides-position">
+                    <span>Posição (cm):</span>
+                    <input type="number" id="guidePositionInput" class="dimension-input" value="1" min="1" step="0.1">
+                </div>
+                <button id="addGuideBtn" class="menu-item">Adicionar</button>
+            </div>
+            <div class="separator"></div>
+            <button id="addDefaultGuidesBtn" class="menu-item">Adicionar Guias Padr&#xe3;o</button>
+            <button id="removeGuidesBtn" class="menu-item">Apagar Guias</button>
+            <div class="separator"></div>
+            <button id="exportButton" class="menu-item">Exportar</button>
+            <div id="exportOptions" class="export-options">
+                <div class="resolution-control">
+                    <span>Resolução:</span>
+                    <input type="number" id="resolutionInput" value="600" min="72" max="2400">
+                </div>
+                <button class="menu-item export-btn" data-format="png">PNG</button>
+                <button class="menu-item export-btn" data-format="jpg">JPG</button>
+                <button class="menu-item export-btn" data-format="pdf">PDF</button>
+                <button class="menu-item export-btn" data-format="vector-pdf">Formas em PDF Vetor</button>
+                <button class="menu-item export-btn" id="previewExportBtn">Ver área de exportação</button>
+            </div>
+        </div>
+        <div id="menu-editar" class="menu-content active">
+            <button id="loadImageBtn2" class="highlight-button">Carregar Imagem</button>
+            <input type="file" id="fileInput" accept="image/*">
+            <div class="image-dimension-controls">
+                <span class="image-dimension-label">&#x2194;</span>
+                <input type="number" id="image-width-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
+                <span class="image-dimension-label">&#x2195;</span>
+                <input type="number" id="image-height-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
+            </div>
+            <div class="separator"></div>
+            <button id="cropImageBtn" class="menu-item">Recortar</button>
+            <div class="separator"></div>
+            <div class="duplicate-control">
+                <button id="brushBtn" class="menu-item" style="width: 31%; margin-right: 3.5%;">Pincel</button>
+                <button id="eraserBtn" class="menu-item" style="width: 31%; margin-right: 3.5%;">Borracha</button>
+                <button id="fillBtn" class="menu-item" style="width: 31%;">Balde</button>
+            </div>
+            <div class="separator"></div>
+            <button id="removeColorClickBtn" class="menu-item">Remover Cor Clique</button>
+            <button id="removeColorTotalBtn" class="menu-item">Remover Cor Total</button>
+            <div class="separator"></div>
+            <button id="aiRemoverBtn" class="menu-item">Removedor IA</button>
+            <button id="vectorizePBBtn" class="menu-item">Vetorizar PB</button>
+            <div class="separator"></div>
+            <div class="duplicate-control">
+                <button id="duplicateImageBtn" class="menu-item" style="margin-right: 5px;">Duplicar</button>
+                <input type="number" id="duplicateInput" class="duplicate-input" value="1" min="1" step="1">
+            </div>
+            <div class="duplicate-control">
+                <button id="organizeBtn" class="menu-item" style="margin-right: 5px;">Organizar</button>
+                <input type="number" id="organizeInput" class="duplicate-input" value="1" min="1" step="1">
+            </div>
+            <div class="duplicate-control">
+                <button id="alignHorizontalBtn" class="menu-item" style="width: 48%; margin-right: 4%;">Alinhar &#x2194;</button>
+                <button id="alignVerticalBtn" class="menu-item" style="width: 48%;">Alinhar &#x2195;</button>
+            </div>
+            <div class="duplicate-control">
+                <button id="mirrorHorizontalBtn" class="menu-item" style="width: 48%; margin-right: 4%;">Espelhar &#x2194;</button>
+                <button id="mirrorVerticalBtn" class="menu-item" style="width: 48%;">Espelhar &#x2195;</button>
+            </div>
+            <div class="duplicate-control">
+                <button id="rotateBtn" class="menu-item" style="margin-right: 5px;">Girar</button>
+                <input type="number" id="rotateInput" class="duplicate-input" value="90" min="0" step="1">
+            </div>
+            <div class="separator"></div>
+            <button id="exportSelectedImageBtn" class="menu-item">Exportar Imagem Selecionada</button>
+        </div>
+        <div id="menu-texto" class="menu-content">
+            <button id="addTextBtn" class="highlight-button">Adicionar Texto</button>
+        </div>
+        <div id="menu-formas" class="menu-content">
+            <button class="menu-item" id="squareBtn">Quadrado</button>
+            <button class="menu-item" id="circleBtn">Circulo</button>
+            <button class="menu-item" id="triangleBtn">Triângulo</button>
+            <button class="menu-item" id="lineBtn">Linha</button>
+            <button class="menu-item" id="ellipseBtn">Elipse</button>
+            <button class="menu-item" id="polygonBtn">Polígono</button>
+            <button class="menu-item" id="polylineBtn">Polilinha</button>
+            <button class="menu-item" id="rectangleBtn">Retângulo</button>
+            <button class="menu-item" id="cakeBtn">Bolo</button>
+        </div>
+        <div id="menu-filtros" class="menu-content">
+            <!-- Empty for now -->
+        </div>
+    </div>
+    <input type="file" id="openFileInput" accept=".cloudapp" style="display: none;">
+    <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+	<div class="version-badge">CloudPhoto Alfa V0.07 - 21/12/2024 - 11:14</div>
+
+<script>
+const container = document.getElementById('canvas-container');
+const canvas = new fabric.Canvas('canvas');
+
+// Create helper canvas for pattern
+const patternCanvas = document.createElement('canvas');
+patternCanvas.width = 20;
+patternCanvas.height = 20;
+const ctx = patternCanvas.getContext('2d');
+
+// Draw pattern background
+ctx.fillStyle = '#16213e';
+ctx.fillRect(0, 0, patternCanvas.width, patternCanvas.height);
+
+// Draw center dot
+ctx.fillStyle = '#1f2b4c';
+ctx.beginPath();
+ctx.arc(10, 10, 3, 0, Math.PI * 2);
+ctx.fill();
+
+// Create Fabric.js pattern
+const pattern = new fabric.Pattern({
+    source: patternCanvas,
+    repeat: 'repeat'
+});
+
+// Apply pattern as canvas background
+canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
+
+const fileInput = document.getElementById('fileInput');
+const loadImageBtn2 = document.getElementById('loadImageBtn2');
+const categoryItems = document.querySelectorAll('.category-item');
+const menuContents = document.querySelectorAll('.menu-content');
+const widthInput = document.getElementById('width-input');
+const heightInput = document.getElementById('height-input');
+const imageWidthInput = document.getElementById('image-width-input');
+const imageHeightInput = document.getElementById('image-height-input');
+const CM_TO_PX = 37.795275591;
+let selectedObjectIds = [];
+let a4Page;
+let MAX_HISTORY = 20;
+let history = [];
+let currentHistoryIndex = -1;
+let previewRect = null;
+let guides = [];
+
+categoryItems.forEach(item => {
+  item.addEventListener('click', () => {
+    categoryItems.forEach(i => i.classList.remove('active'));
+    menuContents.forEach(m => m.classList.remove('active'));
+    item.classList.add('active');
+    const category = item.dataset.category;
+    document.getElementById(`menu-${category}`).classList.add('active');
+  });
+});
+
+loadImageBtn2.addEventListener('click', () => {
+  fileInput.click();
+});
+
+function updatePageDimensions() {
+  const width = parseFloat(widthInput.value) * CM_TO_PX;
+  const height = parseFloat(heightInput.value) * CM_TO_PX;
+
+  // Remove existing CloudFolha if present
+  const existingFolha = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
+  existingFolha.forEach(obj => canvas.remove(obj));
+
+  // Create new CloudFolha with corrected dimensions
+  a4Page = new fabric.Rect({
+    id: 'CloudFolha',
+    left: (canvas.width - width) / 2,
+    top: (canvas.height - height) / 2,
+    width: width,
+    height: height,
+    fill: 'white',
+    selectable: false,
+    evented: false,
+    scaleX: 1,
+    scaleY: 1
+  });
+
+  canvas.add(a4Page);
+  canvas.sendToBack(a4Page);
+  canvas.renderAll();
+  addToHistory();
+}
+
+widthInput.addEventListener('input', updatePageDimensions);
+widthInput.addEventListener('change', updatePageDimensions);
+heightInput.addEventListener('input', updatePageDimensions);
+heightInput.addEventListener('change', updatePageDimensions);
+
+const initialScale = 0.7;
+
+// Substitua a função resizeCanvas existente por esta:
+function resizeCanvas() {
+    canvas.setWidth(container.offsetWidth);
+    canvas.setHeight(container.offsetHeight);
+    
+    // Reapply pattern when canvas is resized
+    canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
+    
+    // Calcular o zoom baseado na altura do container
+    const pageHeight = parseFloat(heightInput.value) * CM_TO_PX;
+    const containerHeight = container.offsetHeight;
+    
+    // Definir zoom para ocupar 70% da altura
+    const zoom = (containerHeight / pageHeight) * 0.7;
+    
+    // Definir o zoom
+    canvas.setZoom(zoom);
+    
+    // Calcular posição para alinhar próximo ao menu esquerdo
+    const leftMenuWidth = 0;
+    const marginLeft = 10;
+    const topMargin = 150; // Margem superior fixa de 50px
+    
+    // Ajustar viewpoint
+    canvas.absolutePan({ x: -(leftMenuWidth + marginLeft), y: -topMargin });
+    
+    updatePageDimensions();
+    canvas.renderAll();
+}
+
+// Adicione esta linha após a definição da função resizeCanvas:
+window.addEventListener('load', resizeCanvas);
+
+canvas.on('mouse:wheel', function (opt) {
+  var delta = opt.e.deltaY;
+  var zoom = canvas.getZoom();
+  zoom *= 0.999 ** delta;
+  if (zoom > 20) zoom = 20;
+  if (zoom < 0.1) zoom = 0.1;
+  const pointer = canvas.getPointer(opt.e);
+  const x = pointer.x;
+  const y = pointer.y;
+  canvas.zoomToPoint({
+    x: x,
+    y: y
+  }, zoom);
+  opt.e.preventDefault();
+  opt.e.stopPropagation();
+});
+
+function saveCanvasState() {
+  selectedObjectIds = canvas.getActiveObjects().map(obj => canvas.getObjects().indexOf(obj));
+  const state = {
+    canvasState: canvas.toJSON(['id', 'name']),
+    selectedObjectIds: selectedObjectIds
+  };
+  return JSON.stringify(state);
+}
+
+function loadCanvasState(stateStr) {
+  const state = JSON.parse(stateStr);
+  canvas.clear();
+  canvas.loadFromJSON(state.canvasState, () => {
+    // Ensure only one CloudFolha exists
+    const cloudFolhas = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
+    if (cloudFolhas.length > 1) {
+      cloudFolhas.slice(1).forEach(obj => canvas.remove(obj));
+    }
+
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      cloudFolha.set({
+        selectable: false,
+        evented: false
+      });
+    }
+
+    const objectsToSelect = state.selectedObjectIds.map(index => canvas.getObjects()[index]).filter(obj => obj);
+    if (objectsToSelect.length > 0) {
+      if (objectsToSelect.length === 1) {
+        canvas.setActiveObject(objectsToSelect[0]);
+      } else {
+        const selection = new fabric.ActiveSelection(objectsToSelect, { canvas });
+        canvas.setActiveObject(selection);
+      }
+    }
+
+    canvas.renderAll();
+  });
+}
+
+function saveHistoryToSessionStorage() {
+  sessionStorage.setItem('canvasHistory', JSON.stringify(history));
+  sessionStorage.setItem('currentHistoryIndex', currentHistoryIndex);
+}
+
+function loadHistoryFromSessionStorage() {
+  const savedHistory = sessionStorage.getItem('canvasHistory');
+  const savedIndex = sessionStorage.getItem('currentHistoryIndex');
+
+  if (savedHistory && savedIndex) {
+    history = JSON.parse(savedHistory);
+    currentHistoryIndex = parseInt(savedIndex);
+    if (history.length > 0) {
+      loadCanvasState(history[currentHistoryIndex]);
+    }
+  }
+}
+
+function addToHistory() {
+  const existingFolha = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
+  if (existingFolha.length > 1) {
+    existingFolha.slice(1).forEach(obj => canvas.remove(obj));
+  }
+
+  currentHistoryIndex++;
+  history = history.slice(0, currentHistoryIndex);
+  history.push(saveCanvasState());
+
+  if (history.length > MAX_HISTORY) {
+    history.shift();
+    currentHistoryIndex--;
+  }
+
+  saveHistoryToSessionStorage();
+}
+
+canvas.on('object:modified', addToHistory);
+canvas.on('object:added', function(e) {
+  if (e.target && e.target.id !== 'CloudFolha') {
+    addToHistory();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'z') {
+      if (e.shiftKey) {
+        if (currentHistoryIndex < history.length - 1) {
+          currentHistoryIndex++;
+          loadCanvasState(history[currentHistoryIndex]);
+          saveHistoryToSessionStorage();
+        }
+      } else {
+        if (currentHistoryIndex > 0) {
+          currentHistoryIndex--;
+          loadCanvasState(history[currentHistoryIndex]);
+          saveHistoryToSessionStorage();
+        }
+      }
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Delete') {
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects) {
+      canvas.remove(...activeObjects);
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+      addToHistory();
+    }
+  }
+});
+
+document.addEventListener('paste', function(e) {
+  if (e.clipboardData) {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          fabric.Image.fromURL(event.target.result, function(img) {
+            const canvasCenter = canvas.getCenter();
+            img.set({
+              left: canvasCenter.left,
+              top: canvasCenter.top,
+              originX: 'center',
+              originY: 'center'
+            });
+            canvas.add(img);
+            canvas.setActiveObject(img);
+            canvas.renderAll();
+            addToHistory();
+          });
+        };
+        reader.readAsDataURL(blob);
+      }
+    }
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+    e.preventDefault();
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+      activeObject.clone(function(cloned) {
+        cloned.set({
+          left: cloned.left + 20,
+          top: cloned.top + 20
+        });
+        canvas.add(cloned);
+        canvas.setActiveObject(cloned);
+        canvas.renderAll();
+        addToHistory();
+      });
+    }
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+    e.preventDefault();
+    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+    if (objects.length > 0) {
+      const selection = new fabric.ActiveSelection(objects, { canvas: canvas });
+      canvas.setActiveObject(selection);
+      canvas.renderAll();
+    }
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+    e.preventDefault();
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      // Create temporary canvas for printing
+      const printCanvas = document.createElement('canvas');
+      const ctx = printCanvas.getContext('2d');
+      printCanvas.width = cloudFolha.width;
+      printCanvas.height = cloudFolha.height;
+
+      // Fill with white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, printCanvas.width, printCanvas.height);
+
+      // Create temporary Fabric canvas
+      const tempCanvas = new fabric.Canvas(printCanvas);
+      tempCanvas.setWidth(cloudFolha.width);
+      tempCanvas.setHeight(cloudFolha.height);
+
+      // Clone and position objects relative to CloudFolha
+      const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+      objects.forEach(obj => {
+        const clonedObj = fabric.util.object.clone(obj);
+        const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
+        const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
+
+        clonedObj.set({
+          left: relativeLeft,
+          top: relativeTop,
+          scaleX: obj.scaleX / cloudFolha.scaleX,
+          scaleY: obj.scaleY / cloudFolha.scaleY
+        });
+
+        tempCanvas.add(clonedObj);
+      });
+
+      tempCanvas.renderAll();
+
+      // Print the canvas
+      const dataUrl = tempCanvas.toDataURL('image/png');
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print</title>
+            <style>
+              @media print {
+                img { max-width: 100%; }
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${dataUrl}" onload="window.print();window.close()">
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      // Cleanup
+      tempCanvas.dispose();
+    }
+  }
+});
+
+canvas.on('selection:created', function(e) {
+  const editarCategory = document.querySelector('.category-item[data-category="editar"]');
+  if (!editarCategory.classList.contains('active')) {
+    categoryItems.forEach(i => i.classList.remove('active'));
+    menuContents.forEach(m => m.classList.remove('active'));
+    editarCategory.classList.add('active');
+    document.getElementById('menu-editar').classList.add('active');
+  }
+  if (e.selected && e.selected[0]) {
+    updateImageDimensionInputs(e.selected[0]);
+  }
+});
+
+canvas.on('selection:updated', function(e) {
+  const editarCategory = document.querySelector('.category-item[data-category="editar"]');
+  if (!editarCategory.classList.contains('active')) {
+    categoryItems.forEach(i => i.classList.remove('active'));
+    menuContents.forEach(m => m.classList.remove('active'));
+    editarCategory.classList.add('active');
+    document.getElementById('menu-editar').classList.add('active');
+  }
+  if (e.selected && e.selected[0]) {
+    updateImageDimensionInputs(e.selected[0]);
+  }
+});
+
+canvas.on('selection:cleared', function() {
+  imageWidthInput.value = "0";
+  imageHeightInput.value = "0";
+});
+
+// Update dimensions when object is modified (scaled, moved, etc)
+canvas.on('object:modified', function(e) {
+  if (e.target) {
+    updateImageDimensionInputs(e.target);
+  }
+});
+
+canvas.on('object:scaling', function(e) {
+  if (e.target) {
+    updateImageDimensionInputs(e.target);
+  }
+});
+
+function updateImageDimensionInputs(obj) {
+  if (!obj || !obj.type === 'image') {
+    imageWidthInput.value = "0";
+    imageHeightInput.value = "0";
+    return;
+  }
+
+  const widthInCm = (obj.width * obj.scaleX) / CM_TO_PX;
+  const heightInCm = (obj.height * obj.scaleY) / CM_TO_PX;
+
+  imageWidthInput.value = widthInCm.toFixed(1);
+  imageHeightInput.value = heightInCm.toFixed(1);
+}
+
+fileInput.addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      fabric.Image.fromURL(event.target.result, function (img) {
+        const canvasCenter = canvas.getCenter();
+        img.set({
+          left: canvasCenter.left,
+          top: canvasCenter.top,
+          name: file.name,
+          originX: 'center',
+          originY: 'center'
+        });
+
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+
+        updateImageDimensionInputs(img);
+        addToHistory();
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+  fileInput.value = '';
+});
+
+function addShape(shapeName) {
+  let shape;
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  const center = {
+    left: cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2,
+    top: cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2
+  };
+
+  switch(shapeName) {
+    case 'square':
+      shape = new fabric.Rect({
+        left: center.left,
+        top: center.top,
+        width: 100,
+        height: 100,
+        fill: '#fff',
+        stroke: '#000',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center'
+      });
+      break;
+
+    case 'circle':
+      shape = new fabric.Circle({
+        left: center.left,
+        top: center.top,
+        radius: 50,
+        fill: '#fff',
+        stroke: '#000',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center'
+      });
+      break;
+
+    case 'triangle':
+      shape = new fabric.Triangle({
+        left: center.left,
+        top: center.top,
+        width: 100,
+        height: 100,
+        fill: '#fff',
+        stroke: '#000',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center'
+      });
+      break;
+
+    case 'line':
+      shape = new fabric.Line([50, 50, 150, 50], {
+        left: center.left - 50,
+        top: center.top,
+        stroke: '#000',
+        strokeWidth: 2
+      });
+      break;
+
+    case 'ellipse':
+      shape = new fabric.Ellipse({
+        left: center.left,
+        top: center.top,
+        rx: 80,
+        ry: 40,
+        fill: '#fff',
+        stroke: '#000',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center'
+      });
+      break;
+
+    case 'polygon':
+      shape = new fabric.Polygon([
+        {x: 0, y: 0},
+        {x: 100, y: 0},
+        {x: 100, y: 100},
+        {x: 50, y: 150},
+        {x: 0, y: 100}
+      ], {
+        left: center.left - 50,
+        top: center.top - 75,
+        fill: '#fff',
+        stroke: '#000',
+        strokeWidth: 2
+      });
+      break;
+
+    case 'polyline':
+      shape = new fabric.Polyline([
+        {x: 0, y: 0},
+        {x: 50, y: 50},
+        {x: 100, y: 0},
+        {x: 150, y: 50}
+      ], {
+        left: center.left - 75,
+        top: center.top - 25,
+        fill: '',
+        stroke: '#000',
+        strokeWidth: 2
+      });
+      break;
+
+    case 'rectangle':
+      shape = new fabric.Rect({
+        left: center.left,
+        top: center.top,
+        width: 150,
+        height: 100,
+        fill: '#fff',
+        stroke: '#000',
+        strokeWidth: 2,
+        originX: 'center',
+        originY: 'center'
+      });
+      break;
+  }
+
+  if (shape) {
+    canvas.add(shape);
+    canvas.setActiveObject(shape);
+    canvas.renderAll();
+    addToHistory();
+  }
+}
+
+function saveDocument() {
+  const state = canvas.toJSON(['id', 'name']);
+  const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+  link.href = URL.createObjectURL(blob);
+  link.download = `document_${timestamp}.cloudapp`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function openDocument(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const state = JSON.parse(e.target.result);
+      canvas.clear();
+      canvas.loadFromJSON(state, function() {
+        // Ensure CloudFolha is non-selectable
+        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+        if (cloudFolha) {
+          cloudFolha.set({
+            selectable: false,
+            evented: false
+          });
+        }
+        canvas.renderAll();
+        addToHistory();
+      });
+    } catch (err) {
+      alert('Error loading document: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+window.addEventListener('load', function() {
+  const saveDocBtn = document.querySelector('button.menu-item:nth-of-type(2)');
+  const openDocBtn = document.querySelector('button.menu-item:nth-of-type(1)');
+  const openFileInput = document.getElementById('openFileInput');
+
+  saveDocBtn.addEventListener('click', saveDocument);
+
+  openDocBtn.addEventListener('click', () => {
+    openFileInput.click();
+  });
+
+  openFileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+      openDocument(e.target.files[0]);
+    }
+    openFileInput.value = '';
+  });
+
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (cloudFolha) {
+    cloudFolha.set({
+      selectable: false,
+      evented: false
+    });
+  }
+  loadHistoryFromSessionStorage();
+  if (history.length === 0) {
+    addToHistory();
+  }
+
+  document.getElementById('squareBtn').addEventListener('click', () => addShape('square'));
+  document.getElementById('circleBtn').addEventListener('click', () => addShape('circle'));
+  document.getElementById('triangleBtn').addEventListener('click', () => addShape('triangle'));
+  document.getElementById('lineBtn').addEventListener('click', () => addShape('line'));
+  document.getElementById('ellipseBtn').addEventListener('click', () => addShape('ellipse'));
+  document.getElementById('polygonBtn').addEventListener('click', () => addShape('polygon'));
+  document.getElementById('polylineBtn').addEventListener('click', () => addShape('polyline'));
+  document.getElementById('rectangleBtn').addEventListener('click', () => addShape('rectangle'));
+
+  // Adicionar Guias
+  const addGuidesBtn = document.getElementById('addGuidesBtn');
+  const guidesMenu = document.getElementById('guidesMenu');
+  const addGuideBtn = document.getElementById('addGuideBtn');
+  const guidePositionInput = document.getElementById('guidePositionInput');
+  const horizontalGuideBtn = document.getElementById('horizontalGuideBtn');
+  const verticalGuideBtn = document.getElementById('verticalGuideBtn');
+  const singleGuideBtn = document.getElementById('singleGuideBtn');
+  const multipleGuidesBtn = document.getElementById('multipleGuidesBtn');
+
+  addGuidesBtn.addEventListener('click', () => {
+    guidesMenu.classList.toggle('active');
+  });
+
+  addGuideBtn.addEventListener('click', () => {
+    const position = parseFloat(guidePositionInput.value) * CM_TO_PX;
+    const isHorizontal = horizontalGuideBtn.classList.contains('active');
+    const isSingle = singleGuideBtn.classList.contains('active');
+
+    if (isHorizontal) {
+      if (isSingle) {
+        addHorizontalGuide(position);
+      } else {
+        addMultipleHorizontalGuides(position);
+      }
+    } else {
+      if (isSingle) {
+        addVerticalGuide(position);
+      } else {
+        addMultipleVerticalGuides(position);
+      }
+    }
+
+    guidesMenu.classList.remove('active');
+  });
+
+  function addHorizontalGuide(position) {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      const guide = new fabric.Line([cloudFolha.left, cloudFolha.top + position, cloudFolha.left + cloudFolha.width * cloudFolha.scaleX, cloudFolha.top + position], {
+        stroke: 'red',
+        strokeDashArray: [5, 5],
+        selectable: false,
+        evented: false,
+        id: 'guide'
+      });
+      guides.push(guide);
+      canvas.add(guide);
+      canvas.renderAll();
+    }
+  }
+
+  function addVerticalGuide(position) {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      const guide = new fabric.Line([cloudFolha.left + position, cloudFolha.top, cloudFolha.left + position, cloudFolha.top + cloudFolha.height * cloudFolha.scaleY], {
+        stroke: 'red',
+        strokeDashArray: [5, 5],
+        selectable: false,
+        evented: false,
+        id: 'guide'
+      });
+      guides.push(guide);
+      canvas.add(guide);
+      canvas.renderAll();
+    }
+  }
+
+  function addMultipleHorizontalGuides(position) {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      const numGuides = Math.floor(cloudFolha.height / position);
+      for (let i = 1; i <= numGuides; i++) {
+        addHorizontalGuide(i * position);
+      }
+    }
+  }
+
+  function addMultipleVerticalGuides(position) {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      const numGuides = Math.floor(cloudFolha.width / position);
+      for (let i = 1; i <= numGuides; i++) {
+        addVerticalGuide(i * position);
+      }
+    }
+  }
+
+  // Adicionar Guias Padrão
+  const addDefaultGuidesBtn = document.getElementById('addDefaultGuidesBtn');
+  addDefaultGuidesBtn.addEventListener('click', addDefaultGuides);
+
+  function addDefaultGuides() {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      const margin = 0.5 * CM_TO_PX;
+      addHorizontalGuide(margin);
+      addHorizontalGuide(cloudFolha.height - margin);
+      addVerticalGuide(margin);
+      addVerticalGuide(cloudFolha.width - margin);
+    }
+  }
+
+  // Apagar Guias
+  const removeGuidesBtn = document.getElementById('removeGuidesBtn');
+  removeGuidesBtn.addEventListener('click', removeGuides);
+
+  function removeGuides() {
+    guides.forEach(guide => canvas.remove(guide));
+    guides = [];
+    canvas.renderAll();
+  }
+
+  // Magnetismo
+  canvas.on('object:moving', function(e) {
+    const obj = e.target;
+    guides.forEach(guide => {
+      if (guide.type === 'line') {
+        if (guide.x1 === guide.x2) {
+          // Vertical guide
+          if (Math.abs(obj.left - guide.x1) < 5) {
+            obj.set('left', guide.x1);
+          }
+        } else {
+          // Horizontal guide
+          if (Math.abs(obj.top - guide.y1) < 5) {
+            obj.set('top', guide.y1);
+          }
+        }
+      }
+    });
+  });
+
+  // Adicionar Guia Padrão com F2
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      addDefaultGuides();
+    }
+  });
+
+  const exportButton = document.getElementById('exportButton');
+  const exportOptions = document.getElementById('exportOptions');
+  const resolutionInput = document.getElementById('resolutionInput');
+
+  // Toggle export options
+  exportButton.addEventListener('click', () => {
+      if (previewRect) {
+          canvas.remove(previewRect);
+          previewRect = null;
+          canvas.renderAll();
+      }
+      exportOptions.classList.toggle('active');
+  });
+
+  function exportCanvas(format) {
+      const dpi = parseInt(resolutionInput.value) || 600;
+      const scale = dpi / 96;
+
+      const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+      if (!cloudFolha) return;
+
+      // Create a temporary container
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '-9999px';
+      document.body.appendChild(tempContainer);
+
+      // Create a new canvas with exact dimensions of CloudFolha
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = cloudFolha.width;
+      exportCanvas.height = cloudFolha.height;
+      tempContainer.appendChild(exportCanvas);
+
+      // Create a new Fabric canvas
+      const exportFabricCanvas = new fabric.Canvas(exportCanvas);
+      exportFabricCanvas.setWidth(cloudFolha.width);
+      exportFabricCanvas.setHeight(cloudFolha.height);
+
+      // Clone and position objects relative to CloudFolha
+      const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+      objects.forEach(obj => {
+          const clonedObj = fabric.util.object.clone(obj);
+
+          // Calculate position relative to CloudFolha
+          const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
+          const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
+
+          clonedObj.set({
+              left: relativeLeft,
+              top: relativeTop,
+              scaleX: obj.scaleX / cloudFolha.scaleX,
+              scaleY: obj.scaleY / cloudFolha.scaleY
+          });
+
+          exportFabricCanvas.add(clonedObj);
+      });
+
+      exportFabricCanvas.renderAll();
+
+      // Use html2canvas to capture the canvas
+      html2canvas(exportCanvas, {
+          scale: scale,
+          backgroundColor: format === 'jpg' ? '#ffffff' : null,
+          logging: false,
+          useCORS: true
+      }).then(outputCanvas => {
+          const link = document.createElement('a');
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+
+          if (format === 'png' || format === 'jpg') {
+              link.href = outputCanvas.toDataURL(`image/${format}`, 1.0);
+              link.download = `canvas_export_${timestamp}.${format}`;
+              link.click();
+          }
+
+          // Cleanup
+          tempContainer.remove();
+          exportFabricCanvas.dispose();
+      });
+  }
+
+  // Update the export button click handlers
+  document.querySelectorAll('.export-btn').forEach(btn => {
+      if (btn.id !== 'previewExportBtn') {
+          btn.addEventListener('click', () => {
+              const format = btn.dataset.format;
+              if (format === 'pdf' || format === 'vector-pdf') {
+                  alert('PDF export will be implemented soon');
+                  return;
+              }
+              exportCanvas(format);
+          });
+      }
+  });
+
+  document.getElementById('previewExportBtn').addEventListener('click', () => {
+      if (previewRect) {
+          canvas.remove(previewRect);
+          previewRect = null;
+          canvas.renderAll();
+          return;
+      }
+
+      const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+      if (!cloudFolha) return;
+
+      previewRect = new fabric.Rect({
+          left: cloudFolha.left,
+          top: cloudFolha.top,
+          width: cloudFolha.width,
+          height: cloudFolha.height,
+          fill: 'rgba(255, 0, 0, 0.2)',
+          stroke: 'red',
+          strokeWidth: 2,
+          selectable: false,
+          evented: false,
+          scaleX: cloudFolha.scaleX,
+          scaleY: cloudFolha.scaleY
+      });
+
+      canvas.add(previewRect);
+      canvas.bringToFront(previewRect);
+      canvas.renderAll();
+  });
+
+  // Add event listeners for image dimension inputs
+  imageWidthInput.addEventListener('change', () => {
+    const activeObj = canvas.getActiveObject();
+    if (!activeObj) return;
+
+    const widthInPx = parseFloat(imageWidthInput.value) * CM_TO_PX;
+    const heightInPx = parseFloat(imageHeightInput.value) * CM_TO_PX;
+
+    const scaleX = widthInPx / activeObj.width;
+    const scaleY = heightInPx / activeObj.height;
+
+    activeObj.set({
+      scaleX: scaleX,
+      scaleY: scaleY
+    });
+
+    canvas.renderAll();
+    addToHistory();
+  });
+
+  imageHeightInput.addEventListener('change', () => {
+    const activeObj = canvas.getActiveObject();
+    if (!activeObj) return;
+
+    const widthInPx = parseFloat(imageWidthInput.value) * CM_TO_PX;
+    const heightInPx = parseFloat(imageHeightInput.value) * CM_TO_PX;
+
+    const scaleX = widthInPx / activeObj.width;
+    const scaleY = heightInPx / activeObj.height;
+
+    activeObj.set({
+      scaleX: scaleX,
+      scaleY: scaleY
+    });
+
+    canvas.renderAll();
+    addToHistory();
+  });
+
+  // Highlight the selected guide orientation
+  horizontalGuideBtn.addEventListener('click', () => {
+    horizontalGuideBtn.classList.add('active');
+    verticalGuideBtn.classList.remove('active');
+  });
+
+  verticalGuideBtn.addEventListener('click', () => {
+    verticalGuideBtn.classList.add('active');
+    horizontalGuideBtn.classList.remove('active');
+  });
+
+  // Highlight the selected guide type
+  singleGuideBtn.addEventListener('click', () => {
+    singleGuideBtn.classList.add('active');
+    multipleGuidesBtn.classList.remove('active');
+  });
+
+  multipleGuidesBtn.addEventListener('click', () => {
+    multipleGuidesBtn.classList.add('active');
+    singleGuideBtn.classList.remove('active');
+  });
+
+  // Adjust the position input behavior
+  addGuideBtn.addEventListener('click', () => {
+    const position = parseFloat(guidePositionInput.value) * CM_TO_PX;
+    const isHorizontal = horizontalGuideBtn.classList.contains('active');
+    const isSingle = singleGuideBtn.classList.contains('active');
+
+    if (isHorizontal) {
+      if (isSingle) {
+        addHorizontalGuide(position);
+      } else {
+        addMultipleHorizontalGuides(position);
+      }
+    } else {
+      if (isSingle) {
+        addVerticalGuide(position);
+      } else {
+        addMultipleVerticalGuides(position);
+      }
+    }
+
+    guidesMenu.classList.remove('active');
+  });
+
+  function addDefaultGuides() {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+      const margin = 0.5 * CM_TO_PX;
+      addHorizontalGuide(margin);
+      addHorizontalGuide(cloudFolha.height - margin);
+      addVerticalGuide(margin);
+      addVerticalGuide(cloudFolha.width - margin);
+    }
+  }
+});
+</script>
+</body>
+</html>
