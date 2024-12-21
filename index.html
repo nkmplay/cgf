@@ -428,37 +428,35 @@
     <div id="canvas-container">
         <canvas id="canvas"></canvas>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.07 - 21/12/2024</div>
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.08 - 21/12/2024</div>
 
 <script>
 const container = document.getElementById('canvas-container');
 const canvas = new fabric.Canvas('canvas');
 
-// Create helper canvas for pattern
+// ---------- Inicio Seção Configuração do Canvas ----------
 const patternCanvas = document.createElement('canvas');
 patternCanvas.width = 20;
 patternCanvas.height = 20;
 const ctx = patternCanvas.getContext('2d');
 
-// Draw pattern background
 ctx.fillStyle = '#16213e';
 ctx.fillRect(0, 0, patternCanvas.width, patternCanvas.height);
 
-// Draw center dot
 ctx.fillStyle = '#1f2b4c';
 ctx.beginPath();
 ctx.arc(10, 10, 3, 0, Math.PI * 2);
 ctx.fill();
 
-// Create Fabric.js pattern
 const pattern = new fabric.Pattern({
     source: patternCanvas,
     repeat: 'repeat'
 });
 
-// Apply pattern as canvas background
 canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
+// ---------- Final Seção Configuração do Canvas ----------
 
+// ---------- Inicio Seção Variáveis Globais ----------
 const fileInput = document.getElementById('fileInput');
 const loadImageBtn2 = document.getElementById('loadImageBtn2');
 const categoryItems = document.querySelectorAll('.category-item');
@@ -475,7 +473,9 @@ let history = [];
 let currentHistoryIndex = -1;
 let previewRect = null;
 let guides = [];
+// ---------- Final Seção Variáveis Globais ----------
 
+// ---------- Inicio Seção Eventos de Categoria ----------
 categoryItems.forEach(item => {
   item.addEventListener('click', () => {
     categoryItems.forEach(i => i.classList.remove('active'));
@@ -489,16 +489,16 @@ categoryItems.forEach(item => {
 loadImageBtn2.addEventListener('click', () => {
   fileInput.click();
 });
+// ---------- Final Seção Eventos de Categoria ----------
 
+// ---------- Inicio Seção Dimensões da Página ----------
 function updatePageDimensions() {
   const width = parseFloat(widthInput.value) * CM_TO_PX;
   const height = parseFloat(heightInput.value) * CM_TO_PX;
 
-  // Remove existing CloudFolha if present
   const existingFolha = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
   existingFolha.forEach(obj => canvas.remove(obj));
 
-  // Create new CloudFolha with corrected dimensions
   a4Page = new fabric.Rect({
     id: 'CloudFolha',
     left: (canvas.width - width) / 2,
@@ -522,59 +522,142 @@ widthInput.addEventListener('input', updatePageDimensions);
 widthInput.addEventListener('change', updatePageDimensions);
 heightInput.addEventListener('input', updatePageDimensions);
 heightInput.addEventListener('change', updatePageDimensions);
+// ---------- Final Seção Dimensões da Página ----------
 
-const initialScale = 0.7;
-
-// Substitua a função resizeCanvas existente por esta:
+// ---------- Inicio Seção Redimensionamento do Canvas ----------
 function resizeCanvas() {
     canvas.setWidth(container.offsetWidth);
     canvas.setHeight(container.offsetHeight);
-    
-    // Reapply pattern when canvas is resized
+
     canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
-    
-    // Calcular o zoom baseado na altura do container
+
     const pageHeight = parseFloat(heightInput.value) * CM_TO_PX;
     const containerHeight = container.offsetHeight;
-    
-    // Definir zoom para ocupar 70% da altura
+
     const zoom = (containerHeight / pageHeight) * 0.7;
-    
-    // Definir o zoom
+
     canvas.setZoom(zoom);
-    
-    // Calcular posição para alinhar próximo ao menu esquerdo
+
     const leftMenuWidth = 0;
     const marginLeft = 10;
-    const topMargin = 150; // Margem superior fixa de 50px
-    
-    // Ajustar viewpoint
+    const topMargin = 150;
+
     canvas.absolutePan({ x: -(leftMenuWidth + marginLeft), y: -topMargin });
-    
+
     updatePageDimensions();
     canvas.renderAll();
 }
 
-// Adicione esta linha após a definição da função resizeCanvas:
-window.addEventListener('load', resizeCanvas);
+// Variáveis para controle de pan e zoom
+let isPanning = false;
+let lastPosX;
+let lastPosY;
+let isSpacePressed = false;
 
-canvas.on('mouse:wheel', function (opt) {
+// Atualiza o cursor baseado no estado
+function updateCursor() {
+  if (isSpacePressed) {
+    canvas.defaultCursor = 'grab';
+    canvas.hoverCursor = 'grab';
+    if (isPanning) {
+      canvas.defaultCursor = 'grabbing';
+      canvas.hoverCursor = 'grabbing';
+    }
+  } else {
+    canvas.defaultCursor = 'default';
+    canvas.hoverCursor = 'move';
+  }
+  canvas.requestRenderAll();
+}
+
+// Função melhorada de zoom
+canvas.on('mouse:wheel', function(opt) {
   var delta = opt.e.deltaY;
   var zoom = canvas.getZoom();
-  zoom *= 0.999 ** delta;
+  var point = {
+    x: opt.e.offsetX,
+    y: opt.e.offsetY
+  };
+
+  // Ajusta a sensibilidade do zoom
+  var factor = 1.1;
+  if (delta > 0) {
+    zoom = zoom / factor;
+  } else {
+    zoom = zoom * factor;
+  }
+
+  // Limita o zoom
   if (zoom > 20) zoom = 20;
-  if (zoom < 0.1) zoom = 0.1;
-  const pointer = canvas.getPointer(opt.e);
-  const x = pointer.x;
-  const y = pointer.y;
-  canvas.zoomToPoint({
-    x: x,
-    y: y
-  }, zoom);
+  if (zoom < 0.01) zoom = 0.01;
+
+  // Aplica o zoom mantendo o ponto do mouse fixo
+  canvas.zoomToPoint(point, zoom);
+  
   opt.e.preventDefault();
   opt.e.stopPropagation();
 });
 
+// Event listeners para o pan
+canvas.on('mouse:down', function(opt) {
+  if (isSpacePressed && opt.e.buttons === 1) { // Verifica se é o botão esquerdo
+    isPanning = true;
+    lastPosX = opt.e.clientX;
+    lastPosY = opt.e.clientY;
+    updateCursor();
+  }
+});
+
+canvas.on('mouse:move', function(opt) {
+  if (isPanning && opt.e.buttons === 1) {
+    const deltaX = opt.e.clientX - lastPosX;
+    const deltaY = opt.e.clientY - lastPosY;
+    
+    const vpt = canvas.viewportTransform;
+    vpt[4] += deltaX;
+    vpt[5] += deltaY;
+    
+    canvas.requestRenderAll();
+    
+    lastPosX = opt.e.clientX;
+    lastPosY = opt.e.clientY;
+  }
+});
+
+canvas.on('mouse:up', function() {
+  isPanning = false;
+  updateCursor();
+});
+
+// Event listeners para a tecla espaço
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' && !isSpacePressed) {
+    e.preventDefault();
+    isSpacePressed = true;
+    updateCursor();
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    isSpacePressed = false;
+    isPanning = false;
+    updateCursor();
+  }
+});
+
+// Previne o comportamento padrão da tecla espaço no navegador
+window.addEventListener('keydown', function(e) {
+  if (e.code === 'Space') {
+    e.preventDefault();
+  }
+});
+
+window.addEventListener('load', resizeCanvas);
+// ---------- Final Seção Redimensionamento do Canvas ----------
+
+// ---------- Inicio Seção Histórico ----------
 function saveCanvasState() {
   selectedObjectIds = canvas.getActiveObjects().map(obj => canvas.getObjects().indexOf(obj));
   const state = {
@@ -588,7 +671,6 @@ function loadCanvasState(stateStr) {
   const state = JSON.parse(stateStr);
   canvas.clear();
   canvas.loadFromJSON(state.canvasState, () => {
-    // Ensure only one CloudFolha exists
     const cloudFolhas = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
     if (cloudFolhas.length > 1) {
       cloudFolhas.slice(1).forEach(obj => canvas.remove(obj));
@@ -680,7 +762,9 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+// ---------- Final Seção Histórico ----------
 
+// ---------- Inicio Seção Manipulação de Objetos ----------
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Delete') {
     const activeObjects = canvas.getActiveObjects();
@@ -757,22 +841,18 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
     if (cloudFolha) {
-      // Create temporary canvas for printing
       const printCanvas = document.createElement('canvas');
       const ctx = printCanvas.getContext('2d');
       printCanvas.width = cloudFolha.width;
       printCanvas.height = cloudFolha.height;
 
-      // Fill with white background
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, printCanvas.width, printCanvas.height);
 
-      // Create temporary Fabric canvas
       const tempCanvas = new fabric.Canvas(printCanvas);
       tempCanvas.setWidth(cloudFolha.width);
       tempCanvas.setHeight(cloudFolha.height);
 
-      // Clone and position objects relative to CloudFolha
       const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
       objects.forEach(obj => {
         const clonedObj = fabric.util.object.clone(obj);
@@ -791,7 +871,6 @@ document.addEventListener('keydown', function(e) {
 
       tempCanvas.renderAll();
 
-      // Print the canvas
       const dataUrl = tempCanvas.toDataURL('image/png');
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
@@ -811,7 +890,6 @@ document.addEventListener('keydown', function(e) {
       `);
       printWindow.document.close();
 
-      // Cleanup
       tempCanvas.dispose();
     }
   }
@@ -848,7 +926,6 @@ canvas.on('selection:cleared', function() {
   imageHeightInput.value = "0";
 });
 
-// Update dimensions when object is modified (scaled, moved, etc)
 canvas.on('object:modified', function(e) {
   if (e.target) {
     updateImageDimensionInputs(e.target);
@@ -902,7 +979,9 @@ fileInput.addEventListener('change', function (e) {
   }
   fileInput.value = '';
 });
+// ---------- Final Seção Manipulação de Objetos ----------
 
+// ---------- Inicio Seção Formas ----------
 function addShape(shapeName) {
   let shape;
   const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
@@ -1030,6 +1109,17 @@ function addShape(shapeName) {
   }
 }
 
+document.getElementById('squareBtn').addEventListener('click', () => addShape('square'));
+document.getElementById('circleBtn').addEventListener('click', () => addShape('circle'));
+document.getElementById('triangleBtn').addEventListener('click', () => addShape('triangle'));
+document.getElementById('lineBtn').addEventListener('click', () => addShape('line'));
+document.getElementById('ellipseBtn').addEventListener('click', () => addShape('ellipse'));
+document.getElementById('polygonBtn').addEventListener('click', () => addShape('polygon'));
+document.getElementById('polylineBtn').addEventListener('click', () => addShape('polyline'));
+document.getElementById('rectangleBtn').addEventListener('click', () => addShape('rectangle'));
+// ---------- Final Seção Formas ----------
+
+// ---------- Inicio Seção Documentos ----------
 function saveDocument() {
   const state = canvas.toJSON(['id', 'name']);
   const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
@@ -1048,7 +1138,6 @@ function openDocument(file) {
       const state = JSON.parse(e.target.result);
       canvas.clear();
       canvas.loadFromJSON(state, function() {
-        // Ensure CloudFolha is non-selectable
         const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
         if (cloudFolha) {
           cloudFolha.set({
@@ -1095,378 +1184,343 @@ window.addEventListener('load', function() {
   if (history.length === 0) {
     addToHistory();
   }
+});
+// ---------- Final Seção Documentos ----------
 
-  document.getElementById('squareBtn').addEventListener('click', () => addShape('square'));
-  document.getElementById('circleBtn').addEventListener('click', () => addShape('circle'));
-  document.getElementById('triangleBtn').addEventListener('click', () => addShape('triangle'));
-  document.getElementById('lineBtn').addEventListener('click', () => addShape('line'));
-  document.getElementById('ellipseBtn').addEventListener('click', () => addShape('ellipse'));
-  document.getElementById('polygonBtn').addEventListener('click', () => addShape('polygon'));
-  document.getElementById('polylineBtn').addEventListener('click', () => addShape('polyline'));
-  document.getElementById('rectangleBtn').addEventListener('click', () => addShape('rectangle'));
+// ---------- Inicio Seção Guias ----------
+const addGuidesBtn = document.getElementById('addGuidesBtn');
+const guidesMenu = document.getElementById('guidesMenu');
+const addGuideBtn = document.getElementById('addGuideBtn');
+const guidePositionInput = document.getElementById('guidePositionInput');
+const horizontalGuideBtn = document.getElementById('horizontalGuideBtn');
+const verticalGuideBtn = document.getElementById('verticalGuideBtn');
+const singleGuideBtn = document.getElementById('singleGuideBtn');
+const multipleGuidesBtn = document.getElementById('multipleGuidesBtn');
 
-  // Adicionar Guias
-  const addGuidesBtn = document.getElementById('addGuidesBtn');
-  const guidesMenu = document.getElementById('guidesMenu');
-  const addGuideBtn = document.getElementById('addGuideBtn');
-  const guidePositionInput = document.getElementById('guidePositionInput');
-  const horizontalGuideBtn = document.getElementById('horizontalGuideBtn');
-  const verticalGuideBtn = document.getElementById('verticalGuideBtn');
-  const singleGuideBtn = document.getElementById('singleGuideBtn');
-  const multipleGuidesBtn = document.getElementById('multipleGuidesBtn');
+addGuidesBtn.addEventListener('click', () => {
+  guidesMenu.classList.toggle('active');
+});
 
-  addGuidesBtn.addEventListener('click', () => {
-    guidesMenu.classList.toggle('active');
-  });
+addGuideBtn.addEventListener('click', () => {
+  const position = parseFloat(guidePositionInput.value) * CM_TO_PX;
+  const isHorizontal = horizontalGuideBtn.classList.contains('active');
+  const isSingle = singleGuideBtn.classList.contains('active');
 
-  addGuideBtn.addEventListener('click', () => {
-    const position = parseFloat(guidePositionInput.value) * CM_TO_PX;
-    const isHorizontal = horizontalGuideBtn.classList.contains('active');
-    const isSingle = singleGuideBtn.classList.contains('active');
-
-    if (isHorizontal) {
-      if (isSingle) {
-        addHorizontalGuide(position);
-      } else {
-        addMultipleHorizontalGuides(position);
-      }
+  if (isHorizontal) {
+    if (isSingle) {
+      addHorizontalGuide(position);
     } else {
-      if (isSingle) {
-        addVerticalGuide(position);
-      } else {
-        addMultipleVerticalGuides(position);
-      }
+      addMultipleHorizontalGuides(position);
     }
-
-    guidesMenu.classList.remove('active');
-  });
-
-  function addHorizontalGuide(position) {
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-      const guide = new fabric.Line([cloudFolha.left, cloudFolha.top + position, cloudFolha.left + cloudFolha.width * cloudFolha.scaleX, cloudFolha.top + position], {
-        stroke: 'red',
-        strokeDashArray: [5, 5],
-        selectable: false,
-        evented: false,
-        id: 'guide'
-      });
-      guides.push(guide);
-      canvas.add(guide);
-      canvas.renderAll();
+  } else {
+    if (isSingle) {
+      addVerticalGuide(position);
+    } else {
+      addMultipleVerticalGuides(position);
     }
   }
 
-  function addVerticalGuide(position) {
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-      const guide = new fabric.Line([cloudFolha.left + position, cloudFolha.top, cloudFolha.left + position, cloudFolha.top + cloudFolha.height * cloudFolha.scaleY], {
-        stroke: 'red',
-        strokeDashArray: [5, 5],
-        selectable: false,
-        evented: false,
-        id: 'guide'
-      });
-      guides.push(guide);
-      canvas.add(guide);
-      canvas.renderAll();
-    }
-  }
+  guidesMenu.classList.remove('active');
+});
 
-  function addMultipleHorizontalGuides(position) {
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-      const numGuides = Math.floor(cloudFolha.height / position);
-      for (let i = 1; i <= numGuides; i++) {
-        addHorizontalGuide(i * position);
-      }
-    }
-  }
-
-  function addMultipleVerticalGuides(position) {
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-      const numGuides = Math.floor(cloudFolha.width / position);
-      for (let i = 1; i <= numGuides; i++) {
-        addVerticalGuide(i * position);
-      }
-    }
-  }
-
-  // Adicionar Guias Padrão
-  const addDefaultGuidesBtn = document.getElementById('addDefaultGuidesBtn');
-  addDefaultGuidesBtn.addEventListener('click', addDefaultGuides);
-
-  function addDefaultGuides() {
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-      const margin = 0.5 * CM_TO_PX;
-      addHorizontalGuide(margin);
-      addHorizontalGuide(cloudFolha.height - margin);
-      addVerticalGuide(margin);
-      addVerticalGuide(cloudFolha.width - margin);
-    }
-  }
-
-  // Apagar Guias
-  const removeGuidesBtn = document.getElementById('removeGuidesBtn');
-  removeGuidesBtn.addEventListener('click', removeGuides);
-
-  function removeGuides() {
-    guides.forEach(guide => canvas.remove(guide));
-    guides = [];
+function addHorizontalGuide(position) {
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (cloudFolha) {
+    const guide = new fabric.Line([cloudFolha.left, cloudFolha.top + position, cloudFolha.left + cloudFolha.width * cloudFolha.scaleX, cloudFolha.top + position], {
+      stroke: 'red',
+      strokeDashArray: [5, 5],
+      selectable: false,
+      evented: false,
+      id: 'guide'
+    });
+    guides.push(guide);
+    canvas.add(guide);
     canvas.renderAll();
   }
+}
 
-  // Magnetismo
-  canvas.on('object:moving', function(e) {
-    const obj = e.target;
-    guides.forEach(guide => {
-      if (guide.type === 'line') {
-        if (guide.x1 === guide.x2) {
-          // Vertical guide
-          if (Math.abs(obj.left - guide.x1) < 5) {
-            obj.set('left', guide.x1);
-          }
-        } else {
-          // Horizontal guide
-          if (Math.abs(obj.top - guide.y1) < 5) {
-            obj.set('top', guide.y1);
-          }
+function addVerticalGuide(position) {
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (cloudFolha) {
+    const guide = new fabric.Line([cloudFolha.left + position, cloudFolha.top, cloudFolha.left + position, cloudFolha.top + cloudFolha.height * cloudFolha.scaleY], {
+      stroke: 'red',
+      strokeDashArray: [5, 5],
+      selectable: false,
+      evented: false,
+      id: 'guide'
+    });
+    guides.push(guide);
+    canvas.add(guide);
+    canvas.renderAll();
+  }
+}
+
+function addMultipleHorizontalGuides(position) {
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (cloudFolha) {
+    const numGuides = Math.floor(cloudFolha.height / position);
+    for (let i = 1; i <= numGuides; i++) {
+      addHorizontalGuide(i * position);
+    }
+  }
+}
+
+function addMultipleVerticalGuides(position) {
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (cloudFolha) {
+    const numGuides = Math.floor(cloudFolha.width / position);
+    for (let i = 1; i <= numGuides; i++) {
+      addVerticalGuide(i * position);
+    }
+  }
+}
+
+const addDefaultGuidesBtn = document.getElementById('addDefaultGuidesBtn');
+addDefaultGuidesBtn.addEventListener('click', addDefaultGuides);
+
+function addDefaultGuides() {
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (cloudFolha) {
+    const margin = 0.5 * CM_TO_PX;
+    addHorizontalGuide(margin);
+    addHorizontalGuide(cloudFolha.height - margin);
+    addVerticalGuide(margin);
+    addVerticalGuide(cloudFolha.width - margin);
+  }
+}
+
+const removeGuidesBtn = document.getElementById('removeGuidesBtn');
+removeGuidesBtn.addEventListener('click', removeGuides);
+
+function removeGuides() {
+  guides.forEach(guide => canvas.remove(guide));
+  guides = [];
+  canvas.renderAll();
+}
+
+canvas.on('object:moving', function(e) {
+  const obj = e.target;
+  guides.forEach(guide => {
+    if (guide.type === 'line') {
+      if (guide.x1 === guide.x2) {
+        if (Math.abs(obj.left - guide.x1) < 5) {
+          obj.set('left', guide.x1);
+        }
+      } else {
+        if (Math.abs(obj.top - guide.y1) < 5) {
+          obj.set('top', guide.y1);
         }
       }
-    });
-  });
-
-  // Adicionar Guia Padrão com F2
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'F2') {
-      e.preventDefault();
-      addDefaultGuides();
     }
   });
+});
 
-  const exportButton = document.getElementById('exportButton');
-  const exportOptions = document.getElementById('exportOptions');
-  const resolutionInput = document.getElementById('resolutionInput');
-
-  // Toggle export options
-  exportButton.addEventListener('click', () => {
-      if (previewRect) {
-          canvas.remove(previewRect);
-          previewRect = null;
-          canvas.renderAll();
-      }
-      exportOptions.classList.toggle('active');
-  });
-
-  function exportCanvas(format) {
-      const dpi = parseInt(resolutionInput.value) || 600;
-      const scale = dpi / 96;
-
-      const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-      if (!cloudFolha) return;
-
-      // Create a temporary container
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '-9999px';
-      document.body.appendChild(tempContainer);
-
-      // Create a new canvas with exact dimensions of CloudFolha
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = cloudFolha.width;
-      exportCanvas.height = cloudFolha.height;
-      tempContainer.appendChild(exportCanvas);
-
-      // Create a new Fabric canvas
-      const exportFabricCanvas = new fabric.Canvas(exportCanvas);
-      exportFabricCanvas.setWidth(cloudFolha.width);
-      exportFabricCanvas.setHeight(cloudFolha.height);
-
-      // Clone and position objects relative to CloudFolha
-      const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-      objects.forEach(obj => {
-          const clonedObj = fabric.util.object.clone(obj);
-
-          // Calculate position relative to CloudFolha
-          const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
-          const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
-
-          clonedObj.set({
-              left: relativeLeft,
-              top: relativeTop,
-              scaleX: obj.scaleX / cloudFolha.scaleX,
-              scaleY: obj.scaleY / cloudFolha.scaleY
-          });
-
-          exportFabricCanvas.add(clonedObj);
-      });
-
-      exportFabricCanvas.renderAll();
-
-      // Use html2canvas to capture the canvas
-      html2canvas(exportCanvas, {
-          scale: scale,
-          backgroundColor: format === 'jpg' ? '#ffffff' : null,
-          logging: false,
-          useCORS: true
-      }).then(outputCanvas => {
-          const link = document.createElement('a');
-          const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
-
-          if (format === 'png' || format === 'jpg') {
-              link.href = outputCanvas.toDataURL(`image/${format}`, 1.0);
-              link.download = `canvas_export_${timestamp}.${format}`;
-              link.click();
-          }
-
-          // Cleanup
-          tempContainer.remove();
-          exportFabricCanvas.dispose();
-      });
-  }
-
-  // Update the export button click handlers
-  document.querySelectorAll('.export-btn').forEach(btn => {
-      if (btn.id !== 'previewExportBtn') {
-          btn.addEventListener('click', () => {
-              const format = btn.dataset.format;
-              if (format === 'pdf' || format === 'vector-pdf') {
-                  alert('Em Breve');
-                  return;
-              }
-              exportCanvas(format);
-          });
-      }
-  });
-
-  document.getElementById('previewExportBtn').addEventListener('click', () => {
-      if (previewRect) {
-          canvas.remove(previewRect);
-          previewRect = null;
-          canvas.renderAll();
-          return;
-      }
-
-      const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-      if (!cloudFolha) return;
-
-      previewRect = new fabric.Rect({
-          left: cloudFolha.left,
-          top: cloudFolha.top,
-          width: cloudFolha.width,
-          height: cloudFolha.height,
-          fill: 'rgba(255, 0, 0, 0.2)',
-          stroke: 'red',
-          strokeWidth: 2,
-          selectable: false,
-          evented: false,
-          scaleX: cloudFolha.scaleX,
-          scaleY: cloudFolha.scaleY
-      });
-
-      canvas.add(previewRect);
-      canvas.bringToFront(previewRect);
-      canvas.renderAll();
-  });
-
-  // Add event listeners for image dimension inputs
-  imageWidthInput.addEventListener('change', () => {
-    const activeObj = canvas.getActiveObject();
-    if (!activeObj) return;
-
-    const widthInPx = parseFloat(imageWidthInput.value) * CM_TO_PX;
-    const heightInPx = parseFloat(imageHeightInput.value) * CM_TO_PX;
-
-    const scaleX = widthInPx / activeObj.width;
-    const scaleY = heightInPx / activeObj.height;
-
-    activeObj.set({
-      scaleX: scaleX,
-      scaleY: scaleY
-    });
-
-    canvas.renderAll();
-    addToHistory();
-  });
-
-  imageHeightInput.addEventListener('change', () => {
-    const activeObj = canvas.getActiveObject();
-    if (!activeObj) return;
-
-    const widthInPx = parseFloat(imageWidthInput.value) * CM_TO_PX;
-    const heightInPx = parseFloat(imageHeightInput.value) * CM_TO_PX;
-
-    const scaleX = widthInPx / activeObj.width;
-    const scaleY = heightInPx / activeObj.height;
-
-    activeObj.set({
-      scaleX: scaleX,
-      scaleY: scaleY
-    });
-
-    canvas.renderAll();
-    addToHistory();
-  });
-
-  // Highlight the selected guide orientation
-  horizontalGuideBtn.addEventListener('click', () => {
-    horizontalGuideBtn.classList.add('active');
-    verticalGuideBtn.classList.remove('active');
-  });
-
-  verticalGuideBtn.addEventListener('click', () => {
-    verticalGuideBtn.classList.add('active');
-    horizontalGuideBtn.classList.remove('active');
-  });
-
-  // Highlight the selected guide type
-  singleGuideBtn.addEventListener('click', () => {
-    singleGuideBtn.classList.add('active');
-    multipleGuidesBtn.classList.remove('active');
-  });
-
-  multipleGuidesBtn.addEventListener('click', () => {
-    multipleGuidesBtn.classList.add('active');
-    singleGuideBtn.classList.remove('active');
-  });
-
-  // Adjust the position input behavior
-  addGuideBtn.addEventListener('click', () => {
-    const position = parseFloat(guidePositionInput.value) * CM_TO_PX;
-    const isHorizontal = horizontalGuideBtn.classList.contains('active');
-    const isSingle = singleGuideBtn.classList.contains('active');
-
-    if (isHorizontal) {
-      if (isSingle) {
-        addHorizontalGuide(position);
-      } else {
-        addMultipleHorizontalGuides(position);
-      }
-    } else {
-      if (isSingle) {
-        addVerticalGuide(position);
-      } else {
-        addMultipleVerticalGuides(position);
-      }
-    }
-
-    guidesMenu.classList.remove('active');
-  });
-
-  function addDefaultGuides() {
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-      const margin = 0.5 * CM_TO_PX;
-      addHorizontalGuide(margin);
-      addHorizontalGuide(cloudFolha.height - margin);
-      addVerticalGuide(margin);
-      addVerticalGuide(cloudFolha.width - margin);
-    }
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    addDefaultGuides();
   }
 });
+
+horizontalGuideBtn.addEventListener('click', () => {
+  horizontalGuideBtn.classList.add('active');
+  verticalGuideBtn.classList.remove('active');
+});
+
+verticalGuideBtn.addEventListener('click', () => {
+  verticalGuideBtn.classList.add('active');
+  horizontalGuideBtn.classList.remove('active');
+});
+
+singleGuideBtn.addEventListener('click', () => {
+  singleGuideBtn.classList.add('active');
+  multipleGuidesBtn.classList.remove('active');
+});
+
+multipleGuidesBtn.addEventListener('click', () => {
+  multipleGuidesBtn.classList.add('active');
+  singleGuideBtn.classList.remove('active');
+});
+
+addGuideBtn.addEventListener('click', () => {
+  const position = parseFloat(guidePositionInput.value) * CM_TO_PX;
+  const isHorizontal = horizontalGuideBtn.classList.contains('active');
+  const isSingle = singleGuideBtn.classList.contains('active');
+
+  if (isHorizontal) {
+    if (isSingle) {
+      addHorizontalGuide(position);
+    } else {
+      addMultipleHorizontalGuides(position);
+    }
+  } else {
+    if (isSingle) {
+      addVerticalGuide(position);
+    } else {
+      addMultipleVerticalGuides(position);
+    }
+  }
+
+  guidesMenu.classList.remove('active');
+});
+// ---------- Final Seção Guias ----------
+
+// ---------- Inicio Seção Exportação ----------
+const exportButton = document.getElementById('exportButton');
+const exportOptions = document.getElementById('exportOptions');
+const resolutionInput = document.getElementById('resolutionInput');
+
+exportButton.addEventListener('click', () => {
+  if (previewRect) {
+    canvas.remove(previewRect);
+    previewRect = null;
+    canvas.renderAll();
+  }
+  exportOptions.classList.toggle('active');
+});
+
+function exportCanvas(format) {
+  const dpi = parseInt(resolutionInput.value) || 600;
+  const scale = dpi / 96;
+
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (!cloudFolha) return;
+
+  const tempContainer = document.createElement('div');
+  tempContainer.style.position = 'absolute';
+  tempContainer.style.left = '-9999px';
+  tempContainer.style.top = '-9999px';
+  document.body.appendChild(tempContainer);
+
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = cloudFolha.width;
+  exportCanvas.height = cloudFolha.height;
+  tempContainer.appendChild(exportCanvas);
+
+  const exportFabricCanvas = new fabric.Canvas(exportCanvas);
+  exportFabricCanvas.setWidth(cloudFolha.width);
+  exportFabricCanvas.setHeight(cloudFolha.height);
+
+  const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+  objects.forEach(obj => {
+    const clonedObj = fabric.util.object.clone(obj);
+
+    const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
+    const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
+
+    clonedObj.set({
+      left: relativeLeft,
+      top: relativeTop,
+      scaleX: obj.scaleX / cloudFolha.scaleX,
+      scaleY: obj.scaleY / cloudFolha.scaleY
+    });
+
+    exportFabricCanvas.add(clonedObj);
+  });
+
+  exportFabricCanvas.renderAll();
+
+  html2canvas(exportCanvas, {
+    scale: scale,
+    backgroundColor: format === 'jpg' ? '#ffffff' : null,
+    logging: false,
+    useCORS: true
+  }).then(outputCanvas => {
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+
+    if (format === 'png' || format === 'jpg') {
+      link.href = outputCanvas.toDataURL(`image/${format}`, 1.0);
+      link.download = `canvas_export_${timestamp}.${format}`;
+      link.click();
+    }
+
+    tempContainer.remove();
+    exportFabricCanvas.dispose();
+  });
+}
+
+document.querySelectorAll('.export-btn').forEach(btn => {
+  if (btn.id !== 'previewExportBtn') {
+    btn.addEventListener('click', () => {
+      const format = btn.dataset.format;
+      if (format === 'pdf' || format === 'vector-pdf') {
+        alert('PDF export will be implemented soon');
+        return;
+      }
+      exportCanvas(format);
+    });
+  }
+});
+
+document.getElementById('previewExportBtn').addEventListener('click', () => {
+  if (previewRect) {
+    canvas.remove(previewRect);
+    previewRect = null;
+    canvas.renderAll();
+    return;
+  }
+
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (!cloudFolha) return;
+
+  previewRect = new fabric.Rect({
+    left: cloudFolha.left,
+    top: cloudFolha.top,
+    width: cloudFolha.width,
+    height: cloudFolha.height,
+    fill: 'rgba(255, 0, 0, 0.2)',
+    stroke: 'red',
+    strokeWidth: 2,
+    selectable: false,
+    evented: false,
+    scaleX: cloudFolha.scaleX,
+    scaleY: cloudFolha.scaleY
+  });
+
+  canvas.add(previewRect);
+  canvas.bringToFront(previewRect);
+  canvas.renderAll();
+});
+
+imageWidthInput.addEventListener('change', () => {
+  const activeObj = canvas.getActiveObject();
+  if (!activeObj) return;
+
+  const widthInPx = parseFloat(imageWidthInput.value) * CM_TO_PX;
+  const heightInPx = parseFloat(imageHeightInput.value) * CM_TO_PX;
+
+  const scaleX = widthInPx / activeObj.width;
+  const scaleY = heightInPx / activeObj.height;
+
+  activeObj.set({
+    scaleX: scaleX,
+    scaleY: scaleY
+  });
+
+  canvas.renderAll();
+  addToHistory();
+});
+
+imageHeightInput.addEventListener('change', () => {
+  const activeObj = canvas.getActiveObject();
+  if (!activeObj) return;
+
+  const widthInPx = parseFloat(imageWidthInput.value) * CM_TO_PX;
+  const heightInPx = parseFloat(imageHeightInput.value) * CM_TO_PX;
+
+  const scaleX = widthInPx / activeObj.width;
+  const scaleY = heightInPx / activeObj.height;
+
+  activeObj.set({
+    scaleX: scaleX,
+    scaleY: scaleY
+  });
+
+  canvas.renderAll();
+  addToHistory();
+});
+// ---------- Final Seção Exportação ----------
 </script>
 </body>
 </html>
