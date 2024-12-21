@@ -428,7 +428,7 @@
     <div id="canvas-container">
         <canvas id="canvas"></canvas>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.08 - 21/12/2024</div>
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.09 - 21/12/2024</div>
 
 <script>
 const container = document.getElementById('canvas-container');
@@ -699,13 +699,13 @@ function loadCanvasState(stateStr) {
 }
 
 function saveHistoryToSessionStorage() {
-  sessionStorage.setItem('canvasHistory', JSON.stringify(history));
-  sessionStorage.setItem('currentHistoryIndex', currentHistoryIndex);
+  localStorage.setItem('canvasHistory', JSON.stringify(history));
+  localStorage.setItem('currentHistoryIndex', currentHistoryIndex);
 }
 
 function loadHistoryFromSessionStorage() {
-  const savedHistory = sessionStorage.getItem('canvasHistory');
-  const savedIndex = sessionStorage.getItem('currentHistoryIndex');
+  const savedHistory = localStorage.getItem('canvasHistory');
+  const savedIndex = localStorage.getItem('currentHistoryIndex');
 
   if (savedHistory && savedIndex) {
     history = JSON.parse(savedHistory);
