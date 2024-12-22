@@ -372,6 +372,69 @@
             max-width: 100%;
             max-height: 550px;
         }
+        
+        .text-controls {
+          padding: 10px;
+        }
+        
+        .control-group {
+          margin-bottom: 10px;
+        }
+        
+        .text-input {
+          width: 100%;
+          padding: 4px;
+          background: #1a4b8c;
+          color: white;
+          border: 1px solid #235ab4;
+          border-radius: 4px;
+        }
+        
+        .gradient-stops {
+          margin-bottom: 10px;
+        }
+        
+        .gradient-stop {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          margin-bottom: 5px;
+        }
+        
+        .gradient-color {
+          width: 50px;
+        }
+        
+        .gradient-position {
+          width: 60px;
+          padding: 4px;
+          background: #1a4b8c;
+          color: white;
+          border: 1px solid #235ab4;
+          border-radius: 4px;
+        }
+        
+        .remove-stop {
+          background: #ff4444;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 2px 6px;
+          cursor: pointer;
+        }
+        
+        .gradient-angle {
+          margin-top: 10px;
+        }
+        
+        input[type="color"] {
+          width: 100%;
+          height: 30px;
+          padding: 0;
+          border: none;
+          border-radius: 4px;
+          background: #1a4b8c;
+        }
     </style>
 </head>
 <body>
@@ -478,6 +541,73 @@
         </div>
         <div id="menu-texto" class="menu-content">
             <button id="addTextBtn" class="highlight-button">Adicionar Texto</button>
+            <div class="text-controls">
+              <div class="control-group">
+                <label>Fonte:</label>
+                <select id="fontSelect" class="text-input">
+                  <option value="Arial">Arial</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Verdana">Verdana</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Courier New">Courier New</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label>Tamanho:</label>
+                <input type="number" id="fontSizeInput" class="text-input" value="20" min="1">
+              </div>
+
+              <div class="control-group">
+                <button id="solidColorBtn" class="menu-item active">Cor Padrão</button>
+                <button id="gradientColorBtn" class="menu-item">Gradiente</button>
+              </div>
+
+              <div id="solidColorPicker" class="control-group">
+                <input type="color" id="textColorInput" value="#000000">
+              </div>
+
+              <div id="gradientPicker" class="control-group" style="display: none;">
+                <div class="gradient-stops">
+                  <div class="gradient-stop">
+                    <input type="color" class="gradient-color" value="#000000">
+                    <input type="number" class="gradient-position" value="0" min="0" max="100">
+                    <button class="remove-stop">&times;</button>
+                  </div>
+                </div>
+                <button id="addGradientStop" class="menu-item">Adicionar Cor</button>
+                <div class="gradient-angle">
+                  <label>Ângulo:</label>
+                  <input type="number" id="gradientAngle" value="0" min="0" max="360">
+                </div>
+              </div>
+
+              <div class="separator"></div>
+
+              <div class="control-group">
+                <input type="checkbox" id="stroke1Enable">
+                <label>Contorno Externo 1</label>
+                <input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
+                <div id="stroke1ColorPicker">
+                  <button id="stroke1SolidBtn" class="menu-item active">Cor</button>
+                  <button id="stroke1GradientBtn" class="menu-item">Gradiente</button>
+                  <input type="color" id="stroke1Color" value="#000000">
+                </div>
+              </div>
+
+              <div class="separator"></div>
+
+              <div class="control-group">
+                <input type="checkbox" id="stroke2Enable">
+                <label>Contorno Externo 2</label>
+                <input type="number" id="stroke2Width" class="text-input" value="1" min="0" disabled>
+                <div id="stroke2ColorPicker">
+                  <button id="stroke2SolidBtn" class="menu-item active">Cor</button>
+                  <button id="stroke2GradientBtn" class="menu-item">Gradiente</button>
+                  <input type="color" id="stroke2Color" value="#000000">
+                </div>
+              </div>
+            </div>
         </div>
         <div id="menu-formas" class="menu-content">
             <button class="menu-item" id="squareBtn">Quadrado</button>
@@ -571,6 +701,27 @@ let history = [];
 let currentHistoryIndex = -1;
 let previewRect = null;
 let guides = [];
+let activeTextSettings = {
+  gradientMode: false,
+  gradientStops: [{color: '#000000', position: 0}, {color: '#ffffff', position: 100}],
+  gradientAngle: 0,
+  stroke1: {
+    enabled: false,
+    width: 1,
+    gradientMode: false,
+    color: '#000000',
+    gradientStops: [{color: '#000000', position: 0}, {color: '#ffffff', position: 100}],
+    gradientAngle: 0
+  },
+  stroke2: {
+    enabled: false,
+    width: 1,
+    gradientMode: false,
+    color: '#000000',
+    gradientStops: [{color: '#000000', position: 0}, {color: '#ffffff', position: 100}],
+    gradientAngle: 0
+  }
+};
 // ---------- Final Seção Variáveis Globais ----------
 
 // ---------- Inicio Seção Eventos de Categoria ----------
@@ -1005,6 +1156,7 @@ document.addEventListener('keydown', function(e) {
       const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
       objects.forEach(obj => {
         const clonedObj = fabric.util.object.clone(obj);
+
         const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
         const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
 
@@ -1548,7 +1700,7 @@ function exportCanvas(format) {
 
     if (format === 'png' || format === 'jpg') {
       link.href = outputCanvas.toDataURL(`image/${format}`, 1.0);
-      link.download = `canvas_export_${timestamp}.${format}`;
+      link.download = `CloudApp_${timestamp}.${format}`;
       link.click();
     }
 
@@ -1639,6 +1791,160 @@ imageHeightInput.addEventListener('change', () => {
 });
 // ---------- Final Seção Exportação ----------
 
+// ---------- Inicio Seção Manipulação de Objetos Novos ----------
+// Align objects horizontally (center)
+function alignObjectsHorizontal() {
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length < 2) return;
+
+  const group = canvas.getActiveObject();
+  const groupCenter = group.getCenterPoint();
+
+  activeObjects.forEach(obj => {
+    obj.set('left', obj.left + (groupCenter.x - obj.getCenterPoint().x));
+  });
+
+  canvas.renderAll();
+  addToHistory();
+}
+
+// Align objects vertically (center)
+function alignObjectsVertical() {
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length < 2) return;
+
+  const group = canvas.getActiveObject();
+  const groupCenter = group.getCenterPoint();
+
+  activeObjects.forEach(obj => {
+    obj.set('top', obj.top + (groupCenter.y - obj.getCenterPoint().y));
+  });
+
+  canvas.renderAll();
+  addToHistory();
+}
+
+// Mirror objects horizontally
+function mirrorObjectsHorizontal() {
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length === 0) return;
+
+  activeObjects.forEach(obj => {
+    obj.set('flipX', !obj.flipX);
+  });
+
+  canvas.renderAll();
+  addToHistory();
+}
+
+// Mirror objects vertically
+function mirrorObjectsVertical() {
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length === 0) return;
+
+  activeObjects.forEach(obj => {
+    obj.set('flipY', !obj.flipY);
+  });
+
+  canvas.renderAll();
+  addToHistory();
+}
+
+// Rotate objects by angle
+function rotateObjects(angle) {
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length === 0) return;
+
+  activeObjects.forEach(obj => {
+    obj.rotate(parseFloat(angle));
+  });
+
+  canvas.renderAll();
+  addToHistory();
+}
+
+// Export selected objects as PNG
+function exportSelectedObjects() {
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length === 0) return;
+
+  // Create temporary canvas with selected objects
+  const tempCanvas = document.createElement('canvas');
+  const tempFabricCanvas = new fabric.Canvas(tempCanvas);
+
+  // Get the bounding box with the actual positions
+  const bounds = {
+    left: Number.POSITIVE_INFINITY,
+    top: Number.POSITIVE_INFINITY,
+    right: Number.NEGATIVE_INFINITY,
+    bottom: Number.NEGATIVE_INFINITY
+  };
+
+  // Calculate actual bounds including transformations
+  activeObjects.forEach(obj => {
+    const objBounds = obj.getBoundingRect(true, true);
+    bounds.left = Math.min(bounds.left, objBounds.left);
+    bounds.top = Math.min(bounds.top, objBounds.top);
+    bounds.right = Math.max(bounds.right, objBounds.left + objBounds.width);
+    bounds.bottom = Math.max(bounds.bottom, objBounds.top + objBounds.height);
+  });
+
+  const width = bounds.right - bounds.left;
+  const height = bounds.bottom - bounds.top;
+
+  // Set canvas size to actual bounds
+  tempFabricCanvas.setWidth(width);
+  tempFabricCanvas.setHeight(height);
+
+  // Clone and adjust position of objects
+  activeObjects.forEach(obj => {
+    obj.clone(function(cloned) {
+      cloned.set({
+        left: cloned.left - bounds.left,
+        top: cloned.top - bounds.top
+      });
+      tempFabricCanvas.add(cloned);
+    });
+  });
+
+  // Wait for objects to be added and rendered
+  setTimeout(() => {
+    tempFabricCanvas.renderAll();
+
+    // Create high resolution version for 600 DPI
+    const scaleFactor = 600 / 96;
+    const scaledCanvas = document.createElement('canvas');
+    scaledCanvas.width = width * scaleFactor;
+    scaledCanvas.height = height * scaleFactor;
+    const ctx = scaledCanvas.getContext('2d');
+    ctx.scale(scaleFactor, scaleFactor);
+    ctx.drawImage(tempCanvas, 0, 0);
+
+    // Download the image
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+    const link = document.createElement('a');
+    link.download = `selected_objects_${timestamp}.png`;
+    link.href = scaledCanvas.toDataURL('image/png');
+    link.click();
+
+    // Cleanup
+    tempFabricCanvas.dispose();
+  }, 100);
+}
+// ---------- Final Seção Manipulação de Objetos Novos ----------
+
+// ---------- Inicio Seção Eventos Novos ----------
+document.getElementById('alignHorizontalBtn').addEventListener('click', alignObjectsHorizontal);
+document.getElementById('alignVerticalBtn').addEventListener('click', alignObjectsVertical);
+document.getElementById('mirrorHorizontalBtn').addEventListener('click', mirrorObjectsHorizontal);
+document.getElementById('mirrorVerticalBtn').addEventListener('click', mirrorObjectsVertical);
+document.getElementById('rotateBtn').addEventListener('click', function() {
+  const angle = document.getElementById('rotateInput').value;
+  rotateObjects(angle);
+});
+document.getElementById('exportSelectedImageBtn').addEventListener('click', exportSelectedObjects);
+// ---------- Final Seção Eventos Novos ----------
+
 // ---------- Inicio Seção Documentos ----------
 function saveDocument() {
   const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
@@ -1693,9 +1999,9 @@ function openDocument() {
 
 function loadDocumentFile(file) {
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (event) {
     try {
-      const documentData = JSON.parse(e.target.result);
+      const documentData = JSON.parse(event.target.result);
       
       // Atualiza as dimensões da página
       widthInput.value = documentData.pageWidth;
@@ -1710,7 +2016,6 @@ function loadDocumentFile(file) {
       documentData.objects.forEach(objData => {
         if (objData.type === 'image') {
           fabric.Image.fromURL(objData.src, img => {
-            const canvasCenter = getCanvasCenter();
             img.set(objData); 
             canvas.add(img);
             canvas.renderAll();
@@ -1967,6 +2272,8 @@ function handleFiles(files) {
       handleImageFile(file);
     } else if (file.type === 'application/pdf') {
       handlePdfFile(file);
+    } else if (file.name.endsWith('.cloudapp')) {
+      loadDocumentFile(file);
     }
   });
 }
@@ -2120,6 +2427,185 @@ function getCanvasCenter() {
     left: canvas.getWidth() / 2,
     top: canvas.getHeight() / 2
   };
+}
+
+canvas.on('mouse:dblclick', function(e) {
+  if (e.target && e.target.type === 'text') {
+    e.target.enterEditing();
+  }
+});
+
+function updateActiveText() {
+  const activeObject = canvas.getActiveObject();
+  if (!activeObject || activeObject.type !== 'text') return;
+
+  // Update font family
+  if (document.getElementById('fontSelect').value) {
+    activeObject.set('fontFamily', document.getElementById('fontSelect').value);
+  }
+
+  // Update font size
+  if (document.getElementById('fontSizeInput').value) {
+    activeObject.set('fontSize', parseInt(document.getElementById('fontSizeInput').value));
+  }
+
+  // Update fill (color or gradient)
+  if (activeTextSettings.gradientMode) {
+    const gradient = createGradientFromStops(activeObject);
+    activeObject.set('fill', gradient);
+  } else {
+    activeObject.set('fill', document.getElementById('textColorInput').value);
+  }
+
+  // Update strokes
+  updateTextStrokes(activeObject);
+
+  canvas.renderAll();
+}
+
+function createGradientFromStops(obj) {
+  const stops = activeTextSettings.gradientStops;
+  const coords = calculateGradientCoords(obj, activeTextSettings.gradientAngle);
+  
+  return new fabric.Gradient({
+    type: 'linear',
+    coords: coords,
+    colorStops: stops.map(stop => ({
+      offset: stop.position / 100,
+      color: stop.color
+    }))
+  });
+}
+
+function calculateGradientCoords(obj, angle) {
+  const angleRad = angle * Math.PI / 180;
+  const cos = Math.cos(angleRad);
+  const sin = Math.sin(angleRad);
+  
+  return {
+    x1: -obj.width/2 * cos,
+    y1: -obj.width/2 * sin,
+    x2: obj.width/2 * cos,
+    y2: obj.width/2 * sin
+  };
+}
+
+function updateTextStrokes(obj) {
+  const stroke1 = activeTextSettings.stroke1;
+  const stroke2 = activeTextSettings.stroke2;
+  
+  let strokeStyles = [];
+  
+  if (stroke2.enabled) {
+    strokeStyles.push({
+      width: stroke2.width,
+      color: stroke2.gradientMode ? 
+        createGradientFromStops(obj, stroke2.gradientStops, stroke2.gradientAngle) : 
+        stroke2.color
+    });
+  }
+  
+  if (stroke1.enabled) {
+    strokeStyles.push({
+      width: stroke1.width,
+      color: stroke1.gradientMode ? 
+        createGradientFromStops(obj, stroke1.gradientStops, stroke1.gradientAngle) : 
+        stroke1.color
+    });
+  }
+  
+  obj.set({
+    strokeWidth: strokeStyles.reduce((sum, style) => sum + style.width, 0),
+    stroke: strokeStyles.length > 0 ? strokeStyles[0].color : null
+  });
+}
+
+document.getElementById('addTextBtn').addEventListener('click', function() {
+  const text = new fabric.Text('CloudApp', {
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2,
+    fontSize: parseInt(document.getElementById('fontSizeInput').value) || 20,
+    fill: document.getElementById('textColorInput').value,
+    fontFamily: document.getElementById('fontSelect').value || 'Arial',
+    originX: 'center',
+    originY: 'center'
+  });
+    
+  canvas.add(text);
+  canvas.setActiveObject(text);
+  canvas.renderAll();
+  addToHistory();
+});
+
+document.getElementById('fontSelect').addEventListener('change', updateActiveText);
+document.getElementById('fontSizeInput').addEventListener('change', updateActiveText);
+document.getElementById('textColorInput').addEventListener('change', updateActiveText);
+document.getElementById('solidColorBtn').addEventListener('click', () => {
+  activeTextSettings.gradientMode = false;
+  document.getElementById('solidColorPicker').style.display = 'block';
+  document.getElementById('gradientPicker').style.display = 'none';
+  updateActiveText();
+});
+
+document.getElementById('gradientColorBtn').addEventListener('click', () => {
+  activeTextSettings.gradientMode = true;
+  document.getElementById('solidColorPicker').style.display = 'none';
+  document.getElementById('gradientPicker').style.display = 'block';
+  updateActiveText();
+});
+
+document.getElementById('addGradientStop').addEventListener('click', () => {
+  const stop = {color: '#000000', position: 50};
+  activeTextSettings.gradientStops.push(stop);
+  updateGradientStopsUI();
+  updateActiveText();
+});
+
+document.getElementById('stroke1Enable').addEventListener('change', function() {
+  activeTextSettings.stroke1.enabled = this.checked;
+  document.getElementById('stroke1Width').disabled = !this.checked;
+  updateActiveText();
+});
+
+document.getElementById('stroke2Enable').addEventListener('change', function() {
+  activeTextSettings.stroke2.enabled = this.checked;
+  document.getElementById('stroke2Width').disabled = !this.checked;
+  updateActiveText();
+});
+
+function updateGradientStopsUI() {
+  const container = document.querySelector('.gradient-stops');
+  container.innerHTML = '';
+  
+  activeTextSettings.gradientStops.forEach((stop, index) => {
+    const stopEl = document.createElement('div');
+    stopEl.className = 'gradient-stop';
+    stopEl.innerHTML = `
+      <input type="color" class="gradient-color" value="${stop.color}">
+      <input type="number" class="gradient-position" value="${stop.position}" min="0" max="100">
+      <button class="remove-stop">&times;</button>
+    `;
+    
+    stopEl.querySelector('.gradient-color').addEventListener('change', (e) => {
+      stop.color = e.target.value;
+      updateActiveText();
+    });
+    
+    stopEl.querySelector('.gradient-position').addEventListener('change', (e) => {
+      stop.position = parseInt(e.target.value);
+      updateActiveText();
+    });
+    
+    stopEl.querySelector('.remove-stop').addEventListener('click', () => {
+      if (activeTextSettings.gradientStops.length > 2) {
+        activeTextSettings.gradientStops.splice(index, 1);
+        updateGradientStopsUI();
+        updateActiveText();
+      }
+    });
+    
+    container.appendChild(stopEl);
+  });
 }
 </script>
 </body>
