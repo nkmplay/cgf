@@ -1,11 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <base href="." target="_blank">
+<html><head><base href="." target="_blank">
     <title>Layout com Canvas</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cloudgraficaweb.github.io/CGVendas/scripts/fabric.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <style>
         body, html {
             margin: 0;
@@ -301,7 +302,76 @@
 		font-family: Arial, sans-serif;
 		z-index: 100;
 		pointer-events: none;
-	}
+		}
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #0f3460;
+            height: 600px;
+            max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .modal-body {
+            height: 550px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .modal-footer {
+            height: 50px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 10px;
+            background: #1a4b8c;
+        }
+
+        .modal-footer button {
+            margin: 0 5px;
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .modal-footer .save-btn {
+            background: #ffd700;
+            color: black;
+        }
+
+        .modal-footer .cancel-btn {
+            background: #ff4444;
+            color: white;
+        }
+
+        .crop-container {
+            max-height: 550px;
+            max-width: 100%;
+        }
+
+        .crop-container img {
+            max-width: 100%;
+            max-height: 550px;
+        }
     </style>
 </head>
 <body>
@@ -323,8 +393,8 @@
                 <input type="number" id="height-input" class="dimension-input" value="29.7" min="1" step="0.1">
             </div>
             <div class="separator"></div>
-            <button class="menu-item">Abrir Documento</button>
-            <button class="menu-item">Salvar Documento</button>
+            <button id="openDocumentBtn" class="menu-item">Abrir Documento</button>
+            <button id="saveDocumentBtn" class="menu-item">Salvar Documento</button>
             <div class="separator"></div>
             <button id="addGuidesBtn" class="menu-item">Adicionar Guias</button>
             <div id="guidesMenu" class="guides-menu">
@@ -343,7 +413,7 @@
                 <button id="addGuideBtn" class="menu-item">Adicionar</button>
             </div>
             <div class="separator"></div>
-            <button id="addDefaultGuidesBtn" class="menu-item">Adicionar Guias Padr&#xe3;o</button>
+            <button id="addDefaultGuidesBtn" class="menu-item">Adicionar Guias Padrão</button>
             <button id="removeGuidesBtn" class="menu-item">Apagar Guias</button>
             <div class="separator"></div>
             <button id="exportButton" class="menu-item">Exportar</button>
@@ -428,11 +498,40 @@
     <div id="canvas-container">
         <canvas id="canvas"></canvas>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.09 - 21/12/2024</div>
+    <div id="cropperModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="crop-container">
+                    <img id="cropperImage" src="">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" id="cancelCropBtn">Cancelar</button>
+                <button class="save-btn" id="saveCropBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.10 - 21/12/2024</div>
 
 <script>
 const container = document.getElementById('canvas-container');
-const canvas = new fabric.Canvas('canvas');
+if (!container) {
+  console.error('Canvas container not found');
+  throw new Error('Canvas container not found');
+}
+
+const canvas = new fabric.Canvas('canvas', {
+  preserveObjectStacking: true,
+  selection: true
+});
+
+if (!canvas || !canvas.add) {
+  console.error('Failed to initialize fabric.Canvas');
+  throw new Error('Canvas initialization failed');
+}
+
+const IMAGE_MAX_SIZE = 4096;
+const CM_TO_PX = 37.795275591;
 
 // ---------- Inicio Seção Configuração do Canvas ----------
 const patternCanvas = document.createElement('canvas');
@@ -465,10 +564,9 @@ const widthInput = document.getElementById('width-input');
 const heightInput = document.getElementById('height-input');
 const imageWidthInput = document.getElementById('image-width-input');
 const imageHeightInput = document.getElementById('image-height-input');
-const CM_TO_PX = 37.795275591;
 let selectedObjectIds = [];
 let a4Page;
-let MAX_HISTORY = 20;
+let MAX_HISTORY = 10;
 let history = [];
 let currentHistoryIndex = -1;
 let previewRect = null;
@@ -593,7 +691,7 @@ canvas.on('mouse:wheel', function(opt) {
 
   // Aplica o zoom mantendo o ponto do mouse fixo
   canvas.zoomToPoint(point, zoom);
-  
+
   opt.e.preventDefault();
   opt.e.stopPropagation();
 });
@@ -612,13 +710,13 @@ canvas.on('mouse:move', function(opt) {
   if (isPanning && opt.e.buttons === 1) {
     const deltaX = opt.e.clientX - lastPosX;
     const deltaY = opt.e.clientY - lastPosY;
-    
+
     const vpt = canvas.viewportTransform;
     vpt[4] += deltaX;
     vpt[5] += deltaY;
-    
+
     canvas.requestRenderAll();
-    
+
     lastPosX = opt.e.clientX;
     lastPosY = opt.e.clientY;
   }
@@ -658,110 +756,154 @@ window.addEventListener('load', resizeCanvas);
 // ---------- Final Seção Redimensionamento do Canvas ----------
 
 // ---------- Inicio Seção Histórico ----------
+function compressCanvasState(canvas) {
+    // Only store essential data
+    const objects = canvas.getObjects().map(obj => {
+        const essentialProps = {
+            type: obj.type,
+            left: obj.left,
+            top: obj.top,
+            width: obj.width,
+            height: obj.height,
+            scaleX: obj.scaleX,
+            scaleY: obj.scaleY,
+            angle: obj.angle,
+            id: obj.id,
+            name: obj.name
+        };
+        
+        if (obj.src) {
+            essentialProps.src = obj.src;
+        }
+        
+        return essentialProps;
+    });
+    
+    return objects;
+}
+
 function saveCanvasState() {
-  selectedObjectIds = canvas.getActiveObjects().map(obj => canvas.getObjects().indexOf(obj));
-  const state = {
-    canvasState: canvas.toJSON(['id', 'name']),
-    selectedObjectIds: selectedObjectIds
-  };
-  return JSON.stringify(state);
+    selectedObjectIds = canvas.getActiveObjects().map(obj => canvas.getObjects().indexOf(obj));
+    const state = {
+        objects: compressCanvasState(canvas),
+        selectedObjectIds: selectedObjectIds
+    };
+    return JSON.stringify(state);
 }
 
 function loadCanvasState(stateStr) {
-  const state = JSON.parse(stateStr);
-  canvas.clear();
-  canvas.loadFromJSON(state.canvasState, () => {
-    const cloudFolhas = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
-    if (cloudFolhas.length > 1) {
-      cloudFolhas.slice(1).forEach(obj => canvas.remove(obj));
-    }
+    try {
+        const state = JSON.parse(stateStr);
+        canvas.clear();
+        
+        // Rebuild canvas from compressed state
+        if (state.objects) {
+            state.objects.forEach(obj => {
+                if (obj.type === 'image') {
+                    fabric.Image.fromURL(obj.src, img => {
+                        img.set(obj);
+                        canvas.add(img);
+                        canvas.renderAll();
+                    });
+                } else {
+                    let fabricObj;
+                    switch(obj.type) {
+                        case 'rect':
+                            fabricObj = new fabric.Rect(obj);
+                            break;
+                        // Add other object types as needed
+                        default:
+                            fabricObj = new fabric.Object(obj);
+                    }
+                    canvas.add(fabricObj);
+                }
+            });
+        }
 
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-      cloudFolha.set({
-        selectable: false,
-        evented: false
-      });
-    }
+        // Restore selection
+        if (state.selectedObjectIds) {
+            const objectsToSelect = state.selectedObjectIds
+                .map(index => canvas.getObjects()[index])
+                .filter(obj => obj);
+                
+            if (objectsToSelect.length > 0) {
+                if (objectsToSelect.length === 1) {
+                    canvas.setActiveObject(objectsToSelect[0]);
+                } else {
+                    const selection = new fabric.ActiveSelection(objectsToSelect, { canvas });
+                    canvas.setActiveObject(selection);
+                }
+            }
+        }
 
-    const objectsToSelect = state.selectedObjectIds.map(index => canvas.getObjects()[index]).filter(obj => obj);
-    if (objectsToSelect.length > 0) {
-      if (objectsToSelect.length === 1) {
-        canvas.setActiveObject(objectsToSelect[0]);
-      } else {
-        const selection = new fabric.ActiveSelection(objectsToSelect, { canvas });
-        canvas.setActiveObject(selection);
-      }
+        canvas.renderAll();
+    } catch (error) {
+        console.error('Error loading canvas state:', error);
     }
-
-    canvas.renderAll();
-  });
 }
 
-function saveHistoryToSessionStorage() {
-  localStorage.setItem('canvasHistory', JSON.stringify(history));
-  localStorage.setItem('currentHistoryIndex', currentHistoryIndex);
+function saveHistoryToLocalStorage() {
+    try {
+        // Only store last 5 states to prevent quota issues
+        const recentHistory = history.slice(-5);
+        localStorage.setItem('canvasHistory', JSON.stringify(recentHistory));
+        localStorage.setItem('currentHistoryIndex', Math.min(currentHistoryIndex, 4));
+    } catch (error) {
+        console.warn('Failed to save to localStorage:', error);
+        // Clear old history if storage is full
+        localStorage.clear();
+        try {
+            // Try one more time after clearing
+            const recentHistory = history.slice(-5);
+            localStorage.setItem('canvasHistory', JSON.stringify(recentHistory));
+            localStorage.setItem('currentHistoryIndex', Math.min(currentHistoryIndex, 4));
+        } catch (error) {
+            console.error('Still unable to save to localStorage:', error);
+        }
+    }
 }
 
-function loadHistoryFromSessionStorage() {
-  const savedHistory = localStorage.getItem('canvasHistory');
-  const savedIndex = localStorage.getItem('currentHistoryIndex');
+function loadHistoryFromLocalStorage() {
+    try {
+        const savedHistory = localStorage.getItem('canvasHistory');
+        const savedIndex = localStorage.getItem('currentHistoryIndex');
 
-  if (savedHistory && savedIndex) {
-    history = JSON.parse(savedHistory);
-    currentHistoryIndex = parseInt(savedIndex);
-    if (history.length > 0) {
-      loadCanvasState(history[currentHistoryIndex]);
+        if (savedHistory && savedIndex) {
+            history = JSON.parse(savedHistory);
+            currentHistoryIndex = parseInt(savedIndex);
+            if (history.length > 0) {
+                loadCanvasState(history[currentHistoryIndex]);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading history:', error);
+        // Clear corrupted storage
+        localStorage.clear();
     }
-  }
 }
 
 function addToHistory() {
-  const existingFolha = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
-  if (existingFolha.length > 1) {
-    existingFolha.slice(1).forEach(obj => canvas.remove(obj));
-  }
+    try {
+        // Limit history size more aggressively
+        if (history.length >= MAX_HISTORY) {
+            history = history.slice(-Math.floor(MAX_HISTORY/2));
+            currentHistoryIndex = Math.floor(MAX_HISTORY/2) - 1;
+        }
 
-  currentHistoryIndex++;
-  history = history.slice(0, currentHistoryIndex);
-  history.push(saveCanvasState());
+        currentHistoryIndex++;
+        history = history.slice(0, currentHistoryIndex);
+        history.push(saveCanvasState());
 
-  if (history.length > MAX_HISTORY) {
-    history.shift();
-    currentHistoryIndex--;
-  }
-
-  saveHistoryToSessionStorage();
+        // Only attempt to save every 5 actions to reduce storage operations
+        if (currentHistoryIndex % 5 === 0) {
+            saveHistoryToLocalStorage();
+        }
+    } catch (error) {
+        console.error('Error adding to history:', error);
+    }
 }
 
-canvas.on('object:modified', addToHistory);
-canvas.on('object:added', function(e) {
-  if (e.target && e.target.id !== 'CloudFolha') {
-    addToHistory();
-  }
-});
-
-document.addEventListener('keydown', function(e) {
-  if (e.ctrlKey || e.metaKey) {
-    if (e.key === 'z') {
-      if (e.shiftKey) {
-        if (currentHistoryIndex < history.length - 1) {
-          currentHistoryIndex++;
-          loadCanvasState(history[currentHistoryIndex]);
-          saveHistoryToSessionStorage();
-        }
-      } else {
-        if (currentHistoryIndex > 0) {
-          currentHistoryIndex--;
-          loadCanvasState(history[currentHistoryIndex]);
-          saveHistoryToSessionStorage();
-        }
-      }
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }
-});
+// Reduce MAX_HISTORY to a more manageable size
 // ---------- Final Seção Histórico ----------
 
 // ---------- Inicio Seção Manipulação de Objetos ----------
@@ -784,20 +926,27 @@ document.addEventListener('paste', function(e) {
       if (items[i].type.indexOf('image') !== -1) {
         const blob = items[i].getAsFile();
         const reader = new FileReader();
-        reader.onload = function(event) {
-          fabric.Image.fromURL(event.target.result, function(img) {
-            const canvasCenter = canvas.getCenter();
+        reader.onload = function (event) {
+          fabric.Image.fromURL(event.target.result, function (img) {
+            const canvasCenter = getCanvasCenter();
+            
             img.set({
               left: canvasCenter.left,
               top: canvasCenter.top,
               originX: 'center',
-              originY: 'center'
+              originY: 'center',
+              perPixelTargetFind: true,
+              lockMovementX: false, 
+              lockMovementY: false
             });
+
+            resizeImageToMaxSize(img);
+
             canvas.add(img);
             canvas.setActiveObject(img);
             canvas.renderAll();
             addToHistory();
-          });
+          }, { crossOrigin: 'anonymous' });
         };
         reader.readAsDataURL(blob);
       }
@@ -810,7 +959,7 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
-      activeObject.clone(function(cloned) {
+      activeObject.clone(function (cloned) {
         cloned.set({
           left: cloned.left + 20,
           top: cloned.top + 20
@@ -952,20 +1101,55 @@ function updateImageDimensionInputs(obj) {
   imageHeightInput.value = heightInCm.toFixed(1);
 }
 
+function resizeImageToMaxSize(img) {
+  const maxWidthInCm = 21; // A4 width
+  const maxHeightInCm = 29.7; // A4 height
+  
+  const maxWidthPx = maxWidthInCm * CM_TO_PX;
+  const maxHeightPx = maxHeightInCm * CM_TO_PX;
+
+  let scaleX = 1;
+  let scaleY = 1;
+
+  if (img.width > maxWidthPx || img.height > maxHeightPx) {
+    const scaleW = maxWidthPx / img.width;
+    const scaleH = maxHeightPx / img.height;
+    const scale = Math.min(scaleW, scaleH);
+    
+    scaleX = scale;
+    scaleY = scale;
+  }
+
+  img.set({
+    scaleX: scaleX,
+    scaleY: scaleY,
+    perPixelTargetFind: true,
+    lockMovementX: false,
+    lockMovementY: false
+  });
+}
+
+// Evento para carregar imagem do input file
 fileInput.addEventListener('change', function (e) {
   const file = e.target.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = function (event) {
       fabric.Image.fromURL(event.target.result, function (img) {
-        const canvasCenter = canvas.getCenter();
+        const canvasCenter = getCanvasCenter();
+        
         img.set({
           left: canvasCenter.left,
           top: canvasCenter.top,
           name: file.name,
           originX: 'center',
-          originY: 'center'
+          originY: 'center',
+          perPixelTargetFind: true,
+          lockMovementX: false, 
+          lockMovementY: false
         });
+
+        resizeImageToMaxSize(img);
 
         canvas.add(img);
         canvas.setActiveObject(img);
@@ -973,12 +1157,13 @@ fileInput.addEventListener('change', function (e) {
 
         updateImageDimensionInputs(img);
         addToHistory();
-      });
+      }, { crossOrigin: 'anonymous' });
     };
     reader.readAsDataURL(file);
   }
   fileInput.value = '';
 });
+
 // ---------- Final Seção Manipulação de Objetos ----------
 
 // ---------- Inicio Seção Formas ----------
@@ -1118,74 +1303,6 @@ document.getElementById('polygonBtn').addEventListener('click', () => addShape('
 document.getElementById('polylineBtn').addEventListener('click', () => addShape('polyline'));
 document.getElementById('rectangleBtn').addEventListener('click', () => addShape('rectangle'));
 // ---------- Final Seção Formas ----------
-
-// ---------- Inicio Seção Documentos ----------
-function saveDocument() {
-  const state = canvas.toJSON(['id', 'name']);
-  const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
-  const link = document.createElement('a');
-  const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
-  link.href = URL.createObjectURL(blob);
-  link.download = `document_${timestamp}.cloudapp`;
-  link.click();
-  URL.revokeObjectURL(link.href);
-}
-
-function openDocument(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const state = JSON.parse(e.target.result);
-      canvas.clear();
-      canvas.loadFromJSON(state, function() {
-        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-        if (cloudFolha) {
-          cloudFolha.set({
-            selectable: false,
-            evented: false
-          });
-        }
-        canvas.renderAll();
-        addToHistory();
-      });
-    } catch (err) {
-      alert('Error loading document: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-window.addEventListener('load', function() {
-  const saveDocBtn = document.querySelector('button.menu-item:nth-of-type(2)');
-  const openDocBtn = document.querySelector('button.menu-item:nth-of-type(1)');
-  const openFileInput = document.getElementById('openFileInput');
-
-  saveDocBtn.addEventListener('click', saveDocument);
-
-  openDocBtn.addEventListener('click', () => {
-    openFileInput.click();
-  });
-
-  openFileInput.addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-      openDocument(e.target.files[0]);
-    }
-    openFileInput.value = '';
-  });
-
-  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-  if (cloudFolha) {
-    cloudFolha.set({
-      selectable: false,
-      evented: false
-    });
-  }
-  loadHistoryFromSessionStorage();
-  if (history.length === 0) {
-    addToHistory();
-  }
-});
-// ---------- Final Seção Documentos ----------
 
 // ---------- Inicio Seção Guias ----------
 const addGuidesBtn = document.getElementById('addGuidesBtn');
@@ -1521,6 +1638,489 @@ imageHeightInput.addEventListener('change', () => {
   addToHistory();
 });
 // ---------- Final Seção Exportação ----------
+
+// ---------- Inicio Seção Documentos ----------
+function saveDocument() {
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (!cloudFolha) return;
+
+  // Cria um objeto para armazenar os dados do documento
+  const documentData = {
+    version: '1.0', 
+    pageWidth: widthInput.value,
+    pageHeight: heightInput.value,
+    objects: []
+  };
+
+  // Salva todos os objetos exceto a folha
+  canvas.getObjects().forEach(obj => {
+    if (obj.id !== 'CloudFolha' && obj.id !== 'guide') {
+      const objData = obj.toObject(['id', 'name']);
+      
+      // Se for uma imagem, converte para base64
+      if (obj.type === 'image' && obj._element) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = obj._element.width;
+        tempCanvas.height = obj._element.height;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.drawImage(obj._element, 0, 0);
+        objData.src = tempCanvas.toDataURL('image/png');
+      }
+      
+      documentData.objects.push(objData);
+    }
+  });
+
+  // Cria o arquivo para download
+  const jsonString = JSON.stringify(documentData);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+  link.download = `documento_${timestamp}.cloudapp`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function openDocument() {
+  const input = document.getElementById('openFileInput');
+  input.click();
+}
+
+function loadDocumentFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const documentData = JSON.parse(e.target.result);
+      
+      // Atualiza as dimensões da página
+      widthInput.value = documentData.pageWidth;
+      heightInput.value = documentData.pageHeight;
+      updatePageDimensions();
+      
+      // Remove todos os objetos exceto a folha
+      const objectsToRemove = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+      canvas.remove(...objectsToRemove);
+      
+      // Carrega os objetos salvos
+      documentData.objects.forEach(objData => {
+        if (objData.type === 'image') {
+          fabric.Image.fromURL(objData.src, img => {
+            const canvasCenter = getCanvasCenter();
+            img.set(objData); 
+            canvas.add(img);
+            canvas.renderAll();
+          }, { crossOrigin: 'anonymous' });
+        } else {
+          let fabricObj;
+          switch(objData.type) {
+            case 'rect':
+              fabricObj = new fabric.Rect(objData);
+              break;
+            case 'circle': 
+              fabricObj = new fabric.Circle(objData);
+              break;
+            case 'triangle':
+              fabricObj = new fabric.Triangle(objData); 
+              break;
+            case 'line':
+              fabricObj = new fabric.Line([objData.x1, objData.y1, objData.x2, objData.y2], objData);
+              break;
+            case 'text':
+              fabricObj = new fabric.Text(objData.text, objData);
+              break;
+            default:
+              fabricObj = new fabric.Object(objData);
+          }
+          if (fabricObj) {
+            canvas.add(fabricObj);
+          }
+        }
+      });
+      
+      canvas.renderAll();
+      addToHistory();
+      
+    } catch (error) {
+      console.error('Erro ao carregar o documento:', error);
+      alert('Erro ao carregar o documento. O arquivo pode estar corrompido ou em formato inválido.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('openDocumentBtn').addEventListener('click', openDocument);
+document.getElementById('saveDocumentBtn').addEventListener('click', saveDocument);
+document.getElementById('openFileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    loadDocumentFile(file);
+  }
+  this.value = ''; // Reset o input
+});
+
+// ---------- Final Seção Documentos ----------
+
+let cropper = null;
+let activeObject = null;
+
+document.getElementById('cropImageBtn').addEventListener('click', function() {
+    activeObject = canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'image') {
+        alert('Por favor, selecione uma imagem primeiro.');
+        return;
+    }
+
+    const modal = document.getElementById('cropperModal');
+    const cropperImage = document.getElementById('cropperImage');
+
+    // Get the image data
+    if (activeObject._element) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = activeObject._element.width;
+        tempCanvas.height = activeObject._element.height;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.drawImage(activeObject._element, 0, 0);
+        cropperImage.src = tempCanvas.toDataURL('image/png');
+    }
+
+    modal.style.display = 'flex';
+
+    // Initialize Cropper
+    if (cropper) {
+        cropper.destroy();
+    }
+
+    cropper = new Cropper(cropperImage, {
+        viewMode: 1,
+        dragMode: 'move',
+        aspectRatio: NaN,
+        autoCropArea: 1,
+        restore: false,
+        modal: true,
+        guides: true,
+        center: true,
+        highlight: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+    });
+});
+
+document.getElementById('cancelCropBtn').addEventListener('click', function() {
+    const modal = document.getElementById('cropperModal');
+    modal.style.display = 'none';
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+});
+
+document.getElementById('saveCropBtn').addEventListener('click', function() {
+    if (!cropper || !activeObject) return;
+
+    // Get the cropped canvas
+    const croppedCanvas = cropper.getCroppedCanvas();
+    
+    // Create a new image with the cropped data
+    fabric.Image.fromURL(croppedCanvas.toDataURL(), function(img) {
+        // Keep the original position and scale
+        const originalLeft = activeObject.left;
+        const originalTop = activeObject.top;
+        const originalScaleX = activeObject.scaleX;
+        const originalScaleY = activeObject.scaleY;
+        const originalAngle = activeObject.angle;
+
+        // Set the new image properties
+        img.set({
+            left: originalLeft,
+            top: originalTop,
+            scaleX: originalScaleX,
+            scaleY: originalScaleY,
+            angle: originalAngle
+        });
+
+        // Remove the old image and add the new one
+        canvas.remove(activeObject);
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        addToHistory();
+
+        // Close the modal
+        const modal = document.getElementById('cropperModal');
+        modal.style.display = 'none';
+        cropper.destroy();
+        cropper = null;
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('cropperModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.style.display = 'none';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+});
+
+function duplicateObjects(numDuplicates) {
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length === 0) return;
+
+  let newObjects = [];
+  activeObjects.forEach(obj => {
+    for (let i = 0; i < numDuplicates; i++) {
+      obj.clone(function(cloned) {
+        cloned.set({
+          left: cloned.left + 20 * (i + 1),
+          top: cloned.top + 20 * (i + 1)
+        });
+        canvas.add(cloned);
+        newObjects.push(cloned);
+      });
+    }
+  });
+
+  // After all objects are cloned, create a group selection
+  setTimeout(() => {
+    if (newObjects.length > 0) {
+      const selection = new fabric.ActiveSelection(newObjects, { canvas });
+      canvas.setActiveObject(selection);
+      canvas.renderAll();
+      addToHistory();
+    }
+  }, 100);
+}
+
+function organizeObjects(marginCm) {
+  const marginPx = marginCm * CM_TO_PX;
+  const activeObjects = canvas.getActiveObjects();
+  if (!activeObjects || activeObjects.length === 0) return;
+
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (!cloudFolha) return;
+
+  const folhaLeft = cloudFolha.left;
+  const folhaTop = cloudFolha.top;
+  const folhaWidth = cloudFolha.width * cloudFolha.scaleX;
+  const folhaRight = folhaLeft + folhaWidth;
+
+  let currentX = folhaLeft + marginPx;
+  let currentY = folhaTop + marginPx;
+  let rowHeight = 0;
+
+  activeObjects.forEach(obj => {
+    const objWidth = obj.width * obj.scaleX;
+    const objHeight = obj.height * obj.scaleY;
+
+    // Check if object needs to move to next row
+    if (currentX + objWidth + marginPx > folhaRight) {
+      currentX = folhaLeft + marginPx;
+      currentY += rowHeight + marginPx;
+      rowHeight = 0;
+    }
+
+    // Update object position
+    obj.set({
+      left: currentX,
+      top: currentY
+    });
+
+    // Update tracking variables
+    currentX += objWidth + marginPx;
+    rowHeight = Math.max(rowHeight, objHeight);
+  });
+
+  canvas.renderAll();
+  addToHistory();
+}
+
+document.getElementById('duplicateImageBtn').addEventListener('click', function() {
+  const numDuplicates = parseInt(document.getElementById('duplicateInput').value) || 1;
+  duplicateObjects(numDuplicates);
+});
+
+document.getElementById('organizeBtn').addEventListener('click', function() {
+  const marginCm = parseFloat(document.getElementById('organizeInput').value) || 1;
+  organizeObjects(marginCm);
+});
+
+// ---------- Inicio Seção Drag and Drop ----------
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const files = e.dataTransfer.files;
+  handleFiles(files);
+}
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (file.type.startsWith('image/')) {
+      handleImageFile(file);
+    } else if (file.type === 'application/pdf') {
+      handlePdfFile(file);
+    }
+  });
+}
+
+function handleImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    if (!canvas || !canvas.add) {
+      console.error('Canvas not properly initialized');
+      return;
+    }
+
+    fabric.Image.fromURL(e.target.result, function(img) {
+      if (!img) {
+        console.error('Failed to load image');
+        return;
+      }
+
+      const canvasCenter = getCanvasCenter();
+      img.set({
+        left: canvasCenter.left,
+        top: canvasCenter.top,
+        originX: 'center',
+        originY: 'center',
+        perPixelTargetFind: true,
+        lockMovementX: false,
+        lockMovementY: false
+      });
+
+      resizeImageToMaxSize(img);
+      
+      try {
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        addToHistory();
+      } catch (error) {
+        console.error('Error adding image to canvas:', error);
+      }
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function handlePdfFile(file) {
+  // Create PDF page selection modal
+  const modalHtml = `
+    <div id="pdfModal" class="modal-overlay" style="display: flex;">
+      <div class="modal-content" style="height: auto; padding: 20px; min-width: 300px;">
+        <h3 style="color: white; margin-bottom: 20px;">Selecionar Página do PDF</h3>
+        <div style="margin-bottom: 20px;">
+          <input type="number" id="pdfPageInput" value="1" min="1" 
+                 style="width: 100%; padding: 8px; background: #1a4b8c; color: white; border: 1px solid #235ab4;">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button id="pdfCancelBtn" class="menu-item" style="width: auto;">Cancelar</button>
+          <button id="pdfConfirmBtn" class="menu-item" style="width: auto; background: #ffd700; color: black;">Importar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  const modal = document.getElementById('pdfModal');
+  const cancelBtn = document.getElementById('pdfCancelBtn');
+  const confirmBtn = document.getElementById('pdfConfirmBtn');
+  const pageInput = document.getElementById('pdfPageInput');
+
+  cancelBtn.onclick = () => {
+    modal.remove();
+  };
+
+  confirmBtn.onclick = () => {
+    const pageNumber = parseInt(pageInput.value) || 1;
+    convertPdfToImage(file, pageNumber - 1).then(() => {
+      modal.remove();
+    });
+  };
+}
+
+async function convertPdfToImage(file, pageNumber) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+  
+  if (pageNumber >= pdf.numPages) {
+    alert('Página não existe no PDF');
+    return;
+  }
+
+  const page = await pdf.getPage(pageNumber + 1);
+  const scale = 2; // Increase for better quality
+  const viewport = page.getViewport({ scale });
+
+  const tempCanvas = document.createElement('canvas');
+  const context = tempCanvas.getContext('2d');
+  tempCanvas.height = viewport.height;
+  tempCanvas.width = viewport.width;
+
+  await page.render({
+    canvasContext: context,
+    viewport: viewport
+  }).promise;
+
+  if (!canvas || !canvas.add) {
+    console.error('Canvas not properly initialized');
+    return;
+  }
+
+  fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
+    if (!img) {
+      console.error('Failed to load PDF page as image');
+      return;
+    }
+
+    const canvasCenter = getCanvasCenter();
+    img.set({
+      left: canvasCenter.left,
+      top: canvasCenter.top,
+      originX: 'center',
+      originY: 'center',
+      perPixelTargetFind: true,
+      lockMovementX: false,
+      lockMovementY: false
+    });
+
+    resizeImageToMaxSize(img);
+    
+    try {
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+      addToHistory();
+    } catch (error) {
+      console.error('Error adding PDF page to canvas:', error);
+    }
+  });
+}
+
+// Add drag and drop event listeners
+canvas.wrapperEl.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+canvas.wrapperEl.addEventListener('drop', handleDrop);
+// ---------- Final Seção Drag and Drop ----------
+
+function getCanvasCenter() {
+  return {
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2
+  };
+}
 </script>
 </body>
 </html>
