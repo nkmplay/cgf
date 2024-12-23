@@ -1733,7 +1733,6 @@ document.querySelectorAll('.export-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const format = btn.dataset.format;
       if (format === 'pdf' || format === 'vector-pdf') {
-        alert('Em Breve');
         return;
       }
       exportCanvas(format);
@@ -2112,7 +2111,6 @@ function loadDocumentFile(file) {
 
     } catch (error) {
       console.error('Erro ao carregar o documento:', error);
-      alert('Erro ao carregar o documento. O arquivo pode estar corrompido ou em formato inválido.');
     }
   };
   reader.readAsText(file);
@@ -2136,7 +2134,6 @@ let activeObject = null;
 document.getElementById('cropImageBtn').addEventListener('click', function() {
     activeObject = canvas.getActiveObject();
     if (!activeObject || activeObject.type !== 'image') {
-        alert('Por favor, selecione uma imagem primeiro.');
         return;
     }
 
@@ -2406,7 +2403,6 @@ async function convertPdfToImage(file, pageNumber) {
   const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
 
   if (pageNumber >= pdf.numPages) {
-    alert('Página não existe no PDF');
     return;
   }
 
