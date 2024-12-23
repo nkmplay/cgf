@@ -1,4 +1,8 @@
-<html><head><base href="." target="_blank">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Layout com Canvas</title>
     <script src="https://cloudgraficaweb.github.io/CGVendas/scripts/fabric.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -372,69 +376,88 @@
             max-width: 100%;
             max-height: 550px;
         }
-        
-        .text-controls {
-          padding: 10px;
-        }
-        
-        .control-group {
-          margin-bottom: 10px;
-        }
-        
-        .text-input {
-          width: 100%;
-          padding: 4px;
-          background: #1a4b8c;
-          color: white;
-          border: 1px solid #235ab4;
-          border-radius: 4px;
-        }
-        
-        .gradient-stops {
-          margin-bottom: 10px;
-        }
-        
-        .gradient-stop {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          margin-bottom: 5px;
-        }
-        
-        .gradient-color {
-          width: 50px;
-        }
-        
-        .gradient-position {
-          width: 60px;
-          padding: 4px;
-          background: #1a4b8c;
-          color: white;
-          border: 1px solid #235ab4;
-          border-radius: 4px;
-        }
-        
-        .remove-stop {
-          background: #ff4444;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          padding: 2px 6px;
-          cursor: pointer;
-        }
-        
-        .gradient-angle {
-          margin-top: 10px;
-        }
-        
-        input[type="color"] {
-          width: 100%;
-          height: 30px;
-          padding: 0;
-          border: none;
-          border-radius: 4px;
-          background: #1a4b8c;
-        }
+
+.text-controls {
+    padding: 10px;
+}
+
+.control-group {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.text-input {
+    width: 100%;
+    padding: 4px;
+    background: #1a4b8c;
+    color: white;
+    border: 1px solid #235ab4;
+    border-radius: 4px;
+}
+
+.gradient-stops {
+    margin-bottom: 10px;
+}
+
+.gradient-stop {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.gradient-color {
+    width: 50px;
+}
+
+.gradient-position {
+    width: 60px;
+    padding: 4px;
+    background: #1a4b8c;
+    color: white;
+    border: 1px solid #235ab4;
+    border-radius: 4px;
+}
+
+.remove-stop {
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.gradient-angle {
+    margin-top: 10px;
+}
+
+input[type="color"] {
+    width: 100%;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: #1a4b8c;
+}
+.font-label {
+    display: block; /* Coloca o texto "Fonte:" em uma linha acima */
+    margin-bottom: 5px; /* Espaçamento entre o texto e o combobox */
+    font-size: 14px; /* Tamanho do texto "Fonte:" */
+}
+
+.font-select {
+    width: 100%; /* Ocupa toda a largura disponível */
+    height: 40px; /* Altura maior para o combobox */
+    font-size: 20px; /* Tamanho do texto dentro do combobox */
+    padding: 5px; /* Espaçamento interno para melhorar a aparência */
+    border-radius: 4px; /* Borda arredondada */
+    border: 1px solid #235ab4; /* Cor da borda */
+    background: #1a4b8c; /* Cor de fundo */
+    color: white; /* Cor do texto */
+}
     </style>
 </head>
 <body>
@@ -539,76 +562,79 @@
             <div class="separator"></div>
             <button id="exportSelectedImageBtn" class="menu-item">Exportar Imagem Selecionada</button>
         </div>
-        <div id="menu-texto" class="menu-content">
-            <button id="addTextBtn" class="highlight-button">Adicionar Texto</button>
-            <div class="text-controls">
-              <div class="control-group">
-                <label>Fonte:</label>
-                <select id="fontSelect" class="text-input">
-                  <option value="Arial">Arial</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Verdana">Verdana</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Courier New">Courier New</option>
-                </select>
-              </div>
+		<div id="menu-texto" class="menu-content">
+			<button id="addTextBtn" class="highlight-button">Adicionar Texto</button>
+			<div class="text-controls">
+				<div class="control-group">
+					<label for="fontSelect" class="font-label">Fonte:</label>
+					<select id="fontSelect" class="text-input font-select">
+					<option value="Arial" style="font-family: Arial;">Arial</option>
+					  <option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
+					  <option value="Brush Script MT" style="font-family: 'Brush Script MT';">Brush Script MT</option>
+					  <option value="Bookman Old Style" style="font-family: 'Bookman Old Style';">Bookman Old Style</option>
+					  <option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
+					  <option value="Courier" style="font-family: Courier;">Courier</option>
+					  <option value="Dancing Script" style="font-family: 'Dancing Script';">Dancing Script</option>
+					  <option value="Impact" style="font-family: Impact;">Impact</option>
+					  <option value="Lucida Handwriting" style="font-family: 'Lucida Handwriting';">Lucida Handwriting</option>
+					  <option value="Lucida Sans Unicode" style="font-family: 'Lucida Sans Unicode';">Lucida Sans Unicode</option>
+					  <option value="Papyrus" style="font-family: Papyrus;">Papyrus</option>
+					  <option value="Segoe Print" style="font-family: 'Segoe Print';">Segoe Print</option>
+					  <option value="Segoe Script" style="font-family: 'Segoe Script';">Segoe Script</option>
+					  <option value="Segoe UI" style="font-family: 'Segoe UI';">Segoe UI</option>
+					  <option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
+					  <option value="Trebuchet MS" style="font-family: 'Trebuchet MS';">Trebuchet MS</option>
+					  <option value="Verdana" style="font-family: Verdana;">Verdana</option>
+					  <option value="Monotype Corsiva" style="font-family: 'Monotype Corsiva';">Monotype Corsiva</option>
+					  <option value="Mistral" style="font-family: Mistral;">Mistral</option>
+					  <option value="Freestyle Script" style="font-family: 'Freestyle Script';">Freestyle Script</option>
+					  <option value="Bradley Hand ITC" style="font-family: 'Bradley Hand ITC';">Bradley Hand ITC</option>
+					  <option value="Edwardian Script ITC" style="font-family: 'Edwardian Script ITC';">Edwardian Script ITC</option>
+					  <option value="Vivaldi" style="font-family: Vivaldi;">Vivaldi</option>
+					  <option value="Rage Italic" style="font-family: 'Rage Italic';">Rage Italic</option>
+					</select>
+				</div>
 
-              <div class="control-group">
-                <label>Tamanho:</label>
-                <input type="number" id="fontSizeInput" class="text-input" value="20" min="1">
-              </div>
+				<div class="control-group">
+					<label>Tamanho:</label>
+					<input type="number" id="fontSizeInput" class="text-input" value="20" min="1">
+				</div>
 
-              <div class="control-group">
-                <button id="solidColorBtn" class="menu-item active">Cor Padrão</button>
-                <button id="gradientColorBtn" class="menu-item">Gradiente</button>
-              </div>
+				<div class="control-group">
+					<button id="solidColorBtn" class="menu-item active">Cor Padrão</button>
+					<button id="gradientColorBtn" class="menu-item">Gradiente</button>
+				</div>
 
-              <div id="solidColorPicker" class="control-group">
-                <input type="color" id="textColorInput" value="#000000">
-              </div>
+				<div id="solidColorPicker" class="control-group">
+					<input type="color" id="textColorInput" value="#000000">
+				</div>
 
-              <div id="gradientPicker" class="control-group" style="display: none;">
-                <div class="gradient-stops">
-                  <div class="gradient-stop">
-                    <input type="color" class="gradient-color" value="#000000">
-                    <input type="number" class="gradient-position" value="0" min="0" max="100">
-                    <button class="remove-stop">&times;</button>
-                  </div>
-                </div>
-                <button id="addGradientStop" class="menu-item">Adicionar Cor</button>
-                <div class="gradient-angle">
-                  <label>Ângulo:</label>
-                  <input type="number" id="gradientAngle" value="0" min="0" max="360">
-                </div>
-              </div>
+				<div id="gradientPicker" class="control-group" style="display: none;">
+					<div class="gradient-stops">
+						<div class="gradient-stop">
+							<input type="color" class="gradient-color" value="#000000">
+							<input type="number" class="gradient-position" value="100" min="0" max="100">
+							<button class="remove-stop">&times;</button>
+						</div>
+						<div class="gradient-stop">
+							<input type="color" class="gradient-color" value="#ff0000">
+							<input type="number" class="gradient-position" value="50" min="0" max="100">
+							<button class="remove-stop">&times;</button>
+						</div>
+					</div>
+					<button id="addGradientStop" class="menu-item">Adicionar Cor</button>
+				</div>
 
-              <div class="separator"></div>
+				<div class="separator"></div>
 
-              <div class="control-group">
-                <input type="checkbox" id="stroke1Enable">
-                <label>Contorno Externo 1</label>
-                <input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
-                <div id="stroke1ColorPicker">
-                  <button id="stroke1SolidBtn" class="menu-item active">Cor</button>
-                  <button id="stroke1GradientBtn" class="menu-item">Gradiente</button>
-                  <input type="color" id="stroke1Color" value="#000000">
-                </div>
-              </div>
-
-              <div class="separator"></div>
-
-              <div class="control-group">
-                <input type="checkbox" id="stroke2Enable">
-                <label>Contorno Externo 2</label>
-                <input type="number" id="stroke2Width" class="text-input" value="1" min="0" disabled>
-                <div id="stroke2ColorPicker">
-                  <button id="stroke2SolidBtn" class="menu-item active">Cor</button>
-                  <button id="stroke2GradientBtn" class="menu-item">Gradiente</button>
-                  <input type="color" id="stroke2Color" value="#000000">
-                </div>
-              </div>
-            </div>
-        </div>
+				<div class="control-group">
+					<input type="checkbox" id="stroke1Enable">
+					<label>Contorno Externo 1</label>
+					<input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
+					<input type="color" id="stroke1Color" value="#000000">
+				</div>
+			</div>
+		</div>
         <div id="menu-formas" class="menu-content">
             <button class="menu-item" id="squareBtn">Quadrado</button>
             <button class="menu-item" id="circleBtn">Circulo</button>
@@ -621,7 +647,7 @@
             <button class="menu-item" id="cakeBtn">Bolo</button>
         </div>
         <div id="menu-filtros" class="menu-content">
-            <!-- Empty for now -->
+			<!-- Conteúdo do menu Filtros -->
         </div>
     </div>
     <input type="file" id="openFileInput" accept=".cloudapp" style="display: none;">
@@ -641,8 +667,7 @@
             </div>
         </div>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.11 - 22/12/2024</div>
-
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.12 - 22/12/2024</div>
 <script>
 const container = document.getElementById('canvas-container');
 if (!container) {
@@ -701,27 +726,9 @@ let history = [];
 let currentHistoryIndex = -1;
 let previewRect = null;
 let guides = [];
-let activeTextSettings = {
-  gradientMode: false,
-  gradientStops: [{color: '#000000', position: 0}, {color: '#ffffff', position: 100}],
-  gradientAngle: 0,
-  stroke1: {
-    enabled: false,
-    width: 1,
-    gradientMode: false,
-    color: '#000000',
-    gradientStops: [{color: '#000000', position: 0}, {color: '#ffffff', position: 100}],
-    gradientAngle: 0
-  },
-  stroke2: {
-    enabled: false,
-    width: 1,
-    gradientMode: false,
-    color: '#000000',
-    gradientStops: [{color: '#000000', position: 0}, {color: '#ffffff', position: 100}],
-    gradientAngle: 0
-  }
-};
+let textIdCounter = 0;
+const textSettings = {};
+
 // ---------- Final Seção Variáveis Globais ----------
 
 // ---------- Inicio Seção Eventos de Categoria ----------
@@ -797,13 +804,11 @@ function resizeCanvas() {
     canvas.renderAll();
 }
 
-// Variáveis para controle de pan e zoom
 let isPanning = false;
 let lastPosX;
 let lastPosY;
 let isSpacePressed = false;
 
-// Atualiza o cursor baseado no estado
 function updateCursor() {
   if (isSpacePressed) {
     canvas.defaultCursor = 'grab';
@@ -819,7 +824,6 @@ function updateCursor() {
   canvas.requestRenderAll();
 }
 
-// Função melhorada de zoom
 canvas.on('mouse:wheel', function(opt) {
   var delta = opt.e.deltaY;
   var zoom = canvas.getZoom();
@@ -828,7 +832,6 @@ canvas.on('mouse:wheel', function(opt) {
     y: opt.e.offsetY
   };
 
-  // Ajusta a sensibilidade do zoom
   var factor = 1.1;
   if (delta > 0) {
     zoom = zoom / factor;
@@ -836,20 +839,17 @@ canvas.on('mouse:wheel', function(opt) {
     zoom = zoom * factor;
   }
 
-  // Limita o zoom
   if (zoom > 20) zoom = 20;
   if (zoom < 0.01) zoom = 0.01;
 
-  // Aplica o zoom mantendo o ponto do mouse fixo
   canvas.zoomToPoint(point, zoom);
 
   opt.e.preventDefault();
   opt.e.stopPropagation();
 });
 
-// Event listeners para o pan
 canvas.on('mouse:down', function(opt) {
-  if (isSpacePressed && opt.e.buttons === 1) { // Verifica se é o botão esquerdo
+  if (isSpacePressed && opt.e.buttons === 1) {
     isPanning = true;
     lastPosX = opt.e.clientX;
     lastPosY = opt.e.clientY;
@@ -896,7 +896,6 @@ document.addEventListener('keyup', function(e) {
   }
 });
 
-// Previne o comportamento padrão da tecla espaço no navegador
 window.addEventListener('keydown', function(e) {
   if (e.code === 'Space') {
     e.preventDefault();
@@ -908,7 +907,6 @@ window.addEventListener('load', resizeCanvas);
 
 // ---------- Inicio Seção Histórico ----------
 function compressCanvasState(canvas) {
-    // Only store essential data
     const objects = canvas.getObjects().map(obj => {
         const essentialProps = {
             type: obj.type,
@@ -922,14 +920,14 @@ function compressCanvasState(canvas) {
             id: obj.id,
             name: obj.name
         };
-        
+
         if (obj.src) {
             essentialProps.src = obj.src;
         }
-        
+
         return essentialProps;
     });
-    
+
     return objects;
 }
 
@@ -946,8 +944,7 @@ function loadCanvasState(stateStr) {
     try {
         const state = JSON.parse(stateStr);
         canvas.clear();
-        
-        // Rebuild canvas from compressed state
+
         if (state.objects) {
             state.objects.forEach(obj => {
                 if (obj.type === 'image') {
@@ -971,12 +968,11 @@ function loadCanvasState(stateStr) {
             });
         }
 
-        // Restore selection
         if (state.selectedObjectIds) {
             const objectsToSelect = state.selectedObjectIds
                 .map(index => canvas.getObjects()[index])
                 .filter(obj => obj);
-                
+
             if (objectsToSelect.length > 0) {
                 if (objectsToSelect.length === 1) {
                     canvas.setActiveObject(objectsToSelect[0]);
@@ -995,16 +991,13 @@ function loadCanvasState(stateStr) {
 
 function saveHistoryToLocalStorage() {
     try {
-        // Only store last 5 states to prevent quota issues
         const recentHistory = history.slice(-5);
         localStorage.setItem('canvasHistory', JSON.stringify(recentHistory));
         localStorage.setItem('currentHistoryIndex', Math.min(currentHistoryIndex, 4));
     } catch (error) {
         console.warn('Failed to save to localStorage:', error);
-        // Clear old history if storage is full
         localStorage.clear();
         try {
-            // Try one more time after clearing
             const recentHistory = history.slice(-5);
             localStorage.setItem('canvasHistory', JSON.stringify(recentHistory));
             localStorage.setItem('currentHistoryIndex', Math.min(currentHistoryIndex, 4));
@@ -1028,14 +1021,12 @@ function loadHistoryFromLocalStorage() {
         }
     } catch (error) {
         console.error('Error loading history:', error);
-        // Clear corrupted storage
         localStorage.clear();
     }
 }
 
 function addToHistory() {
     try {
-        // Limit history size more aggressively
         if (history.length >= MAX_HISTORY) {
             history = history.slice(-Math.floor(MAX_HISTORY/2));
             currentHistoryIndex = Math.floor(MAX_HISTORY/2) - 1;
@@ -1045,7 +1036,6 @@ function addToHistory() {
         history = history.slice(0, currentHistoryIndex);
         history.push(saveCanvasState());
 
-        // Only attempt to save every 5 actions to reduce storage operations
         if (currentHistoryIndex % 5 === 0) {
             saveHistoryToLocalStorage();
         }
@@ -1054,7 +1044,6 @@ function addToHistory() {
     }
 }
 
-// Reduce MAX_HISTORY to a more manageable size
 // ---------- Final Seção Histórico ----------
 
 // ---------- Inicio Seção Manipulação de Objetos ----------
@@ -1080,14 +1069,14 @@ document.addEventListener('paste', function(e) {
         reader.onload = function (event) {
           fabric.Image.fromURL(event.target.result, function (img) {
             const canvasCenter = getCanvasCenter();
-            
+
             img.set({
               left: canvasCenter.left,
               top: canvasCenter.top,
               originX: 'center',
               originY: 'center',
               perPixelTargetFind: true,
-              lockMovementX: false, 
+              lockMovementX: false,
               lockMovementY: false
             });
 
@@ -1197,16 +1186,20 @@ document.addEventListener('keydown', function(e) {
 });
 
 canvas.on('selection:created', function(e) {
-  const editarCategory = document.querySelector('.category-item[data-category="editar"]');
-  if (!editarCategory.classList.contains('active')) {
-    categoryItems.forEach(i => i.classList.remove('active'));
-    menuContents.forEach(m => m.classList.remove('active'));
-    editarCategory.classList.add('active');
-    document.getElementById('menu-editar').classList.add('active');
-  }
-  if (e.selected && e.selected[0]) {
-    updateImageDimensionInputs(e.selected[0]);
-  }
+    if (e.selected[0] && e.selected[0].type === 'text') {
+        activateTextCategory();
+    } else {
+        const editarCategory = document.querySelector('.category-item[data-category="editar"]');
+        if (!editarCategory.classList.contains('active')) {
+            categoryItems.forEach(i => i.classList.remove('active'));
+            menuContents.forEach(m => m.classList.remove('active'));
+            editarCategory.classList.add('active');
+            document.getElementById('menu-editar').classList.add('active');
+        }
+    }
+    if (e.selected && e.selected[0]) {
+        updateImageDimensionInputs(e.selected[0]);
+    }
 });
 
 canvas.on('selection:updated', function(e) {
@@ -1227,15 +1220,42 @@ canvas.on('selection:cleared', function() {
   imageHeightInput.value = "0";
 });
 
-canvas.on('object:modified', function(e) {
-  if (e.target) {
-    updateImageDimensionInputs(e.target);
-  }
+canvas.on('object:modified', function (e) {
+    const activeObject = e.target;
+
+    if (activeObject) {
+        updateImageDimensionInputs(activeObject);
+
+        if (activeObject.type === 'text') {
+            const newFontSize = activeObject.fontSize * activeObject.scaleX;
+            activeObject.set('fontSize', newFontSize);
+            activeObject.set('scaleX', 1);
+            activeObject.set('scaleY', 1);
+            canvas.renderAll();
+
+            document.getElementById('fontSizeInput').value = Math.round(newFontSize);
+        }
+    }
 });
 
 canvas.on('object:scaling', function(e) {
-  if (e.target) {
-    updateImageDimensionInputs(e.target);
+  const obj = e.target;
+  if (obj) {
+    // Atualizar as dimensões da imagem (se for uma imagem)
+    updateImageDimensionInputs(obj);
+
+    // Atualizar o tamanho da fonte do texto (se for um texto)
+    if (obj.type === 'text') {
+      const newFontSize = obj.fontSize * obj.scaleX;
+      obj.set('fontSize', newFontSize);
+      obj.set('scaleX', 1);
+      obj.set('scaleY', 1);
+      canvas.renderAll();
+
+      // Atualizar o tamanho da fonte nas configurações
+      activeTextSettings.fontSize = newFontSize;
+      saveTextSettings(obj);
+    }
   }
 });
 
@@ -1254,9 +1274,9 @@ function updateImageDimensionInputs(obj) {
 }
 
 function resizeImageToMaxSize(img) {
-  const maxWidthInCm = 21; // A4 width
-  const maxHeightInCm = 29.7; // A4 height
-  
+  const maxWidthInCm = 21;
+  const maxHeightInCm = 29.7;
+
   const maxWidthPx = maxWidthInCm * CM_TO_PX;
   const maxHeightPx = maxHeightInCm * CM_TO_PX;
 
@@ -1267,7 +1287,7 @@ function resizeImageToMaxSize(img) {
     const scaleW = maxWidthPx / img.width;
     const scaleH = maxHeightPx / img.height;
     const scale = Math.min(scaleW, scaleH);
-    
+
     scaleX = scale;
     scaleY = scale;
   }
@@ -1281,7 +1301,6 @@ function resizeImageToMaxSize(img) {
   });
 }
 
-// Evento para carregar imagem do input file
 fileInput.addEventListener('change', function (e) {
   const file = e.target.files[0];
   if (file) {
@@ -1289,7 +1308,7 @@ fileInput.addEventListener('change', function (e) {
     reader.onload = function (event) {
       fabric.Image.fromURL(event.target.result, function (img) {
         const canvasCenter = getCanvasCenter();
-        
+
         img.set({
           left: canvasCenter.left,
           top: canvasCenter.top,
@@ -1297,7 +1316,7 @@ fileInput.addEventListener('change', function (e) {
           originX: 'center',
           originY: 'center',
           perPixelTargetFind: true,
-          lockMovementX: false, 
+          lockMovementX: false,
           lockMovementY: false
         });
 
@@ -1792,7 +1811,6 @@ imageHeightInput.addEventListener('change', () => {
 // ---------- Final Seção Exportação ----------
 
 // ---------- Inicio Seção Manipulação de Objetos Novos ----------
-// Align objects horizontally (center)
 function alignObjectsHorizontal() {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length < 2) return;
@@ -1808,7 +1826,6 @@ function alignObjectsHorizontal() {
   addToHistory();
 }
 
-// Align objects vertically (center)
 function alignObjectsVertical() {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length < 2) return;
@@ -1824,7 +1841,6 @@ function alignObjectsVertical() {
   addToHistory();
 }
 
-// Mirror objects horizontally
 function mirrorObjectsHorizontal() {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length === 0) return;
@@ -1837,7 +1853,6 @@ function mirrorObjectsHorizontal() {
   addToHistory();
 }
 
-// Mirror objects vertically
 function mirrorObjectsVertical() {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length === 0) return;
@@ -1850,7 +1865,6 @@ function mirrorObjectsVertical() {
   addToHistory();
 }
 
-// Rotate objects by angle
 function rotateObjects(angle) {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length === 0) return;
@@ -1863,16 +1877,13 @@ function rotateObjects(angle) {
   addToHistory();
 }
 
-// Export selected objects as PNG
 function exportSelectedObjects() {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length === 0) return;
 
-  // Create temporary canvas with selected objects
   const tempCanvas = document.createElement('canvas');
   const tempFabricCanvas = new fabric.Canvas(tempCanvas);
 
-  // Get the bounding box with the actual positions
   const bounds = {
     left: Number.POSITIVE_INFINITY,
     top: Number.POSITIVE_INFINITY,
@@ -1880,7 +1891,6 @@ function exportSelectedObjects() {
     bottom: Number.NEGATIVE_INFINITY
   };
 
-  // Calculate actual bounds including transformations
   activeObjects.forEach(obj => {
     const objBounds = obj.getBoundingRect(true, true);
     bounds.left = Math.min(bounds.left, objBounds.left);
@@ -1892,11 +1902,9 @@ function exportSelectedObjects() {
   const width = bounds.right - bounds.left;
   const height = bounds.bottom - bounds.top;
 
-  // Set canvas size to actual bounds
   tempFabricCanvas.setWidth(width);
   tempFabricCanvas.setHeight(height);
 
-  // Clone and adjust position of objects
   activeObjects.forEach(obj => {
     obj.clone(function(cloned) {
       cloned.set({
@@ -1907,11 +1915,9 @@ function exportSelectedObjects() {
     });
   });
 
-  // Wait for objects to be added and rendered
   setTimeout(() => {
     tempFabricCanvas.renderAll();
 
-    // Create high resolution version for 600 DPI
     const scaleFactor = 600 / 96;
     const scaledCanvas = document.createElement('canvas');
     scaledCanvas.width = width * scaleFactor;
@@ -1920,17 +1926,31 @@ function exportSelectedObjects() {
     ctx.scale(scaleFactor, scaleFactor);
     ctx.drawImage(tempCanvas, 0, 0);
 
-    // Download the image
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
     const link = document.createElement('a');
     link.download = `selected_objects_${timestamp}.png`;
     link.href = scaledCanvas.toDataURL('image/png');
     link.click();
 
-    // Cleanup
     tempFabricCanvas.dispose();
   }, 100);
 }
+
+// Função para obter o centro do canvas
+function getCanvasCenter() {
+  return {
+    left: canvas.getWidth() / 2,
+    top: canvas.getHeight() / 2
+  };
+}
+
+// Evento para editar texto ao dar um duplo clique
+canvas.on('mouse:dblclick', function(e) {
+  if (e.target && e.target.type === 'text') {
+    e.target.enterEditing();
+  }
+});
+
 // ---------- Final Seção Manipulação de Objetos Novos ----------
 
 // ---------- Inicio Seção Eventos Novos ----------
@@ -1950,20 +1970,17 @@ function saveDocument() {
   const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
   if (!cloudFolha) return;
 
-  // Cria um objeto para armazenar os dados do documento
   const documentData = {
-    version: '1.0', 
+    version: '1.0',
     pageWidth: widthInput.value,
     pageHeight: heightInput.value,
     objects: []
   };
 
-  // Salva todos os objetos exceto a folha
   canvas.getObjects().forEach(obj => {
     if (obj.id !== 'CloudFolha' && obj.id !== 'guide') {
       const objData = obj.toObject(['id', 'name']);
-      
-      // Se for uma imagem, converte para base64
+
       if (obj.type === 'image' && obj._element) {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = obj._element.width;
@@ -1972,16 +1989,15 @@ function saveDocument() {
         ctx.drawImage(obj._element, 0, 0);
         objData.src = tempCanvas.toDataURL('image/png');
       }
-      
+
       documentData.objects.push(objData);
     }
   });
 
-  // Cria o arquivo para download
   const jsonString = JSON.stringify(documentData);
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement('a');
   link.href = url;
   const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
@@ -2002,21 +2018,68 @@ function loadDocumentFile(file) {
   reader.onload = function (event) {
     try {
       const documentData = JSON.parse(event.target.result);
-      
-      // Atualiza as dimensões da página
+
       widthInput.value = documentData.pageWidth;
       heightInput.value = documentData.pageHeight;
       updatePageDimensions();
-      
-      // Remove todos os objetos exceto a folha
+
       const objectsToRemove = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
       canvas.remove(...objectsToRemove);
-      
-      // Carrega os objetos salvos
+
       documentData.objects.forEach(objData => {
-        if (objData.type === 'image') {
+        if (objData.type === 'text') {
+          // Extrair as configurações do gradiente do objeto salvo
+          const gradientData = objData.fill && objData.fill.type === 'linear' ? {
+            gradientMode: true,
+            gradientType: 'linear',
+            gradientStops: objData.fill.colorStops.map(stop => ({
+              color: stop.color,
+              position: Math.round(stop.offset * 100)
+            })),
+            gradientAngle: calculateGradientAngle(objData.fill.coords),
+            stroke1: {
+              enabled: !!objData.stroke,
+              width: objData.strokeWidth || 0,
+              color: objData.stroke || '#000000'
+            }
+          } : null;
+
+          // Criar o objeto de texto
+          const fabricText = new fabric.Text(objData.text, objData);
+          
+          // Gerar e atribuir um ID único se não existir
+          if (!objData.textId) {
+            fabricText.textId = generateUniqueId();
+          } else {
+            fabricText.textId = objData.textId;
+          }
+
+          // Salvar as configurações no mapa
+          if (gradientData) {
+            textSettingsMap.set(fabricText.textId, {
+              ...gradientData,
+              fontFamily: objData.fontFamily,
+              fontSize: objData.fontSize,
+              fill: objData.fill
+            });
+          } else {
+            textSettingsMap.set(fabricText.textId, {
+              gradientMode: false,
+              fontFamily: objData.fontFamily,
+              fontSize: objData.fontSize,
+              fill: objData.fill,
+              stroke1: {
+                enabled: !!objData.stroke,
+                width: objData.strokeWidth || 0,
+                color: objData.stroke || '#000000'
+              }
+            });
+          }
+
+          canvas.add(fabricText);
+        } else if (objData.type === 'image') {
           fabric.Image.fromURL(objData.src, img => {
-            img.set(objData); 
+            img.set(objData);
             canvas.add(img);
             canvas.renderAll();
           }, { crossOrigin: 'anonymous' });
@@ -2026,17 +2089,14 @@ function loadDocumentFile(file) {
             case 'rect':
               fabricObj = new fabric.Rect(objData);
               break;
-            case 'circle': 
+            case 'circle':
               fabricObj = new fabric.Circle(objData);
               break;
             case 'triangle':
-              fabricObj = new fabric.Triangle(objData); 
+              fabricObj = new fabric.Triangle(objData);
               break;
             case 'line':
               fabricObj = new fabric.Line([objData.x1, objData.y1, objData.x2, objData.y2], objData);
-              break;
-            case 'text':
-              fabricObj = new fabric.Text(objData.text, objData);
               break;
             default:
               fabricObj = new fabric.Object(objData);
@@ -2046,10 +2106,10 @@ function loadDocumentFile(file) {
           }
         }
       });
-      
+
       canvas.renderAll();
       addToHistory();
-      
+
     } catch (error) {
       console.error('Erro ao carregar o documento:', error);
       alert('Erro ao carregar o documento. O arquivo pode estar corrompido ou em formato inválido.');
@@ -2065,7 +2125,7 @@ document.getElementById('openFileInput').addEventListener('change', function(e) 
   if (file) {
     loadDocumentFile(file);
   }
-  this.value = ''; // Reset o input
+  this.value = '';
 });
 
 // ---------- Final Seção Documentos ----------
@@ -2083,7 +2143,6 @@ document.getElementById('cropImageBtn').addEventListener('click', function() {
     const modal = document.getElementById('cropperModal');
     const cropperImage = document.getElementById('cropperImage');
 
-    // Get the image data
     if (activeObject._element) {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = activeObject._element.width;
@@ -2095,7 +2154,6 @@ document.getElementById('cropImageBtn').addEventListener('click', function() {
 
     modal.style.display = 'flex';
 
-    // Initialize Cropper
     if (cropper) {
         cropper.destroy();
     }
@@ -2128,19 +2186,15 @@ document.getElementById('cancelCropBtn').addEventListener('click', function() {
 document.getElementById('saveCropBtn').addEventListener('click', function() {
     if (!cropper || !activeObject) return;
 
-    // Get the cropped canvas
     const croppedCanvas = cropper.getCroppedCanvas();
-    
-    // Create a new image with the cropped data
+
     fabric.Image.fromURL(croppedCanvas.toDataURL(), function(img) {
-        // Keep the original position and scale
         const originalLeft = activeObject.left;
         const originalTop = activeObject.top;
         const originalScaleX = activeObject.scaleX;
         const originalScaleY = activeObject.scaleY;
         const originalAngle = activeObject.angle;
 
-        // Set the new image properties
         img.set({
             left: originalLeft,
             top: originalTop,
@@ -2149,14 +2203,12 @@ document.getElementById('saveCropBtn').addEventListener('click', function() {
             angle: originalAngle
         });
 
-        // Remove the old image and add the new one
         canvas.remove(activeObject);
         canvas.add(img);
         canvas.setActiveObject(img);
         canvas.renderAll();
         addToHistory();
 
-        // Close the modal
         const modal = document.getElementById('cropperModal');
         modal.style.display = 'none';
         cropper.destroy();
@@ -2164,7 +2216,6 @@ document.getElementById('saveCropBtn').addEventListener('click', function() {
     });
 });
 
-// Close modal when clicking outside
 document.getElementById('cropperModal').addEventListener('click', function(e) {
     if (e.target === this) {
         this.style.display = 'none';
@@ -2193,7 +2244,6 @@ function duplicateObjects(numDuplicates) {
     }
   });
 
-  // After all objects are cloned, create a group selection
   setTimeout(() => {
     if (newObjects.length > 0) {
       const selection = new fabric.ActiveSelection(newObjects, { canvas });
@@ -2225,20 +2275,17 @@ function organizeObjects(marginCm) {
     const objWidth = obj.width * obj.scaleX;
     const objHeight = obj.height * obj.scaleY;
 
-    // Check if object needs to move to next row
     if (currentX + objWidth + marginPx > folhaRight) {
       currentX = folhaLeft + marginPx;
       currentY += rowHeight + marginPx;
       rowHeight = 0;
     }
 
-    // Update object position
     obj.set({
       left: currentX,
       top: currentY
     });
 
-    // Update tracking variables
     currentX += objWidth + marginPx;
     rowHeight = Math.max(rowHeight, objHeight);
   });
@@ -2304,7 +2351,7 @@ function handleImageFile(file) {
       });
 
       resizeImageToMaxSize(img);
-      
+
       try {
         canvas.add(img);
         canvas.setActiveObject(img);
@@ -2319,13 +2366,12 @@ function handleImageFile(file) {
 }
 
 function handlePdfFile(file) {
-  // Create PDF page selection modal
   const modalHtml = `
     <div id="pdfModal" class="modal-overlay" style="display: flex;">
       <div class="modal-content" style="height: auto; padding: 20px; min-width: 300px;">
         <h3 style="color: white; margin-bottom: 20px;">Selecionar Página do PDF</h3>
         <div style="margin-bottom: 20px;">
-          <input type="number" id="pdfPageInput" value="1" min="1" 
+          <input type="number" id="pdfPageInput" value="1" min="1"
                  style="width: 100%; padding: 8px; background: #1a4b8c; color: white; border: 1px solid #235ab4;">
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -2358,14 +2404,14 @@ function handlePdfFile(file) {
 async function convertPdfToImage(file, pageNumber) {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-  
+
   if (pageNumber >= pdf.numPages) {
     alert('Página não existe no PDF');
     return;
   }
 
   const page = await pdf.getPage(pageNumber + 1);
-  const scale = 2; // Increase for better quality
+  const scale = 2;
   const viewport = page.getViewport({ scale });
 
   const tempCanvas = document.createElement('canvas');
@@ -2401,7 +2447,7 @@ async function convertPdfToImage(file, pageNumber) {
     });
 
     resizeImageToMaxSize(img);
-    
+
     try {
       canvas.add(img);
       canvas.setActiveObject(img);
@@ -2413,7 +2459,6 @@ async function convertPdfToImage(file, pageNumber) {
   });
 }
 
-// Add drag and drop event listeners
 canvas.wrapperEl.addEventListener('dragover', function(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -2421,192 +2466,445 @@ canvas.wrapperEl.addEventListener('dragover', function(e) {
 
 canvas.wrapperEl.addEventListener('drop', handleDrop);
 // ---------- Final Seção Drag and Drop ----------
+// ---------- Inicio Seção Texto ----------
+const DEFAULT_TEXT_SETTINGS = {
+    fontSize: 20,
+    fontFamily: 'Arial',
+    fill: '#000000',
+    gradientMode: false,
+    gradientType: 'linear',
+    gradientStops: [
+        { color: '#000000', position: 100 },
+        { color: '#ff0000', position: 50 }
+    ],
+    gradientAngle: 0,
+    stroke1: {
+        enabled: false,
+        width: 1,
+        color: '#000000'
+    }
+};
 
-function getCanvasCenter() {
-  return {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2
-  };
+
+// Mapa para armazenar configurações de texto por textId
+const textSettingsMap = new Map();
+
+// Configurações ativas do texto
+let activeTextSettings = {
+    gradientMode: false,
+    gradientType: 'linear',
+    gradientStops: [
+        { color: '#000000', position: 100 },
+        { color: '#ff0000', position: 50 }
+    ],
+    gradientAngle: 0,
+    stroke1: {
+        enabled: false,
+        width: 1,
+        color: '#000000'
+    }
+};
+
+// Função para gerar um ID único para cada texto
+function generateUniqueId() {
+    return '_' + Math.random().toString(36).substr(2, 9);
 }
 
-canvas.on('mouse:dblclick', function(e) {
-  if (e.target && e.target.type === 'text') {
-    e.target.enterEditing();
+// Função para salvar as configurações de um texto
+function saveTextSettings(textObject) {
+    if (!textObject.textId) {
+        textObject.textId = generateUniqueId();
+    }
+
+    textSettingsMap.set(textObject.textId, {
+        gradientMode: activeTextSettings.gradientMode,
+        gradientType: activeTextSettings.gradientType,
+        gradientStops: JSON.parse(JSON.stringify(activeTextSettings.gradientStops)),
+        gradientAngle: activeTextSettings.gradientAngle,
+        stroke1: { ...activeTextSettings.stroke1 },
+        fontFamily: textObject.fontFamily,
+        fontSize: textObject.fontSize,
+        fill: textObject.fill
+    });
+}
+
+// Função para carregar as configurações de um texto
+function loadTextSettings(textObject) {
+  if (!textObject.textId || !textSettingsMap.has(textObject.textId)) {
+    return false;
   }
-});
 
-function updateActiveText() {
-  const activeObject = canvas.getActiveObject();
-  if (!activeObject || activeObject.type !== 'text') return;
+  const settings = textSettingsMap.get(textObject.textId);
+  
+  // Atualizar as configurações ativas
+  activeTextSettings = JSON.parse(JSON.stringify(settings));
 
-  // Update font family
-  if (document.getElementById('fontSelect').value) {
-    activeObject.set('fontFamily', document.getElementById('fontSelect').value);
-  }
+  // Atualizar a interface
+  document.getElementById('fontSelect').value = settings.fontFamily;
+  document.getElementById('fontSizeInput').value = settings.fontSize;
+  
+  // Configurar o modo de cor (sólida ou gradiente)
+  document.getElementById('solidColorBtn').classList.toggle('active', !settings.gradientMode);
+  document.getElementById('gradientColorBtn').classList.toggle('active', settings.gradientMode);
+  document.getElementById('solidColorPicker').style.display = settings.gradientMode ? 'none' : 'block';
+  document.getElementById('gradientPicker').style.display = settings.gradientMode ? 'block' : 'none';
 
-  // Update font size
-  if (document.getElementById('fontSizeInput').value) {
-    activeObject.set('fontSize', parseInt(document.getElementById('fontSizeInput').value));
-  }
-
-  // Update fill (color or gradient)
-  if (activeTextSettings.gradientMode) {
-    const gradient = createGradientFromStops(activeObject);
-    activeObject.set('fill', gradient);
+  // Se for um gradiente, atualizar as paradas do gradiente
+  if (settings.gradientMode && settings.gradientStops) {
+    activeTextSettings.gradientStops = JSON.parse(JSON.stringify(settings.gradientStops));
+    updateGradientStopsUI();
   } else {
-    activeObject.set('fill', document.getElementById('textColorInput').value);
+    // Se for cor sólida, atualizar o color picker
+    document.getElementById('textColorInput').value = typeof settings.fill === 'string' ? 
+      settings.fill : '#000000';
   }
 
-  // Update strokes
-  updateTextStrokes(activeObject);
+  // Atualizar configurações de contorno
+  document.getElementById('stroke1Enable').checked = settings.stroke1.enabled;
+  document.getElementById('stroke1Width').value = settings.stroke1.width;
+  document.getElementById('stroke1Color').value = settings.stroke1.color;
+  document.getElementById('stroke1Width').disabled = !settings.stroke1.enabled;
+  document.getElementById('stroke1Color').disabled = !settings.stroke1.enabled;
 
-  canvas.renderAll();
+  return true;
 }
 
+// Função para atualizar o texto ativo com as configurações do menu
+function updateActiveText() {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'text') return;
+
+    // Atualizar as propriedades do texto com base nas entradas do menu
+    activeObject.set({
+        fontFamily: document.getElementById('fontSelect').value,
+        fontSize: parseInt(document.getElementById('fontSizeInput').value),
+        fill: activeTextSettings.gradientMode ? createGradientFromStops(activeObject) : document.getElementById('textColorInput').value,
+        stroke: activeTextSettings.stroke1.enabled ? activeTextSettings.stroke1.color : null,
+        strokeWidth: activeTextSettings.stroke1.enabled ? activeTextSettings.stroke1.width : 0,
+    });
+
+    // Salvar as configurações atualizadas no mapa
+    saveTextSettings(activeObject);
+
+    canvas.renderAll();
+}
+
+// Função para criar um gradiente a partir das paradas (stops)
 function createGradientFromStops(obj) {
-  const stops = activeTextSettings.gradientStops;
-  const coords = calculateGradientCoords(obj, activeTextSettings.gradientAngle);
-  
-  return new fabric.Gradient({
-    type: 'linear',
-    coords: coords,
-    colorStops: stops.map(stop => ({
-      offset: stop.position / 100,
-      color: stop.color
-    }))
-  });
+    const stops = activeTextSettings.gradientStops.sort((a, b) => a.position - b.position);
+    const coords = calculateGradientCoords(obj, activeTextSettings.gradientAngle);
+
+    return new fabric.Gradient({
+        type: 'linear',
+        coords: coords,
+        colorStops: stops.map(stop => ({
+            offset: stop.position / 100,
+            color: stop.color
+        }))
+    });
 }
 
+// Função para calcular as coordenadas do gradiente
 function calculateGradientCoords(obj, angle) {
-  const angleRad = angle * Math.PI / 180;
-  const cos = Math.cos(angleRad);
-  const sin = Math.sin(angleRad);
-  
-  return {
-    x1: -obj.width/2 * cos,
-    y1: -obj.width/2 * sin,
-    x2: obj.width/2 * cos,
-    y2: obj.width/2 * sin
-  };
+    const angleRad = angle * Math.PI / 180;
+    const cos = Math.cos(angleRad);
+    const sin = Math.sin(angleRad);
+
+    return {
+        x1: -obj.width / 2 * cos,
+        y1: -obj.width / 2 * sin,
+        x2: obj.width / 2 * cos,
+        y2: obj.width / 2 * sin
+    };
 }
 
+// Função para atualizar os contornos do texto
 function updateTextStrokes(obj) {
-  const stroke1 = activeTextSettings.stroke1;
-  const stroke2 = activeTextSettings.stroke2;
-  
-  let strokeStyles = [];
-  
-  if (stroke2.enabled) {
-    strokeStyles.push({
-      width: stroke2.width,
-      color: stroke2.gradientMode ? 
-        createGradientFromStops(obj, stroke2.gradientStops, stroke2.gradientAngle) : 
-        stroke2.color
-    });
-  }
-  
-  if (stroke1.enabled) {
-    strokeStyles.push({
-      width: stroke1.width,
-      color: stroke1.gradientMode ? 
-        createGradientFromStops(obj, stroke1.gradientStops, stroke1.gradientAngle) : 
-        stroke1.color
-    });
-  }
-  
-  obj.set({
-    strokeWidth: strokeStyles.reduce((sum, style) => sum + style.width, 0),
-    stroke: strokeStyles.length > 0 ? strokeStyles[0].color : null
-  });
+    const stroke1 = activeTextSettings.stroke1;
+
+    if (stroke1.enabled) {
+        obj.set({
+            strokeWidth: stroke1.width,
+            stroke: stroke1.color,
+            paintFirst: 'stroke',
+            strokeUniform: true 
+        });
+    } else {
+        obj.set({
+            strokeWidth: 0,
+            stroke: null,
+            paintFirst: 'fill',
+            strokeUniform: true 
+        });
+    }
 }
 
-document.getElementById('addTextBtn').addEventListener('click', function() {
-  const text = new fabric.Text('CloudApp', {
-    left: canvas.getWidth() / 2,
-    top: canvas.getHeight() / 2,
-    fontSize: parseInt(document.getElementById('fontSizeInput').value) || 20,
-    fill: document.getElementById('textColorInput').value,
-    fontFamily: document.getElementById('fontSelect').value || 'Arial',
-    originX: 'center',
-    originY: 'center'
-  });
+// Função para ativar a categoria "TEXTO"
+function activateTextCategory() {
+    categoryItems.forEach(i => i.classList.remove('active'));
+    menuContents.forEach(m => m.classList.remove('active'));
+    const textoCategory = document.querySelector('.category-item[data-category="texto"]');
+    textoCategory.classList.add('active');
+    document.getElementById('menu-texto').classList.add('active');
+}
+
+// Evento para adicionar um novo texto
+document.getElementById('addTextBtn').addEventListener('click', function () {
+    const text = new fabric.Text('CloudApp', {
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        fontSize: DEFAULT_TEXT_SETTINGS.fontSize,
+        fill: DEFAULT_TEXT_SETTINGS.fill,
+        fontFamily: DEFAULT_TEXT_SETTINGS.fontFamily,
+        originX: 'center',
+        originY: 'center',
+        paintFirst: 'stroke',
+        strokeUniform: true
+    });
+
+    text.textId = generateUniqueId();
     
-  canvas.add(text);
-  canvas.setActiveObject(text);
-  canvas.renderAll();
-  addToHistory();
+    // Resetar o menu para as configurações padrão
+    document.getElementById('fontSizeInput').value = DEFAULT_TEXT_SETTINGS.fontSize;
+    document.getElementById('textColorInput').value = DEFAULT_TEXT_SETTINGS.fill;
+    document.getElementById('fontSelect').value = DEFAULT_TEXT_SETTINGS.fontFamily;
+    
+    // Resetar as configurações ativas para o padrão
+    activeTextSettings = JSON.parse(JSON.stringify(DEFAULT_TEXT_SETTINGS));
+    
+    // Salvar as configurações iniciais
+    saveTextSettings(text);
+
+    canvas.add(text);
+    canvas.setActiveObject(text);
+    canvas.renderAll();
+    addToHistory();
+
+    activateTextCategory();
+    updateTextControlsUI(text);
 });
 
+// Função para atualizar a interface de controle de texto
+function updateTextControlsUI(textObject) {
+    if (!textObject) return;
+    
+    const settings = textSettingsMap.get(textObject.textId);
+    if (!settings) return;
+
+    document.getElementById('fontSizeInput').value = textObject.fontSize;
+    document.getElementById('fontSelect').value = textObject.fontFamily;
+    
+    if (settings.gradientMode) {
+        document.getElementById('gradientColorBtn').classList.add('active');
+        document.getElementById('solidColorBtn').classList.remove('active');
+        document.getElementById('gradientPicker').style.display = 'block';
+        document.getElementById('solidColorPicker').style.display = 'none';
+    } else {
+        document.getElementById('solidColorBtn').classList.add('active');
+        document.getElementById('gradientColorBtn').classList.remove('active');
+        document.getElementById('solidColorPicker').style.display = 'block';
+        document.getElementById('gradientPicker').style.display = 'none';
+        document.getElementById('textColorInput').value = textObject.fill;
+    }
+    
+    // Atualizar controles de contorno
+    document.getElementById('stroke1Enable').checked = settings.stroke1.enabled;
+    document.getElementById('stroke1Width').value = settings.stroke1.width;
+    document.getElementById('stroke1Color').value = settings.stroke1.color;
+    document.getElementById('stroke1Width').disabled = !settings.stroke1.enabled;
+    document.getElementById('stroke1Color').disabled = !settings.stroke1.enabled;
+}
+
+// Eventos para atualizar o texto ativo quando as configurações mudarem
 document.getElementById('fontSelect').addEventListener('change', updateActiveText);
 document.getElementById('fontSizeInput').addEventListener('change', updateActiveText);
-document.getElementById('textColorInput').addEventListener('change', updateActiveText);
+document.getElementById('textColorInput').addEventListener('input', updateActiveText);
+document.getElementById('stroke1Color').addEventListener('input', updateActiveText);
+document.getElementById('stroke1Width').addEventListener('input', updateActiveText);
+
+// Eventos para alternar entre cor sólida e gradiente
 document.getElementById('solidColorBtn').addEventListener('click', () => {
-  activeTextSettings.gradientMode = false;
-  document.getElementById('solidColorPicker').style.display = 'block';
-  document.getElementById('gradientPicker').style.display = 'none';
-  updateActiveText();
+    activeTextSettings.gradientMode = false;
+    document.getElementById('solidColorPicker').style.display = 'block';
+    document.getElementById('gradientPicker').style.display = 'none';
+    updateActiveText();
 });
 
 document.getElementById('gradientColorBtn').addEventListener('click', () => {
-  activeTextSettings.gradientMode = true;
-  document.getElementById('solidColorPicker').style.display = 'none';
-  document.getElementById('gradientPicker').style.display = 'block';
-  updateActiveText();
+    activeTextSettings.gradientMode = true;
+    document.getElementById('solidColorPicker').style.display = 'none';
+    document.getElementById('gradientPicker').style.display = 'block';
+    updateGradientStopsUI();
+    updateActiveText();
 });
 
+// Evento para adicionar uma nova parada de gradiente
 document.getElementById('addGradientStop').addEventListener('click', () => {
-  const stop = {color: '#000000', position: 50};
-  activeTextSettings.gradientStops.push(stop);
-  updateGradientStopsUI();
-  updateActiveText();
+    const stop = { color: '#000000', position: 50 };
+    activeTextSettings.gradientStops.push(stop);
+    updateGradientStopsUI();
+    updateActiveText();
 });
 
-document.getElementById('stroke1Enable').addEventListener('change', function() {
-  activeTextSettings.stroke1.enabled = this.checked;
-  document.getElementById('stroke1Width').disabled = !this.checked;
-  updateActiveText();
+// Eventos para atualizar o contorno do texto
+document.getElementById('stroke1Enable').addEventListener('change', function () {
+    activeTextSettings.stroke1.enabled = this.checked;
+    document.getElementById('stroke1Width').disabled = !this.checked;
+    document.getElementById('stroke1Color').disabled = !this.checked;
+    updateActiveText();
 });
 
-document.getElementById('stroke2Enable').addEventListener('change', function() {
-  activeTextSettings.stroke2.enabled = this.checked;
-  document.getElementById('stroke2Width').disabled = !this.checked;
-  updateActiveText();
+document.getElementById('stroke1Width').addEventListener('input', function () {
+    activeTextSettings.stroke1.width = parseInt(this.value);
+    updateActiveText();
 });
 
+document.getElementById('stroke1Color').addEventListener('input', function () {
+    activeTextSettings.stroke1.color = this.value;
+    updateActiveText();
+});
+
+// Função para atualizar a interface do gradiente
 function updateGradientStopsUI() {
-  const container = document.querySelector('.gradient-stops');
-  container.innerHTML = '';
-  
-  activeTextSettings.gradientStops.forEach((stop, index) => {
-    const stopEl = document.createElement('div');
-    stopEl.className = 'gradient-stop';
-    stopEl.innerHTML = `
-      <input type="color" class="gradient-color" value="${stop.color}">
-      <input type="number" class="gradient-position" value="${stop.position}" min="0" max="100">
-      <button class="remove-stop">&times;</button>
-    `;
-    
-    stopEl.querySelector('.gradient-color').addEventListener('change', (e) => {
-      stop.color = e.target.value;
-      updateActiveText();
+    const container = document.querySelector('.gradient-stops');
+    container.innerHTML = '';
+
+    activeTextSettings.gradientStops.forEach((stop, index) => {
+        const stopEl = document.createElement('div');
+        stopEl.className = 'gradient-stop';
+        stopEl.innerHTML = `
+            <input type="color" class="gradient-color" value="${stop.color}">
+            <input type="number" class="gradient-position" value="${stop.position}" min="0" max="100">
+            <button class="remove-stop">&times;</button>
+        `;
+
+        stopEl.querySelector('.gradient-color').addEventListener('input', (e) => {
+            stop.color = e.target.value;
+            updateActiveText();
+        });
+
+        stopEl.querySelector('.gradient-position').addEventListener('input', (e) => {
+            stop.position = parseInt(e.target.value);
+            updateActiveText();
+        });
+
+        const removeButton = stopEl.querySelector('.remove-stop');
+        if (index < 2) {
+            removeButton.disabled = true;
+        } else {
+            removeButton.addEventListener('click', () => {
+                if (activeTextSettings.gradientStops.length > 2) {
+                    activeTextSettings.gradientStops.splice(index, 1);
+                    updateGradientStopsUI();
+                    updateActiveText();
+                }
+            });
+        }
+
+        container.appendChild(stopEl);
     });
-    
-    stopEl.querySelector('.gradient-position').addEventListener('change', (e) => {
-      stop.position = parseInt(e.target.value);
-      updateActiveText();
-    });
-    
-    stopEl.querySelector('.remove-stop').addEventListener('click', () => {
-      if (activeTextSettings.gradientStops.length > 2) {
-        activeTextSettings.gradientStops.splice(index, 1);
+}
+
+// Eventos para carregar as configurações ao selecionar um texto
+canvas.on('selection:created', function (e) {
+    if (e.selected[0] && e.selected[0].type === 'text') {
+        activateTextCategory();
+        const textObject = e.selected[0];
+        
+        // Carregar configurações salvas ou criar novas se não existirem
+        if (!textObject.textId) {
+            textObject.textId = generateUniqueId();
+            saveTextSettings(textObject);
+        }
+        
+        const settings = textSettingsMap.get(textObject.textId);
+        if (settings) {
+            activeTextSettings = JSON.parse(JSON.stringify(settings));
+        }
+        
+        updateTextControlsUI(textObject);
+        document.querySelector('.text-controls').style.display = 'block';
+
+        // Adicionar as chamadas aqui
         updateGradientStopsUI();
         updateActiveText();
-      }
-    });
-    
-    container.appendChild(stopEl);
-  });
+    }
+});
+
+canvas.on('selection:updated', function (e) {
+    if (e.selected[0] && e.selected[0].type === 'text') {
+        activateTextCategory();
+        const textObject = e.selected[0];
+        
+        if (!textObject.textId) {
+            textObject.textId = generateUniqueId();
+            saveTextSettings(textObject);
+        }
+        
+        const settings = textSettingsMap.get(textObject.textId);
+        if (settings) {
+            activeTextSettings = JSON.parse(JSON.stringify(settings));
+        }
+        
+        updateTextControlsUI(textObject);
+        document.querySelector('.text-controls').style.display = 'block';
+
+        // Adicionar as chamadas aqui
+        updateGradientStopsUI();
+        updateActiveText();
+    }
+});
+
+canvas.on('object:modified', function(e) {
+    if (e.target && e.target.type === 'text') {
+        const textObject = e.target;
+        if (textObject.scaleX !== 1 || textObject.scaleY !== 1) {
+            // Atualizar o tamanho da fonte baseado na escala
+            const newFontSize = Math.round(textObject.fontSize * textObject.scaleX);
+            textObject.set({
+                fontSize: newFontSize,
+                scaleX: 1,
+                scaleY: 1
+            });
+            
+            // Atualizar as configurações salvas
+            const settings = textSettingsMap.get(textObject.textId);
+            if (settings) {
+                settings.fontSize = newFontSize;
+                textSettingsMap.set(textObject.textId, settings);
+            }
+            
+            // Atualizar a interface
+            document.getElementById('fontSizeInput').value = newFontSize;
+        }
+        canvas.renderAll();
+    }
+});
+
+canvas.on('selection:cleared', function () {
+    document.querySelector('.text-controls').style.display = 'none';
+});
+
+// Evento para atualizar o tamanho da fonte do texto
+document.getElementById('fontSizeInput').addEventListener('input', function () {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'text') {
+        const newFontSize = parseInt(this.value);
+        activeObject.set('fontSize', newFontSize);
+        activeObject.set('scaleX', 1);
+        activeObject.set('scaleY', 1);
+        canvas.renderAll();
+    }
+});
+
+function calculateGradientAngle(coords) {
+  if (!coords) return 0;
+  const dx = coords.x2 - coords.x1;
+  const dy = coords.y2 - coords.y1;
+  return Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
 }
+
+// ---------- Final Seção Texto ----------
 </script>
 </body>
 </html>
