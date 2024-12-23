@@ -1927,7 +1927,7 @@ function exportSelectedObjects() {
 
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
     const link = document.createElement('a');
-    link.download = `selected_objects_${timestamp}.png`;
+    link.download = `CloudAppImagem_${timestamp}.png`;
     link.href = scaledCanvas.toDataURL('image/png');
     link.click();
 
