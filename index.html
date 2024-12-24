@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CloudPhoto Editor</title>
     <script src="https://nkmplay.github.io/cgf/scripts/fabric.min.js"></script>
-    <script src="https://nkmplay.github.io/cgf/scripts/jspdf.umd.min.js"></script>
     <script src="https://nkmplay.github.io/cgf/scripts/html2canvas.min.js"></script>
     <script src="https://nkmplay.github.io/cgf/scripts/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://nkmplay.github.io/cgf/scripts/pdf.worker.min.js';</script>
     <link rel="stylesheet" href="https://nkmplay.github.io/cgf/scripts/cropper.min.css">
     <script src="https://nkmplay.github.io/cgf/scripts/cropper.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.4.0/dist/pdf-lib.min.js"></script>
     <style>
         body, html {
             margin: 0;
@@ -510,8 +510,7 @@ input[type="color"] {
                 </div>
                 <button class="menu-item export-btn" data-format="png">PNG</button>
                 <button class="menu-item export-btn" data-format="jpg">JPG</button>
-                <button class="menu-item export-btn" data-format="pdf">PDF</button>
-                <button class="menu-item export-btn" data-format="vector-pdf">Formas em PDF Vetor</button>
+                <button class="menu-item export-btn" id="exportPdfBtn" data-format="pdf">PDF</button>
                 <button class="menu-item export-btn" id="previewExportBtn">Ver área de exportação</button>
             </div>
         </div>
@@ -564,6 +563,7 @@ input[type="color"] {
         </div>
 		<div id="menu-texto" class="menu-content">
 			<button id="addTextBtn" class="highlight-button">Adicionar Texto</button>
+			<div class="separator"></div>
 			<div class="text-controls">
 				<div class="control-group">
 					<label for="fontSelect" class="font-label">Fonte:</label>
@@ -624,15 +624,13 @@ input[type="color"] {
 					</div>
 					<button id="addGradientStop" class="menu-item">Adicionar Cor</button>
 				</div>
-
 				<div class="separator"></div>
-
 				<div class="control-group">
 					<input type="checkbox" id="stroke1Enable">
 					<label>Contorno</label>
 					<input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
 					<input type="color" id="stroke1Color" value="#000000">
-				</div>
+				</div>			
 			</div>
 		</div>
         <div id="menu-formas" class="menu-content">
@@ -667,8 +665,9 @@ input[type="color"] {
             </div>
         </div>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.16 - 24/12/2024</div>
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.17 - 24/12/2024</div>
 <script>
+
 const container = document.getElementById('canvas-container');
 if (!container) {
   console.error('Canvas container not found');
@@ -1825,6 +1824,84 @@ imageHeightInput.addEventListener('change', () => {
   canvas.renderAll();
   addToHistory();
 });
+
+function cmToPoints(cm) {
+    return cm * 28.3465;
+}
+
+document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+    const dpi = parseInt(document.getElementById('resolutionInput').value) || 600;
+    const scale = dpi / 96;
+
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) return;
+
+    const pageWidth = cmToPoints(cloudFolha.width / CM_TO_PX);
+    const pageHeight = cmToPoints(cloudFolha.height / CM_TO_PX);
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = Math.floor(cloudFolha.width * scale);
+    tempCanvas.height = Math.floor(cloudFolha.height * scale);
+    const ctx = tempCanvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    const tempFabricCanvas = new fabric.StaticCanvas(tempCanvas, {
+        enableRetinaScaling: false,
+        renderOnAddRemove: false,
+    });
+
+    tempFabricCanvas.setWidth(cloudFolha.width * scale);
+    tempFabricCanvas.setHeight(cloudFolha.height * scale);
+
+    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+    objects.forEach(obj => {
+        const clonedObj = fabric.util.object.clone(obj);
+
+        const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
+        const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
+
+        clonedObj.set({
+            left: relativeLeft * scale,
+            top: relativeTop * scale,
+            scaleX: (obj.scaleX / cloudFolha.scaleX) * scale,
+            scaleY: (obj.scaleY / cloudFolha.scaleY) * scale
+        });
+
+        tempFabricCanvas.add(clonedObj);
+    });
+
+    tempFabricCanvas.renderAll();
+
+    const outputCanvas = document.createElement('canvas');
+    outputCanvas.width = tempCanvas.width;
+    outputCanvas.height = tempCanvas.height;
+    const outputCtx = outputCanvas.getContext('2d');
+    outputCtx.drawImage(tempCanvas, 0, 0);
+
+    const pdfDoc = await PDFLib.PDFDocument.create();
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
+    const pngImage = await pdfDoc.embedPng(outputCanvas.toDataURL('image/png'));
+    page.drawImage(pngImage, {
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+    link.download = `CloudApp_${timestamp}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
+});
+
+
 // ---------- Final Seção Exportação ----------
 
 // ---------- Inicio Seção Manipulação de Objetos Novos ----------
@@ -2158,6 +2235,7 @@ document.getElementById('openFileInput').addEventListener('change', function(e) 
 
 // ---------- Final Seção Documentos ----------
 
+// ---------- Inicio Seção Corte ----------
 let cropper = null;
 let activeObject = null;
 
@@ -2253,6 +2331,10 @@ document.getElementById('cropperModal').addEventListener('click', function(e) {
     }
 });
 
+// ---------- Final Seção Corte ----------
+
+// ---------- Inicio Seção Duplicar e organizar ----------
+
 function duplicateObjects(numDuplicates) {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length === 0) return;
@@ -2330,6 +2412,8 @@ document.getElementById('organizeBtn').addEventListener('click', function() {
   const marginCm = parseFloat(document.getElementById('organizeInput').value) || 1;
   organizeObjects(marginCm);
 });
+
+// ---------- Final Seção Duplicar e organizar ----------
 
 // ---------- Inicio Seção Drag and Drop ----------
 function handleDrop(e) {
@@ -3168,6 +3252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
 // ---------- Final Seção Eventos de Texto ----------
 
 
