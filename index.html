@@ -618,7 +618,7 @@ input[type="color"] {
 						</div>
 						<div class="gradient-stop">
 							<input type="color" class="gradient-color" value="#ff0000">
-							<input type="number" class="gradient-position" value="50" min="0" max="100">
+							<input type="number" class="gradient-position" value="20" min="0" max="100">
 							<button class="remove-stop">&times;</button>
 						</div>
 					</div>
@@ -629,7 +629,7 @@ input[type="color"] {
 
 				<div class="control-group">
 					<input type="checkbox" id="stroke1Enable">
-					<label>Contorno Externo 1</label>
+					<label>Contorno</label>
 					<input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
 					<input type="color" id="stroke1Color" value="#000000">
 				</div>
@@ -667,7 +667,7 @@ input[type="color"] {
             </div>
         </div>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.14 - 22/12/2024</div>
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.15 - 22/12/2024</div>
 <script>
 const container = document.getElementById('canvas-container');
 if (!container) {
@@ -728,6 +728,7 @@ let previewRect = null;
 let guides = [];
 let textIdCounter = 0;
 const textSettings = {};
+let isTextEditing = false;
 
 // ---------- Final Seção Variáveis Globais ----------
 
@@ -1048,48 +1049,83 @@ function addToHistory() {
 
 // ---------- Inicio Seção Manipulação de Objetos ----------
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Delete') {
-    const activeObjects = canvas.getActiveObjects();
-    if (activeObjects) {
-      canvas.remove(...activeObjects);
-      canvas.discardActiveObject();
-      canvas.requestRenderAll();
-      addToHistory();
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        const activeObject = canvas.getActiveObject();
+
+        if (activeObject) {
+            if (activeObject.type.includes('text') && activeObject.isEditing) {
+                return;
+            } else {
+                e.preventDefault();
+                canvas.remove(activeObject);
+                canvas.requestRenderAll();
+                addToHistory();
+            }
+        }
     }
-  }
 });
 
 document.addEventListener('paste', function(e) {
-  if (e.clipboardData) {
-    const items = e.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        const blob = items[i].getAsFile();
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          fabric.Image.fromURL(event.target.result, function (img) {
-            const canvasCenter = getCanvasCenter();
+  const items = e.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
 
-            img.set({
-              left: canvasCenter.left,
-              top: canvasCenter.top,
-              originX: 'center',
-              originY: 'center',
-              perPixelTargetFind: true,
-              lockMovementX: false,
-              lockMovementY: false
-            });
+    // Verifica se é uma imagem
+    if (item.type.indexOf('image') !== -1) {
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        fabric.Image.fromURL(event.target.result, function(img) {
+          const canvasCenter = getCanvasCenter();
+          img.set({
+            left: canvasCenter.left,
+            top: canvasCenter.top,
+            originX: 'center',
+            originY: 'center',
+            perPixelTargetFind: true,
+            lockMovementX: false,
+            lockMovementY: false
+          });
+          resizeImageToMaxSize(img);
+          canvas.add(img);
+          canvas.setActiveObject(img);
+          canvas.renderAll();
+          addToHistory();
+        }, { crossOrigin: 'anonymous' });
+      };
+      reader.readAsDataURL(blob);
+    }
 
-            resizeImageToMaxSize(img);
+    // Verifica se é texto
+    else if (item.type.indexOf('text/plain') !== -1) {
+      item.getAsString(function(text) {
+        const canvasCenter = getCanvasCenter();
 
-            canvas.add(img);
-            canvas.setActiveObject(img);
-            canvas.renderAll();
-            addToHistory();
-          }, { crossOrigin: 'anonymous' });
-        };
-        reader.readAsDataURL(blob);
-      }
+        // Cria um novo IText com o texto colado
+        const newText = new fabric.IText(text, {
+          left: canvasCenter.left,
+          top: canvasCenter.top,
+          fontSize: 20, 
+          fontFamily: DEFAULT_TEXT_SETTINGS.fontFamily,
+          fill: DEFAULT_TEXT_SETTINGS.fill,
+          originX: 'center',
+          originY: 'center',
+          editable: true,
+          selectable: true
+        });
+
+        // Gera um ID único para o texto
+        newText.textId = generateUniqueId();
+
+        // Adiciona o texto ao canvas
+        canvas.add(newText);
+        canvas.setActiveObject(newText);
+        canvas.renderAll();
+        addToHistory();
+
+        // Ativa a categoria de texto
+        activateTextCategory();
+      });
     }
   }
 });
@@ -1603,13 +1639,6 @@ canvas.on('object:moving', function(e) {
   });
 });
 
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'F2') {
-    e.preventDefault();
-    addDefaultGuides();
-  }
-});
-
 horizontalGuideBtn.addEventListener('click', () => {
   horizontalGuideBtn.classList.add('active');
   verticalGuideBtn.classList.remove('active');
@@ -1943,13 +1972,6 @@ function getCanvasCenter() {
   };
 }
 
-// Evento para editar texto ao dar um duplo clique
-canvas.on('mouse:dblclick', function(e) {
-  if (e.target && e.target.type === 'text') {
-    e.target.enterEditing();
-  }
-});
-
 // ---------- Final Seção Manipulação de Objetos Novos ----------
 
 // ---------- Inicio Seção Eventos Novos ----------
@@ -2045,7 +2067,7 @@ function loadDocumentFile(file) {
 
           // Criar o objeto de texto
           const fabricText = new fabric.Text(objData.text, objData);
-          
+
           // Gerar e atribuir um ID único se não existir
           if (!objData.textId) {
             fabricText.textId = generateUniqueId();
@@ -2462,6 +2484,7 @@ canvas.wrapperEl.addEventListener('dragover', function(e) {
 
 canvas.wrapperEl.addEventListener('drop', handleDrop);
 // ---------- Final Seção Drag and Drop ----------
+
 // ---------- Inicio Seção Texto ----------
 const DEFAULT_TEXT_SETTINGS = {
     fontSize: 20,
@@ -2480,7 +2503,6 @@ const DEFAULT_TEXT_SETTINGS = {
         color: '#000000'
     }
 };
-
 
 // Mapa para armazenar configurações de texto por textId
 const textSettingsMap = new Map();
@@ -2512,7 +2534,7 @@ function saveTextSettings(textObject) {
         textObject.textId = generateUniqueId();
     }
 
-    textSettingsMap.set(textObject.textId, {
+    const settings = {
         gradientMode: activeTextSettings.gradientMode,
         gradientType: activeTextSettings.gradientType,
         gradientStops: JSON.parse(JSON.stringify(activeTextSettings.gradientStops)),
@@ -2521,68 +2543,106 @@ function saveTextSettings(textObject) {
         fontFamily: textObject.fontFamily,
         fontSize: textObject.fontSize,
         fill: textObject.fill
-    });
+    };
+
+    textSettingsMap.set(textObject.textId, settings);
 }
 
 // Função para carregar as configurações de um texto
 function loadTextSettings(textObject) {
-  if (!textObject.textId || !textSettingsMap.has(textObject.textId)) {
-    return false;
-  }
+    if (!textObject.textId || !textSettingsMap.has(textObject.textId)) {
+        return false;
+    }
 
-  const settings = textSettingsMap.get(textObject.textId);
-  
-  // Atualizar as configurações ativas
-  activeTextSettings = JSON.parse(JSON.stringify(settings));
+    const settings = textSettingsMap.get(textObject.textId);
 
-  // Atualizar a interface
-  document.getElementById('fontSelect').value = settings.fontFamily;
-  document.getElementById('fontSizeInput').value = settings.fontSize;
-  
-  // Configurar o modo de cor (sólida ou gradiente)
-  document.getElementById('solidColorBtn').classList.toggle('active', !settings.gradientMode);
-  document.getElementById('gradientColorBtn').classList.toggle('active', settings.gradientMode);
-  document.getElementById('solidColorPicker').style.display = settings.gradientMode ? 'none' : 'block';
-  document.getElementById('gradientPicker').style.display = settings.gradientMode ? 'block' : 'none';
+    // Atualizar as configurações ativas
+    activeTextSettings = JSON.parse(JSON.stringify(settings));
 
-  // Se for um gradiente, atualizar as paradas do gradiente
-  if (settings.gradientMode && settings.gradientStops) {
-    activeTextSettings.gradientStops = JSON.parse(JSON.stringify(settings.gradientStops));
-    updateGradientStopsUI();
-  } else {
-    // Se for cor sólida, atualizar o color picker
-    document.getElementById('textColorInput').value = typeof settings.fill === 'string' ? 
-      settings.fill : '#000000';
-  }
+    // Atualizar a interface
+    document.getElementById('fontSelect').value = settings.fontFamily;
+    document.getElementById('fontSizeInput').value = settings.fontSize;
 
-  // Atualizar configurações de contorno
-  document.getElementById('stroke1Enable').checked = settings.stroke1.enabled;
-  document.getElementById('stroke1Width').value = settings.stroke1.width;
-  document.getElementById('stroke1Color').value = settings.stroke1.color;
-  document.getElementById('stroke1Width').disabled = !settings.stroke1.enabled;
-  document.getElementById('stroke1Color').disabled = !settings.stroke1.enabled;
+    // Configurar o modo de cor (sólida ou gradiente)
+    document.getElementById('solidColorBtn').classList.toggle('active', !settings.gradientMode);
+    document.getElementById('gradientColorBtn').classList.toggle('active', settings.gradientMode);
+    document.getElementById('solidColorPicker').style.display = settings.gradientMode ? 'none' : 'block';
+    document.getElementById('gradientPicker').style.display = settings.gradientMode ? 'block' : 'none';
 
-  return true;
+    if (!settings.gradientMode) {
+        document.getElementById('textColorInput').value = textObject.fill;
+    }
+
+    // Atualizar configurações de contorno
+    document.getElementById('stroke1Enable').checked = settings.stroke1.enabled;
+    document.getElementById('stroke1Width').value = settings.stroke1.width;
+    document.getElementById('stroke1Color').value = settings.stroke1.color;
+    document.getElementById('stroke1Width').disabled = !settings.stroke1.enabled;
+    document.getElementById('stroke1Color').disabled = !settings.stroke1.enabled;
+
+    if (settings.gradientMode) {
+        activeTextSettings.gradientStops = [...settings.gradientStops];
+        updateGradientStopsUI();
+    }
 }
 
 // Função para atualizar o texto ativo com as configurações do menu
 function updateActiveText() {
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'text') return;
+    return debugTextOperation('updateActiveText', () => {
+        const activeObject = canvas.getActiveObject();
+        if (!activeObject || !activeObject.type.includes('text')) {
+            console.log('No active text object found');
+            return;
+        }
 
-    // Atualizar as propriedades do texto com base nas entradas do menu
-    activeObject.set({
-        fontFamily: document.getElementById('fontSelect').value,
-        fontSize: parseInt(document.getElementById('fontSizeInput').value),
-        fill: activeTextSettings.gradientMode ? createGradientFromStops(activeObject) : document.getElementById('textColorInput').value,
-        stroke: activeTextSettings.stroke1.enabled ? activeTextSettings.stroke1.color : null,
-        strokeWidth: activeTextSettings.stroke1.enabled ? activeTextSettings.stroke1.width : 0,
+        console.log('Current text object settings:', {
+            id: activeObject.textId,
+            font: activeObject.fontFamily,
+            size: activeObject.fontSize,
+            fill: activeObject.fill
+        });
+
+        // Collect new settings
+        const newSettings = {
+            fontFamily: document.getElementById('fontSelect').value,
+            fontSize: parseInt(document.getElementById('fontSizeInput').value),
+            selectable: true,
+            editable: true
+        };
+
+        // Update fill based on color mode
+        if (activeTextSettings.gradientMode) {
+            newSettings.fill = createGradientFromStops(activeObject);
+        } else {
+            newSettings.fill = document.getElementById('textColorInput').value;
+        }
+
+        // Apply stroke settings
+        if (activeTextSettings.stroke1.enabled) {
+            newSettings.stroke = activeTextSettings.stroke1.color;
+            newSettings.strokeWidth = parseInt(activeTextSettings.stroke1.width);
+            newSettings.paintFirst = 'stroke';
+        } else {
+            newSettings.stroke = null;
+            newSettings.strokeWidth = 0;
+        }
+
+        console.log('Applying new settings:', newSettings);
+
+        // Apply settings individually and log any errors
+        Object.entries(newSettings).forEach(([key, value]) => {
+            try {
+                activeObject.set(key, value);
+                console.log(`Successfully set ${key} to:`, value);
+            } catch (error) {
+                console.error(`Error setting ${key}:`, error);
+            }
+        });
+
+        activeObject.dirty = true;
+        saveTextSettings(activeObject);
+        canvas.requestRenderAll();
     });
-
-    // Salvar as configurações atualizadas no mapa
-    saveTextSettings(activeObject);
-
-    canvas.renderAll();
 }
 
 // Função para criar um gradiente a partir das paradas (stops)
@@ -2623,14 +2683,14 @@ function updateTextStrokes(obj) {
             strokeWidth: stroke1.width,
             stroke: stroke1.color,
             paintFirst: 'stroke',
-            strokeUniform: true 
+            strokeUniform: true
         });
     } else {
         obj.set({
             strokeWidth: 0,
             stroke: null,
             paintFirst: 'fill',
-            strokeUniform: true 
+            strokeUniform: true
         });
     }
 }
@@ -2645,75 +2705,138 @@ function activateTextCategory() {
 }
 
 // Evento para adicionar um novo texto
-document.getElementById('addTextBtn').addEventListener('click', function () {
-    const text = new fabric.Text('CloudApp', {
-        left: canvas.getWidth() / 2,
-        top: canvas.getHeight() / 2,
-        fontSize: DEFAULT_TEXT_SETTINGS.fontSize,
-        fill: DEFAULT_TEXT_SETTINGS.fill,
-        fontFamily: DEFAULT_TEXT_SETTINGS.fontFamily,
-        originX: 'center',
-        originY: 'center',
-        paintFirst: 'stroke',
-        strokeUniform: true
+document.getElementById('addTextBtn').addEventListener('click', function() {
+    debugTextOperation('addTextBtn click', () => {
+        const text = new fabric.IText('CloudApp', {
+            left: canvas.getWidth() / 2,
+            top: canvas.getHeight() / 2,
+            fontSize: DEFAULT_TEXT_SETTINGS.fontSize,
+            fill: DEFAULT_TEXT_SETTINGS.fill,
+            fontFamily: DEFAULT_TEXT_SETTINGS.fontFamily,
+            originX: 'center',
+            originY: 'center',
+            editable: true,
+            selectable: true
+        });
+
+        text.textId = generateUniqueId();
+        console.log('Created new text object with ID:', text.textId);
+
+        // Update UI controls
+        document.getElementById('fontSizeInput').value = DEFAULT_TEXT_SETTINGS.fontSize;
+        document.getElementById('textColorInput').value = DEFAULT_TEXT_SETTINGS.fill;
+        document.getElementById('fontSelect').value = DEFAULT_TEXT_SETTINGS.fontFamily;
+
+        // Reset and save settings
+        activeTextSettings = JSON.parse(JSON.stringify(DEFAULT_TEXT_SETTINGS));
+        saveTextSettings(text);
+
+        // Add to canvas and activate
+        canvas.add(text);
+        canvas.setActiveObject(text);
+        canvas.requestRenderAll();
+        addToHistory();
+
+        activateTextCategory();
+        updateTextControlsUI(text);
     });
-
-    text.textId = generateUniqueId();
-    
-    // Resetar o menu para as configurações padrão
-    document.getElementById('fontSizeInput').value = DEFAULT_TEXT_SETTINGS.fontSize;
-    document.getElementById('textColorInput').value = DEFAULT_TEXT_SETTINGS.fill;
-    document.getElementById('fontSelect').value = DEFAULT_TEXT_SETTINGS.fontFamily;
-    
-    // Resetar as configurações ativas para o padrão
-    activeTextSettings = JSON.parse(JSON.stringify(DEFAULT_TEXT_SETTINGS));
-    
-    // Salvar as configurações iniciais
-    saveTextSettings(text);
-
-    canvas.add(text);
-    canvas.setActiveObject(text);
-    canvas.renderAll();
-    addToHistory();
-
-    activateTextCategory();
-    updateTextControlsUI(text);
 });
 
-// Função para atualizar a interface de controle de texto
+// Remova eventos existentes de duplo clique
+canvas.off('mouse:dblclick');
+canvas.off('text:editing:exited');
+
+// Adicione o novo evento de duplo clique
+canvas.on('mouse:dblclick', function(options) {
+    if (options.target && options.target.type.includes('text')) {
+        const textObject = options.target;
+
+        textObject.set({
+            editable: true,
+            selectable: true
+        });
+
+        canvas.setActiveObject(textObject);
+
+        if(typeof textObject.enterEditing === 'function') {
+            textObject.enterEditing();
+            textObject.selectAll();
+        }
+
+        canvas.requestRenderAll();
+    }
+});
+
+// Eventos para quando a edição de texto é iniciada e finalizada
+canvas.on('text:editing:entered', function(e) {
+    if (e.target) {
+        e.target.set({
+            editable: true,
+            selectable: true,
+            isEditing: true
+        });
+        isTextEditing = true;
+        isSpacePressed = false;
+        isPanning = false;
+        updateCursor();
+
+        if (e.target.hiddenTextarea) {
+            e.target.hiddenTextarea.onkeydown = function(ke) {
+                if (ke.code === 'Space') {
+                    ke.stopPropagation();
+                }
+            };
+        }
+    }
+});
+
+canvas.on('text:editing:exited', function(e) {
+    if (e.target) {
+        e.target.set({
+            isEditing: false
+        });
+        isTextEditing = false;
+        saveTextSettings(e.target);
+        canvas.requestRenderAll();
+    }
+});
+
 function updateTextControlsUI(textObject) {
     if (!textObject) return;
-    
+
     const settings = textSettingsMap.get(textObject.textId);
     if (!settings) return;
 
+    // Update font settings
     document.getElementById('fontSizeInput').value = textObject.fontSize;
     document.getElementById('fontSelect').value = textObject.fontFamily;
-    
-    if (settings.gradientMode) {
-        document.getElementById('gradientColorBtn').classList.add('active');
-        document.getElementById('solidColorBtn').classList.remove('active');
-        document.getElementById('gradientPicker').style.display = 'block';
-        document.getElementById('solidColorPicker').style.display = 'none';
-    } else {
-        document.getElementById('solidColorBtn').classList.add('active');
-        document.getElementById('gradientColorBtn').classList.remove('active');
-        document.getElementById('solidColorPicker').style.display = 'block';
-        document.getElementById('gradientPicker').style.display = 'none';
+
+    // Update color mode
+    document.getElementById('gradientColorBtn').classList.toggle('active', settings.gradientMode);
+    document.getElementById('solidColorBtn').classList.toggle('active', !settings.gradientMode);
+    document.getElementById('gradientPicker').style.display = settings.gradientMode ? 'block' : 'none';
+    document.getElementById('solidColorPicker').style.display = settings.gradientMode ? 'none' : 'block';
+
+    if (!settings.gradientMode) {
         document.getElementById('textColorInput').value = textObject.fill;
     }
-    
-    // Atualizar controles de contorno
+
+    // Update stroke settings
     document.getElementById('stroke1Enable').checked = settings.stroke1.enabled;
     document.getElementById('stroke1Width').value = settings.stroke1.width;
     document.getElementById('stroke1Color').value = settings.stroke1.color;
     document.getElementById('stroke1Width').disabled = !settings.stroke1.enabled;
     document.getElementById('stroke1Color').disabled = !settings.stroke1.enabled;
+
+    if (settings.gradientMode) {
+        activeTextSettings.gradientStops = [...settings.gradientStops];
+        updateGradientStopsUI();
+    }
 }
 
 // Eventos para atualizar o texto ativo quando as configurações mudarem
-document.getElementById('fontSelect').addEventListener('change', updateActiveText);
-document.getElementById('fontSizeInput').addEventListener('change', updateActiveText);
+document.getElementById('fontSelect').addEventListener('input', updateActiveText);
+document.getElementById('fontSizeInput').addEventListener('input', updateActiveText);
 document.getElementById('textColorInput').addEventListener('input', updateActiveText);
 document.getElementById('stroke1Color').addEventListener('input', updateActiveText);
 document.getElementById('stroke1Width').addEventListener('input', updateActiveText);
@@ -2723,6 +2846,8 @@ document.getElementById('solidColorBtn').addEventListener('click', () => {
     activeTextSettings.gradientMode = false;
     document.getElementById('solidColorPicker').style.display = 'block';
     document.getElementById('gradientPicker').style.display = 'none';
+    document.getElementById('solidColorBtn').classList.add('active');
+    document.getElementById('gradientColorBtn').classList.remove('active');
     updateActiveText();
 });
 
@@ -2730,6 +2855,8 @@ document.getElementById('gradientColorBtn').addEventListener('click', () => {
     activeTextSettings.gradientMode = true;
     document.getElementById('solidColorPicker').style.display = 'none';
     document.getElementById('gradientPicker').style.display = 'block';
+    document.getElementById('gradientColorBtn').classList.add('active');
+    document.getElementById('solidColorBtn').classList.remove('active');
     updateGradientStopsUI();
     updateActiveText();
 });
@@ -2774,6 +2901,7 @@ function updateGradientStopsUI() {
             <button class="remove-stop">&times;</button>
         `;
 
+        // Update event listeners to trigger immediate updates
         stopEl.querySelector('.gradient-color').addEventListener('input', (e) => {
             stop.color = e.target.value;
             updateActiveText();
@@ -2784,16 +2912,11 @@ function updateGradientStopsUI() {
             updateActiveText();
         });
 
-        const removeButton = stopEl.querySelector('.remove-stop');
-        if (index < 2) {
-            removeButton.disabled = true;
-        } else {
-            removeButton.addEventListener('click', () => {
-                if (activeTextSettings.gradientStops.length > 2) {
-                    activeTextSettings.gradientStops.splice(index, 1);
-                    updateGradientStopsUI();
-                    updateActiveText();
-                }
+        if (index >= 2) {
+            stopEl.querySelector('.remove-stop').addEventListener('click', () => {
+                activeTextSettings.gradientStops.splice(index, 1);
+                updateGradientStopsUI();
+                updateActiveText();
             });
         }
 
@@ -2801,76 +2924,84 @@ function updateGradientStopsUI() {
     });
 }
 
-// Eventos para carregar as configurações ao selecionar um texto
+// Eventos para seleção de texto
 canvas.on('selection:created', function (e) {
-    if (e.selected[0] && e.selected[0].type === 'text') {
+    if (e.selected[0].type.includes('text')) {
         activateTextCategory();
         const textObject = e.selected[0];
-        
-        // Carregar configurações salvas ou criar novas se não existirem
+
         if (!textObject.textId) {
             textObject.textId = generateUniqueId();
             saveTextSettings(textObject);
         }
-        
+
         const settings = textSettingsMap.get(textObject.textId);
         if (settings) {
             activeTextSettings = JSON.parse(JSON.stringify(settings));
         }
-        
-        updateTextControlsUI(textObject);
-        document.querySelector('.text-controls').style.display = 'block';
 
-        // Adicionar as chamadas aqui
+        updateTextControlsUI(textObject);
         updateGradientStopsUI();
         updateActiveText();
+    } else if (e.selected[0].type === 'image') {
+        categoryItems.forEach(i => i.classList.remove('active'));
+        menuContents.forEach(m => m.classList.remove('active'));
+        const editCategory = document.querySelector('.category-item[data-category="editar"]');
+        editCategory.classList.add('active');
+        document.getElementById('menu-editar').classList.add('active');
     }
 });
 
 canvas.on('selection:updated', function (e) {
-    if (e.selected[0] && e.selected[0].type === 'text') {
+    if (e.selected[0].type.includes('text')) {
         activateTextCategory();
         const textObject = e.selected[0];
-        
+
         if (!textObject.textId) {
             textObject.textId = generateUniqueId();
             saveTextSettings(textObject);
         }
-        
+
         const settings = textSettingsMap.get(textObject.textId);
         if (settings) {
             activeTextSettings = JSON.parse(JSON.stringify(settings));
         }
-        
-        updateTextControlsUI(textObject);
-        document.querySelector('.text-controls').style.display = 'block';
 
-        // Adicionar as chamadas aqui
+        updateTextControlsUI(textObject);
         updateGradientStopsUI();
         updateActiveText();
+    } else if (e.selected[0].type === 'image') {
+        categoryItems.forEach(i => i.classList.remove('active'));
+        menuContents.forEach(m => m.classList.remove('active'));
+        const editCategory = document.querySelector('.category-item[data-category="editar"]');
+        editCategory.classList.add('active');
+        document.getElementById('menu-editar').classList.add('active');
     }
 });
 
 canvas.on('object:modified', function(e) {
-    if (e.target && e.target.type === 'text') {
-        const textObject = e.target;
+    if (e.target && e.target.type.includes('text')) {
+        textObject = e.target;
+
+        textObject.set({
+            editable: true,
+            selectable: true
+        });
+
         if (textObject.scaleX !== 1 || textObject.scaleY !== 1) {
-            // Atualizar o tamanho da fonte baseado na escala
             const newFontSize = Math.round(textObject.fontSize * textObject.scaleX);
             textObject.set({
                 fontSize: newFontSize,
                 scaleX: 1,
                 scaleY: 1
             });
-            
-            // Atualizar as configurações salvas
+
             const settings = textSettingsMap.get(textObject.textId);
             if (settings) {
                 settings.fontSize = newFontSize;
                 textSettingsMap.set(textObject.textId, settings);
             }
-            
-            // Atualizar a interface
+
             document.getElementById('fontSizeInput').value = newFontSize;
         }
         canvas.renderAll();
@@ -2878,29 +3009,160 @@ canvas.on('object:modified', function(e) {
 });
 
 canvas.on('selection:cleared', function () {
-    document.querySelector('.text-controls').style.display = 'none';
+    // Do not hide text controls anymore
+    // Just clear text input if it exists
+    const textInput = document.getElementById('textInput');
+    if (textInput) {
+        textInput.value = '';
+    }
 });
 
 // Evento para atualizar o tamanho da fonte do texto
 document.getElementById('fontSizeInput').addEventListener('input', function () {
     const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'text') {
+    if (activeObject && activeObject.type.includes('text')) {
         const newFontSize = parseInt(this.value);
-        activeObject.set('fontSize', newFontSize);
-        activeObject.set('scaleX', 1);
-        activeObject.set('scaleY', 1);
+        activeObject.set({
+            fontSize: newFontSize,
+            scaleX: 1,
+            scaleY: 1
+        });
         canvas.renderAll();
     }
 });
 
+// Add event handler for double click on IText objects
+fabric.IText.prototype.dblClickHandler = function() {
+    if (this.selectable && this.editable) {
+        this.enterEditing();
+        this.selectAll();
+        return true;
+    }
+    return false;
+};
+
 function calculateGradientAngle(coords) {
-  if (!coords) return 0;
-  const dx = coords.x2 - coords.x1;
-  const dy = coords.y2 - coords.y1;
-  return Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
+    if (!coords) return 0;
+    const dx = coords.x2 - coords.x1;
+    const dy = coords.y2 - coords.y1;
+    return Math.round(Math.atan2(dy, dx) * 180 / Math.PI);
 }
 
 // ---------- Final Seção Texto ----------
+
+// ---------- Inicio Seção Eventos de Texto ----------
+// Função para processar o texto mantendo espaços e quebras de linha
+function processText(text) {
+    return text
+        .replace(/\r\n/g, '\n')  // Normaliza quebras de linha
+        .replace(/\r/g, '\n');   // Converte retornos de carro em quebras de linha
+}
+
+// Atualizar o evento de input do textInput
+const textInput = document.getElementById('textInput');
+if (textInput) {
+    textInput.addEventListener('input', function(e) {
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length === 0) return;
+
+        const newText = processText(this.value);
+
+        activeObjects.forEach(obj => {
+            if (obj.type.includes('text')) {
+                obj.set({
+                    text: newText,
+                    splitByGrapheme: true
+                });
+
+                obj.dirty = true;
+            }
+        });
+
+        canvas.requestRenderAll();
+        addToHistory();
+    });
+}
+
+// Atualizar os eventos de seleção para preservar formatação
+canvas.on('selection:created', function(e) {
+    if (e.selected[0] && e.selected[0].type.includes('text')) {
+        const textObject = e.selected[0];
+        const textInput = document.getElementById('textInput');
+        if (textInput) {
+            textInput.value = textObject.text || '';
+            textInput.style.whiteSpace = 'pre-wrap';
+        }
+    }
+});
+
+canvas.on('selection:updated', function(e) {
+    if (e.selected[0] && e.selected[0].type.includes('text')) {
+        const textObject = e.selected[0];
+        const textInput = document.getElementById('textInput');
+        if (textInput) {
+            textInput.value = textObject.text || '';
+            textInput.style.whiteSpace = 'pre-wrap';
+        }
+    }
+});
+
+// Adicionar CSS para o textInput
+const style = document.createElement('style');
+style.textContent = `
+#textInput {
+    white-space: pre-wrap;
+    min-height: 50px;
+    resize: vertical;
+    font-family: inherit;
+}
+`;
+document.head.appendChild(style);
+
+function debugTextOperation(operation, callback) {
+    console.log(`Starting ${operation}`);
+    try {
+        const result = callback();
+        console.log(`${operation} completed successfully`);
+        return result;
+    } catch (error) {
+        console.error(`Error in ${operation}:`, error);
+        return null;
+    }
+}
+
+['fontSelect', 'fontSizeInput', 'textColorInput'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+        element.addEventListener('change', function(e) {
+            debugTextOperation(`${id} change`, () => {
+                console.log(`${id} changed to:`, e.target.value);
+                updateActiveText();
+            });
+        });
+
+        element.addEventListener('input', function(e) {
+            debugTextOperation(`${id} input`, () => {
+                console.log(`${id} input value:`, e.target.value);
+                updateActiveText();
+            });
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    debugTextOperation('DOMContentLoaded', () => {
+        const textControls = document.querySelector('.text-controls');
+        if (textControls) {
+            textControls.style.display = 'block';
+            console.log('Text controls initialized and displayed');
+        } else {
+            console.warn('Text controls container not found');
+        }
+    });
+});
+// ---------- Final Seção Eventos de Texto ----------
+
+
 </script>
 </body>
 </html>
