@@ -511,7 +511,6 @@ input[type="color"] {
                 <button class="menu-item export-btn" data-format="png">PNG</button>
                 <button class="menu-item export-btn" data-format="jpg">JPG</button>
                 <button class="menu-item export-btn" id="exportPdfBtn" data-format="pdf">PDF</button>
-                <button class="menu-item export-btn" id="previewExportBtn">Ver área de exportação</button>
             </div>
         </div>
         <div id="menu-editar" class="menu-content active">
@@ -630,7 +629,7 @@ input[type="color"] {
 					<label>Contorno</label>
 					<input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
 					<input type="color" id="stroke1Color" value="#000000">
-				</div>			
+				</div>
 			</div>
 		</div>
         <div id="menu-formas" class="menu-content">
@@ -665,7 +664,7 @@ input[type="color"] {
             </div>
         </div>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.17 - 24/12/2024</div>
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.18 - 25/12/2024</div>
 <script>
 
 const container = document.getElementById('canvas-container');
@@ -771,7 +770,7 @@ function updatePageDimensions() {
   canvas.add(a4Page);
   canvas.sendToBack(a4Page);
   canvas.renderAll();
-  addToHistory();
+  saveState();
 }
 
 widthInput.addEventListener('input', updatePageDimensions);
@@ -905,160 +904,113 @@ window.addEventListener('load', resizeCanvas);
 // ---------- Final Seção Redimensionamento do Canvas ----------
 
 // ---------- Inicio Seção Histórico ----------
-function compressCanvasState(canvas) {
-    const objects = canvas.getObjects().map(obj => {
-        const essentialProps = {
-            type: obj.type,
-            left: obj.left,
-            top: obj.top,
-            width: obj.width,
-            height: obj.height,
-            scaleX: obj.scaleX,
-            scaleY: obj.scaleY,
-            angle: obj.angle,
-            id: obj.id,
-            name: obj.name
-        };
+let canvasHistory = [];
+let historyIndex = -1;
+const maxHistory = 20; // Limite de 20 estados
 
-        if (obj.src) {
-            essentialProps.src = obj.src;
-        }
+function saveState() {
+  const json = canvas.toJSON(['id', 'selectable', 'evented']); // Save these properties
 
-        return essentialProps;
+  // Limit history size
+  if (canvasHistory.length >= maxHistory) {
+    canvasHistory.shift();
+    historyIndex--;
+  }
+
+  canvasHistory = canvasHistory.slice(0, historyIndex + 1);
+  canvasHistory.push(json);
+  historyIndex++;
+}
+
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    canvas.loadFromJSON(canvasHistory[historyIndex], () => {
+      // Find and fix CloudFolha properties
+      const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+      if (cloudFolha) {
+        cloudFolha.set({
+          selectable: false,
+          evented: false,
+          hasControls: false,
+          hasBorders: false,
+          lockMovementX: true,
+          lockMovementY: true
+        });
+      } else {
+        // If CloudFolha is missing, recreate it
+        updatePageDimensions();
+      }
+      
+      canvas.discardActiveObject();
+      canvas.renderAll();
     });
-
-    return objects;
+  }
 }
 
-function saveCanvasState() {
-    selectedObjectIds = canvas.getActiveObjects().map(obj => canvas.getObjects().indexOf(obj));
-    const state = {
-        objects: compressCanvasState(canvas),
-        selectedObjectIds: selectedObjectIds
-    };
-    return JSON.stringify(state);
+function redo() {
+  if (historyIndex < canvasHistory.length - 1) {
+    historyIndex++;
+    canvas.loadFromJSON(canvasHistory[historyIndex], () => {
+      // Find and fix CloudFolha properties
+      const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+      if (cloudFolha) {
+        cloudFolha.set({
+          selectable: false,
+          evented: false,
+          hasControls: false,
+          hasBorders: false,
+          lockMovementX: true,
+          lockMovementY: true
+        });
+      } else {
+        // If CloudFolha is missing, recreate it
+        updatePageDimensions();
+      }
+      
+      canvas.discardActiveObject();
+      canvas.renderAll();
+    });
+  }
 }
 
-function loadCanvasState(stateStr) {
-    try {
-        const state = JSON.parse(stateStr);
-        canvas.clear();
+// Salvar estado inicial
+saveState();
 
-        if (state.objects) {
-            state.objects.forEach(obj => {
-                if (obj.type === 'image') {
-                    fabric.Image.fromURL(obj.src, img => {
-                        img.set(obj);
-                        canvas.add(img);
-                        canvas.renderAll();
-                    });
-                } else {
-                    let fabricObj;
-                    switch(obj.type) {
-                        case 'rect':
-                            fabricObj = new fabric.Rect(obj);
-                            break;
-                        default:
-                            fabricObj = new fabric.Object(obj);
-                    }
-                    canvas.add(fabricObj);
-                }
-            });
-        }
-
-        if (state.selectedObjectIds) {
-            const objectsToSelect = state.selectedObjectIds
-                .map(index => canvas.getObjects()[index])
-                .filter(obj => obj);
-
-            if (objectsToSelect.length > 0) {
-                if (objectsToSelect.length === 1) {
-                    canvas.setActiveObject(objectsToSelect[0]);
-                } else {
-                    const selection = new fabric.ActiveSelection(objectsToSelect, { canvas });
-                    canvas.setActiveObject(selection);
-                }
-            }
-        }
-
-        canvas.renderAll();
-    } catch (error) {
-        console.error('Error loading canvas state:', error);
-    }
-}
-
-function saveHistoryToLocalStorage() {
-    try {
-        const recentHistory = history.slice(-5);
-        localStorage.setItem('canvasHistory', JSON.stringify(recentHistory));
-        localStorage.setItem('currentHistoryIndex', Math.min(currentHistoryIndex, 4));
-    } catch (error) {
-        console.warn('Failed to save to localStorage:', error);
-        localStorage.clear();
-        try {
-            const recentHistory = history.slice(-5);
-            localStorage.setItem('canvasHistory', JSON.stringify(recentHistory));
-            localStorage.setItem('currentHistoryIndex', Math.min(currentHistoryIndex, 4));
-        } catch (error) {
-            console.error('Still unable to save to localStorage:', error);
-        }
-    }
-}
-
-function loadHistoryFromLocalStorage() {
-    try {
-        const savedHistory = localStorage.getItem('canvasHistory');
-        const savedIndex = localStorage.getItem('currentHistoryIndex');
-
-        if (savedHistory && savedIndex) {
-            history = JSON.parse(savedHistory);
-            currentHistoryIndex = parseInt(savedIndex);
-            if (history.length > 0) {
-                loadCanvasState(history[currentHistoryIndex]);
-            }
-        }
-    } catch (error) {
-        console.error('Error loading history:', error);
-        localStorage.clear();
-    }
-}
-
-function addToHistory() {
-    try {
-        if (history.length >= MAX_HISTORY) {
-            history = history.slice(-Math.floor(MAX_HISTORY/2));
-            currentHistoryIndex = Math.floor(MAX_HISTORY/2) - 1;
-        }
-
-        currentHistoryIndex++;
-        history = history.slice(0, currentHistoryIndex);
-        history.push(saveCanvasState());
-
-        if (currentHistoryIndex % 5 === 0) {
-            saveHistoryToLocalStorage();
-        }
-    } catch (error) {
-        console.error('Error adding to history:', error);
-    }
-}
+// Eventos do Fabric.js para salvar estados
+canvas.on('object:modified', saveState);
+canvas.on('object:added', saveState);
+canvas.on('object:removed', saveState);
+canvas.on('selection:created', saveState);
+canvas.on('selection:updated', saveState);
+canvas.on('selection:cleared', saveState);
 
 // ---------- Final Seção Histórico ----------
-
-// ---------- Inicio Seção Manipulação de Objetos ----------
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Delete' || e.key === 'Backspace') {
+        const activeObjects = canvas.getActiveObjects();
         const activeObject = canvas.getActiveObject();
 
-        if (activeObject) {
-            if (activeObject.type.includes('text') && activeObject.isEditing) {
-                return;
-            } else {
-                e.preventDefault();
-                canvas.remove(activeObject);
-                canvas.requestRenderAll();
-                addToHistory();
-            }
+        if (activeObject && activeObject.type.includes('text') && activeObject.isEditing) {
+            return;
         }
+
+        e.preventDefault();
+
+        if (activeObjects.length > 1) {
+            activeObjects.forEach(obj => {
+                if (!(obj.type.includes('text') && obj.isEditing)) {
+                    canvas.remove(obj);
+                }
+            });
+        } 
+        else if (activeObject) {
+            canvas.remove(activeObject);
+        }
+
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+        saveState();
     }
 });
 
@@ -1086,7 +1038,7 @@ document.addEventListener('paste', function(e) {
           canvas.add(img);
           canvas.setActiveObject(img);
           canvas.renderAll();
-          addToHistory();
+          saveState();
         }, { crossOrigin: 'anonymous' });
       };
       reader.readAsDataURL(blob);
@@ -1099,7 +1051,7 @@ document.addEventListener('paste', function(e) {
         const newText = new fabric.IText(text, {
           left: canvasCenter.left,
           top: canvasCenter.top,
-          fontSize: 20, 
+          fontSize: 20,
           fontFamily: DEFAULT_TEXT_SETTINGS.fontFamily,
           fill: DEFAULT_TEXT_SETTINGS.fill,
           originX: 'center',
@@ -1113,7 +1065,7 @@ document.addEventListener('paste', function(e) {
         canvas.add(newText);
         canvas.setActiveObject(newText);
         canvas.renderAll();
-        addToHistory();
+        saveState();
 
         activateTextCategory();
       });
@@ -1134,7 +1086,7 @@ document.addEventListener('keydown', function(e) {
         canvas.add(cloned);
         canvas.setActiveObject(cloned);
         canvas.renderAll();
-        addToHistory();
+        saveState();
       });
     }
   }
@@ -1148,8 +1100,44 @@ document.addEventListener('keydown', function(e) {
       const selection = new fabric.ActiveSelection(objects, { canvas: canvas });
       canvas.setActiveObject(selection);
       canvas.renderAll();
+      saveState();
     }
   }
+});
+
+document.addEventListener('keydown', function(e) {
+    const activeObject = canvas.getActiveObject();
+    const isEditingText = activeObject && activeObject.isEditing;
+
+    if (isEditingText) {
+        return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+    }
+    
+    if ((e.ctrlKey || e.metaKey) && 
+        (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+        e.preventDefault();
+        redo();
+    }
+});
+
+canvas.on('history:append', function() {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+        cloudFolha.set({
+            selectable: false,
+            evented: false,
+            hasControls: false,
+            hasBorders: false,
+            lockMovementX: true,
+            lockMovementY: true
+        });
+    }
+    canvas.renderAll();
 });
 
 document.addEventListener('keydown', function(e) {
@@ -1351,7 +1339,7 @@ fileInput.addEventListener('change', function (e) {
         canvas.renderAll();
 
         updateImageDimensionInputs(img);
-        addToHistory();
+        saveState();
       }, { crossOrigin: 'anonymous' });
     };
     reader.readAsDataURL(file);
@@ -1485,7 +1473,7 @@ function addShape(shapeName) {
     canvas.add(shape);
     canvas.setActiveObject(shape);
     canvas.renderAll();
-    addToHistory();
+    saveState();
   }
 }
 
@@ -1757,35 +1745,6 @@ document.querySelectorAll('.export-btn').forEach(btn => {
   }
 });
 
-document.getElementById('previewExportBtn').addEventListener('click', () => {
-  if (previewRect) {
-    canvas.remove(previewRect);
-    previewRect = null;
-    canvas.renderAll();
-    return;
-  }
-
-  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-  if (!cloudFolha) return;
-
-  previewRect = new fabric.Rect({
-    left: cloudFolha.left,
-    top: cloudFolha.top,
-    width: cloudFolha.width,
-    height: cloudFolha.height,
-    fill: 'rgba(255, 0, 0, 0.2)',
-    stroke: 'red',
-    strokeWidth: 2,
-    selectable: false,
-    evented: false,
-    scaleX: cloudFolha.scaleX,
-    scaleY: cloudFolha.scaleY
-  });
-
-  canvas.add(previewRect);
-  canvas.bringToFront(previewRect);
-  canvas.renderAll();
-});
 
 imageWidthInput.addEventListener('change', () => {
   const activeObj = canvas.getActiveObject();
@@ -1803,7 +1762,7 @@ imageWidthInput.addEventListener('change', () => {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 });
 
 imageHeightInput.addEventListener('change', () => {
@@ -1822,7 +1781,7 @@ imageHeightInput.addEventListener('change', () => {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 });
 
 function cmToPoints(cm) {
@@ -1901,7 +1860,6 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
     URL.revokeObjectURL(url);
 });
 
-
 // ---------- Final Seção Exportação ----------
 
 // ---------- Inicio Seção Manipulação de Objetos Novos ----------
@@ -1917,7 +1875,7 @@ function alignObjectsHorizontal() {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 }
 
 function alignObjectsVertical() {
@@ -1932,7 +1890,7 @@ function alignObjectsVertical() {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 }
 
 function mirrorObjectsHorizontal() {
@@ -1944,7 +1902,7 @@ function mirrorObjectsHorizontal() {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 }
 
 function mirrorObjectsVertical() {
@@ -1956,7 +1914,7 @@ function mirrorObjectsVertical() {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 }
 
 function rotateObjects(angle) {
@@ -1968,7 +1926,7 @@ function rotateObjects(angle) {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 }
 
 function exportSelectedObjects() {
@@ -2209,7 +2167,7 @@ function loadDocumentFile(file) {
       });
 
       canvas.renderAll();
-      addToHistory();
+      saveState();
 
     } catch (error) {
       console.error('Erro ao carregar o documento:', error);
@@ -2312,7 +2270,7 @@ document.getElementById('saveCropBtn').addEventListener('click', function() {
         canvas.add(img);
         canvas.setActiveObject(img);
         canvas.renderAll();
-        addToHistory();
+        saveState();
 
         const modal = document.getElementById('cropperModal');
         modal.style.display = 'none';
@@ -2358,7 +2316,7 @@ function duplicateObjects(numDuplicates) {
       const selection = new fabric.ActiveSelection(newObjects, { canvas });
       canvas.setActiveObject(selection);
       canvas.renderAll();
-      addToHistory();
+      saveState();
     }
   }, 100);
 }
@@ -2400,7 +2358,7 @@ function organizeObjects(marginCm) {
   });
 
   canvas.renderAll();
-  addToHistory();
+  saveState();
 }
 
 document.getElementById('duplicateImageBtn').addEventListener('click', function() {
@@ -2467,7 +2425,7 @@ function handleImageFile(file) {
         canvas.add(img);
         canvas.setActiveObject(img);
         canvas.renderAll();
-        addToHistory();
+        saveState();
       } catch (error) {
         console.error('Error adding image to canvas:', error);
       }
@@ -2562,7 +2520,7 @@ async function convertPdfToImage(file, pageNumber) {
       canvas.add(img);
       canvas.setActiveObject(img);
       canvas.renderAll();
-      addToHistory();
+      saveState();
     } catch (error) {
       console.error('Error adding PDF page to canvas:', error);
     }
@@ -2734,6 +2692,7 @@ function updateActiveText() {
         activeObject.dirty = true;
         saveTextSettings(activeObject);
         canvas.requestRenderAll();
+        saveState();
     });
 }
 
@@ -2827,7 +2786,7 @@ document.getElementById('addTextBtn').addEventListener('click', function() {
         canvas.add(text);
         canvas.setActiveObject(text);
         canvas.requestRenderAll();
-        addToHistory();
+        saveState();
 
         activateTextCategory();
         updateTextControlsUI(text);
@@ -2890,6 +2849,7 @@ canvas.on('text:editing:exited', function(e) {
         isTextEditing = false;
         saveTextSettings(e.target);
         canvas.requestRenderAll();
+        saveState();
     }
 });
 
@@ -3097,6 +3057,7 @@ canvas.on('object:modified', function(e) {
             document.getElementById('fontSizeInput').value = newFontSize;
         }
         canvas.renderAll();
+        saveState();
     }
 });
 
@@ -3120,6 +3081,7 @@ document.getElementById('fontSizeInput').addEventListener('input', function () {
             scaleY: 1
         });
         canvas.renderAll();
+        saveState();
     }
 });
 
@@ -3171,7 +3133,7 @@ if (textInput) {
         });
 
         canvas.requestRenderAll();
-        addToHistory();
+        saveState();
     });
 }
 
@@ -3254,7 +3216,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ---------- Final Seção Eventos de Texto ----------
-
 
 </script>
 </body>
