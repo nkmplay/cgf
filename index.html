@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Layout com Canvas</title>
+    <title>CloudPhoto Editor</title>
     <script src="https://nkmplay.github.io/cgf/scripts/fabric.min.js"></script>
     <script src="https://nkmplay.github.io/cgf/scripts/jspdf.umd.min.js"></script>
     <script src="https://nkmplay.github.io/cgf/scripts/html2canvas.min.js"></script>
@@ -443,20 +443,20 @@ input[type="color"] {
     background: #1a4b8c;
 }
 .font-label {
-    display: block; /* Coloca o texto "Fonte:" em uma linha acima */
-    margin-bottom: 5px; /* Espaçamento entre o texto e o combobox */
-    font-size: 14px; /* Tamanho do texto "Fonte:" */
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
 }
 
 .font-select {
-    width: 100%; /* Ocupa toda a largura disponível */
-    height: 40px; /* Altura maior para o combobox */
-    font-size: 20px; /* Tamanho do texto dentro do combobox */
-    padding: 5px; /* Espaçamento interno para melhorar a aparência */
-    border-radius: 4px; /* Borda arredondada */
-    border: 1px solid #235ab4; /* Cor da borda */
-    background: #1a4b8c; /* Cor de fundo */
-    color: white; /* Cor do texto */
+    width: 100%;
+    height: 40px;
+    font-size: 20px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #235ab4;
+    background: #1a4b8c;
+    color: white;
 }
     </style>
 </head>
@@ -667,7 +667,7 @@ input[type="color"] {
             </div>
         </div>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.15 - 22/12/2024</div>
+	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.16 - 24/12/2024</div>
 <script>
 const container = document.getElementById('canvas-container');
 if (!container) {
@@ -879,7 +879,6 @@ canvas.on('mouse:up', function() {
   updateCursor();
 });
 
-// Event listeners para a tecla espaço
 document.addEventListener('keydown', function(e) {
   if (e.code === 'Space' && !isSpacePressed) {
     e.preventDefault();
@@ -960,7 +959,6 @@ function loadCanvasState(stateStr) {
                         case 'rect':
                             fabricObj = new fabric.Rect(obj);
                             break;
-                        // Add other object types as needed
                         default:
                             fabricObj = new fabric.Object(obj);
                     }
@@ -1070,7 +1068,6 @@ document.addEventListener('paste', function(e) {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
 
-    // Verifica se é uma imagem
     if (item.type.indexOf('image') !== -1) {
       const blob = item.getAsFile();
       const reader = new FileReader();
@@ -1096,12 +1093,10 @@ document.addEventListener('paste', function(e) {
       reader.readAsDataURL(blob);
     }
 
-    // Verifica se é texto
     else if (item.type.indexOf('text/plain') !== -1) {
       item.getAsString(function(text) {
         const canvasCenter = getCanvasCenter();
 
-        // Cria um novo IText com o texto colado
         const newText = new fabric.IText(text, {
           left: canvasCenter.left,
           top: canvasCenter.top,
@@ -1114,16 +1109,13 @@ document.addEventListener('paste', function(e) {
           selectable: true
         });
 
-        // Gera um ID único para o texto
         newText.textId = generateUniqueId();
 
-        // Adiciona o texto ao canvas
         canvas.add(newText);
         canvas.setActiveObject(newText);
         canvas.renderAll();
         addToHistory();
 
-        // Ativa a categoria de texto
         activateTextCategory();
       });
     }
@@ -1277,10 +1269,8 @@ canvas.on('object:modified', function (e) {
 canvas.on('object:scaling', function(e) {
   const obj = e.target;
   if (obj) {
-    // Atualizar as dimensões da imagem (se for uma imagem)
     updateImageDimensionInputs(obj);
 
-    // Atualizar o tamanho da fonte do texto (se for um texto)
     if (obj.type === 'text') {
       const newFontSize = obj.fontSize * obj.scaleX;
       obj.set('fontSize', newFontSize);
@@ -1288,7 +1278,6 @@ canvas.on('object:scaling', function(e) {
       obj.set('scaleY', 1);
       canvas.renderAll();
 
-      // Atualizar o tamanho da fonte nas configurações
       activeTextSettings.fontSize = newFontSize;
       saveTextSettings(obj);
     }
@@ -2000,8 +1989,54 @@ function saveDocument() {
 
   canvas.getObjects().forEach(obj => {
     if (obj.id !== 'CloudFolha' && obj.id !== 'guide') {
-      const objData = obj.toObject(['id', 'name']);
+      // Base object data with essential properties
+      const objData = obj.toObject([
+        'id', 'name', 'type', 'left', 'top', 'width', 'height',
+        'scaleX', 'scaleY', 'angle', 'flipX', 'flipY', 'opacity',
+        'originX', 'originY', 'textId'
+      ]);
 
+      // Additional properties for text objects
+      if (obj.type.includes('text')) {
+        Object.assign(objData, {
+          text: obj.text,
+          fontFamily: obj.fontFamily,
+          fontSize: obj.fontSize,
+          fontWeight: obj.fontWeight,
+          fontStyle: obj.fontStyle,
+          underline: obj.underline,
+          linethrough: obj.linethrough,
+          textAlign: obj.textAlign,
+          charSpacing: obj.charSpacing,
+          lineHeight: obj.lineHeight,
+          editable: true,
+          selectable: true,
+          // Save text settings from the settings map
+          textSettings: textSettingsMap.get(obj.textId)
+        });
+
+        // Handle gradient fill
+        if (obj.fill instanceof fabric.Gradient) {
+          objData.fillType = 'gradient';
+          objData.gradientFill = {
+            type: obj.fill.type,
+            coords: obj.fill.coords,
+            colorStops: obj.fill.colorStops
+          };
+        } else {
+          objData.fillType = 'solid';
+          objData.fill = obj.fill;
+        }
+
+        // Save stroke properties
+        if (obj.stroke) {
+          objData.stroke = obj.stroke;
+          objData.strokeWidth = obj.strokeWidth;
+          objData.paintFirst = obj.paintFirst;
+        }
+      }
+
+      // Handle image objects
       if (obj.type === 'image' && obj._element) {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = obj._element.width;
@@ -2029,14 +2064,9 @@ function saveDocument() {
   URL.revokeObjectURL(url);
 }
 
-function openDocument() {
-  const input = document.getElementById('openFileInput');
-  input.click();
-}
-
 function loadDocumentFile(file) {
   const reader = new FileReader();
-  reader.onload = function (event) {
+  reader.onload = function(event) {
     try {
       const documentData = JSON.parse(event.target.result);
 
@@ -2048,53 +2078,26 @@ function loadDocumentFile(file) {
       canvas.remove(...objectsToRemove);
 
       documentData.objects.forEach(objData => {
-        if (objData.type === 'text') {
-          // Extrair as configurações do gradiente do objeto salvo
-          const gradientData = objData.fill && objData.fill.type === 'linear' ? {
-            gradientMode: true,
-            gradientType: 'linear',
-            gradientStops: objData.fill.colorStops.map(stop => ({
-              color: stop.color,
-              position: Math.round(stop.offset * 100)
-            })),
-            gradientAngle: calculateGradientAngle(objData.fill.coords),
-            stroke1: {
-              enabled: !!objData.stroke,
-              width: objData.strokeWidth || 0,
-              color: objData.stroke || '#000000'
-            }
-          } : null;
+        if (objData.type.includes('text')) {
+          const textOptions = {
+            ...objData,
+            editable: true,
+            selectable: true
+          };
 
-          // Criar o objeto de texto
-          const fabricText = new fabric.Text(objData.text, objData);
-
-          // Gerar e atribuir um ID único se não existir
-          if (!objData.textId) {
-            fabricText.textId = generateUniqueId();
-          } else {
-            fabricText.textId = objData.textId;
+          if (objData.fillType === 'gradient' && objData.gradientFill) {
+            textOptions.fill = new fabric.Gradient({
+              type: objData.gradientFill.type,
+              coords: objData.gradientFill.coords,
+              colorStops: objData.gradientFill.colorStops
+            });
           }
 
-          // Salvar as configurações no mapa
-          if (gradientData) {
-            textSettingsMap.set(fabricText.textId, {
-              ...gradientData,
-              fontFamily: objData.fontFamily,
-              fontSize: objData.fontSize,
-              fill: objData.fill
-            });
-          } else {
-            textSettingsMap.set(fabricText.textId, {
-              gradientMode: false,
-              fontFamily: objData.fontFamily,
-              fontSize: objData.fontSize,
-              fill: objData.fill,
-              stroke1: {
-                enabled: !!objData.stroke,
-                width: objData.strokeWidth || 0,
-                color: objData.stroke || '#000000'
-              }
-            });
+          const fabricText = new fabric.IText(objData.text, textOptions);
+
+          if (objData.textSettings) {
+            textSettingsMap.set(objData.textId, objData.textSettings);
+            activeTextSettings = JSON.parse(JSON.stringify(objData.textSettings));
           }
 
           canvas.add(fabricText);
@@ -2136,6 +2139,11 @@ function loadDocumentFile(file) {
     }
   };
   reader.readAsText(file);
+}
+
+function openDocument() {
+  const input = document.getElementById('openFileInput');
+  input.click();
 }
 
 document.getElementById('openDocumentBtn').addEventListener('click', openDocument);
