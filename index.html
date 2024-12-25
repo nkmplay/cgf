@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html><head><base href="https://nkmplay.github.io/cgf/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CloudPhoto Editor</title>
@@ -10,7 +8,7 @@
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://nkmplay.github.io/cgf/scripts/pdf.worker.min.js';</script>
     <link rel="stylesheet" href="https://nkmplay.github.io/cgf/scripts/cropper.min.css">
     <script src="https://nkmplay.github.io/cgf/scripts/cropper.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.4.0/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.4.0/dist/pdf-lib.min.js"></script>
     <style>
         body, html {
             margin: 0;
@@ -294,19 +292,19 @@
         .guides-position span {
             margin-right: 10px;
         }
-		.version-badge {
-		position: fixed;
-		bottom: 5px;
-		right: 5px;
-		background-color: #ffd700;
-		color: Black;
-		padding: 2px 6px;
-		border-radius: 3px;
-		font-size: 20px;
-		font-family: Arial, sans-serif;
-		z-index: 100;
-		pointer-events: none;
-		}
+        .version-badge {
+        position: fixed;
+        bottom: 5px;
+        right: 5px;
+        background-color: #ffd700;
+        color: Black;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 20px;
+        font-family: Arial, sans-serif;
+        z-index: 100;
+        pointer-events: none;
+        }
         .modal-overlay {
             display: none;
             position: fixed;
@@ -377,86 +375,178 @@
             max-height: 550px;
         }
 
-.text-controls {
+        .text-controls {
+            padding: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 4px;
+            background: #1a4b8c;
+            color: white;
+            border: 1px solid #235ab4;
+            border-radius: 4px;
+        }
+
+        .gradient-stops {
+            margin-bottom: 10px;
+        }
+
+        .gradient-stop {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .gradient-color {
+            width: 50px;
+        }
+
+        .gradient-position {
+            width: 60px;
+            padding: 4px;
+            background: #1a4b8c;
+            color: white;
+            border: 1px solid #235ab4;
+            border-radius: 4px;
+        }
+
+        .remove-stop {
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+        }
+
+        .gradient-angle {
+            margin-top: 10px;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 30px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background: #1a4b8c;
+        }
+        .font-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .font-select {
+            width: 100%;
+            height: 40px;
+            font-size: 20px;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #235ab4;
+            background: #1a4b8c;
+            color: white;
+        }
+        /* Add to the existing <style> section */
+        #removeColorModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+#removeColorModal .modal-content {
+    width: 95%;
+    height: 95%;
+    max-width: none;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    background-color: #0f3460;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#removeColorModal .modal-body {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
     padding: 10px;
 }
 
-.control-group {
-    margin-bottom: 10px;
+#removeColorModal .modal-footer {
+    height: 60px;
+    background-color: #1a4b8c;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    padding: 0 10px;
 }
 
-.text-input {
+#removeColorCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+        #sensitivityRange {
+            width: 100px;
+        }
+
+        .menu-item.active {
+            background-color: #ffd700 !important;
+            color: black !important;
+        }
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 4px;
-    background: #1a4b8c;
-    color: white;
-    border: 1px solid #235ab4;
-    border-radius: 4px;
-}
-
-.gradient-stops {
-    margin-bottom: 10px;
-}
-
-.gradient-stop {
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 5px;
-    margin-bottom: 5px;
+    z-index: 1000;
 }
 
-.gradient-color {
-    width: 50px;
-}
-
-.gradient-position {
-    width: 60px;
-    padding: 4px;
-    background: #1a4b8c;
+.modal-content {
+    background: #0f3460;
+    border-radius: 8px;
+    padding: 10px; /* Padding interno */
+    max-width: 400px;
+    width: auto; /* Ajusta a largura ao conteúdo */
+    min-width: 250px; /* Largura mínima */
+    height: auto; /* Altura ajustada ao conteúdo */
+	max-height: 100px;
     color: white;
-    border: 1px solid #235ab4;
-    border-radius: 4px;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
 }
 
-.remove-stop {
-    background: #ff4444;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 2px 6px;
-    cursor: pointer;
-}
-
-.gradient-angle {
-    margin-top: 10px;
-}
-
-input[type="color"] {
-    width: 100%;
-    height: 30px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    background: #1a4b8c;
-}
-.font-label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 14px;
-}
-
-.font-select {
-    width: 100%;
-    height: 40px;
-    font-size: 20px;
-    padding: 5px;
-    border-radius: 4px;
-    border: 1px solid #235ab4;
-    background: #1a4b8c;
-    color: white;
+.modal-body {
+    margin: 0; /* Remove margens desnecessárias */
+    padding: 0; /* Remove padding interno */
+    word-wrap: break-word; /* Quebra de texto para não ultrapassar o modal */
+    line-height: 1.5; /* Espaçamento entre linhas */
 }
     </style>
 </head>
@@ -526,16 +616,13 @@ input[type="color"] {
             <button id="cropImageBtn" class="menu-item">Recortar</button>
             <div class="separator"></div>
             <div class="duplicate-control">
-                <button id="brushBtn" class="menu-item" style="width: 31%; margin-right: 3.5%;">Pincel</button>
-                <button id="eraserBtn" class="menu-item" style="width: 31%; margin-right: 3.5%;">Borracha</button>
-                <button id="fillBtn" class="menu-item" style="width: 31%;">Balde</button>
+                <button id="btnPincel" class="menu-item" style="width: 100%;">Pincel, Borracha e Balde</button>
             </div>
             <div class="separator"></div>
-            <button id="removeColorClickBtn" class="menu-item">Remover Cor Clique</button>
-            <button id="removeColorTotalBtn" class="menu-item">Remover Cor Total</button>
+            <button id="removeColorBtn" class="menu-item">Remover Cor</button>
             <div class="separator"></div>
-            <button id="aiRemoverBtn" class="menu-item">Removedor IA</button>
-            <button id="vectorizePBBtn" class="menu-item">Vetorizar PB</button>
+            <button id="aiRemoverBtn" class="menu-item" style="color: red;">Removedor IA</button>
+			<button id="vectorizePBBtn" class="menu-item" style="color: red;">Vetorizar PB</button>
             <div class="separator"></div>
             <div class="duplicate-control">
                 <button id="duplicateImageBtn" class="menu-item" style="margin-right: 5px;">Duplicar</button>
@@ -560,78 +647,78 @@ input[type="color"] {
             <div class="separator"></div>
             <button id="exportSelectedImageBtn" class="menu-item">Exportar Imagem Selecionada</button>
         </div>
-		<div id="menu-texto" class="menu-content">
-			<button id="addTextBtn" class="highlight-button">Adicionar Texto</button>
-			<div class="separator"></div>
-			<div class="text-controls">
-				<div class="control-group">
-					<label for="fontSelect" class="font-label">Fonte:</label>
-					<select id="fontSelect" class="text-input font-select">
-					<option value="Arial" style="font-family: Arial;">Arial</option>
-					  <option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
-					  <option value="Brush Script MT" style="font-family: 'Brush Script MT';">Brush Script MT</option>
-					  <option value="Bookman Old Style" style="font-family: 'Bookman Old Style';">Bookman Old Style</option>
-					  <option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
-					  <option value="Courier" style="font-family: Courier;">Courier</option>
-					  <option value="Dancing Script" style="font-family: 'Dancing Script';">Dancing Script</option>
-					  <option value="Impact" style="font-family: Impact;">Impact</option>
-					  <option value="Lucida Handwriting" style="font-family: 'Lucida Handwriting';">Lucida Handwriting</option>
-					  <option value="Lucida Sans Unicode" style="font-family: 'Lucida Sans Unicode';">Lucida Sans Unicode</option>
-					  <option value="Papyrus" style="font-family: Papyrus;">Papyrus</option>
-					  <option value="Segoe Print" style="font-family: 'Segoe Print';">Segoe Print</option>
-					  <option value="Segoe Script" style="font-family: 'Segoe Script';">Segoe Script</option>
-					  <option value="Segoe UI" style="font-family: 'Segoe UI';">Segoe UI</option>
-					  <option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
-					  <option value="Trebuchet MS" style="font-family: 'Trebuchet MS';">Trebuchet MS</option>
-					  <option value="Verdana" style="font-family: Verdana;">Verdana</option>
-					  <option value="Monotype Corsiva" style="font-family: 'Monotype Corsiva';">Monotype Corsiva</option>
-					  <option value="Mistral" style="font-family: Mistral;">Mistral</option>
-					  <option value="Freestyle Script" style="font-family: 'Freestyle Script';">Freestyle Script</option>
-					  <option value="Bradley Hand ITC" style="font-family: 'Bradley Hand ITC';">Bradley Hand ITC</option>
-					  <option value="Edwardian Script ITC" style="font-family: 'Edwardian Script ITC';">Edwardian Script ITC</option>
-					  <option value="Vivaldi" style="font-family: Vivaldi;">Vivaldi</option>
-					  <option value="Rage Italic" style="font-family: 'Rage Italic';">Rage Italic</option>
-					</select>
-				</div>
+        <div id="menu-texto" class="menu-content">
+            <button id="addTextBtn" class="highlight-button">Adicionar Texto</button>
+            <div class="separator"></div>
+            <div class="text-controls">
+                <div class="control-group">
+                    <label for="fontSelect" class="font-label">Fonte:</label>
+                    <select id="fontSelect" class="text-input font-select">
+                    <option value="Arial" style="font-family: Arial;">Arial</option>
+                      <option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
+                      <option value="Brush Script MT" style="font-family: 'Brush Script MT';">Brush Script MT</option>
+                      <option value="Bookman Old Style" style="font-family: 'Bookman Old Style';">Bookman Old Style</option>
+                      <option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
+                      <option value="Courier" style="font-family: Courier;">Courier</option>
+                      <option value="Dancing Script" style="font-family: 'Dancing Script';">Dancing Script</option>
+                      <option value="Impact" style="font-family: Impact;">Impact</option>
+                      <option value="Lucida Handwriting" style="font-family: 'Lucida Handwriting';">Lucida Handwriting</option>
+                      <option value="Lucida Sans Unicode" style="font-family: 'Lucida Sans Unicode';">Lucida Sans Unicode</option>
+                      <option value="Papyrus" style="font-family: Papyrus;">Papyrus</option>
+                      <option value="Segoe Print" style="font-family: 'Segoe Print';">Segoe Print</option>
+                      <option value="Segoe Script" style="font-family: 'Segoe Script';">Segoe Script</option>
+                      <option value="Segoe UI" style="font-family: 'Segoe UI';">Segoe UI</option>
+                      <option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
+                      <option value="Trebuchet MS" style="font-family: 'Trebuchet MS';">Trebuchet MS</option>
+                      <option value="Verdana" style="font-family: Verdana;">Verdana</option>
+                      <option value="Monotype Corsiva" style="font-family: 'Monotype Corsiva';">Monotype Corsiva</option>
+                      <option value="Mistral" style="font-family: Mistral;">Mistral</option>
+                      <option value="Freestyle Script" style="font-family: 'Freestyle Script';">Freestyle Script</option>
+                      <option value="Bradley Hand ITC" style="font-family: 'Bradley Hand ITC';">Bradley Hand ITC</option>
+                      <option value="Edwardian Script ITC" style="font-family: 'Edwardian Script ITC';">Edwardian Script ITC</option>
+                      <option value="Vivaldi" style="font-family: Vivaldi;">Vivaldi</option>
+                      <option value="Rage Italic" style="font-family: 'Rage Italic';">Rage Italic</option>
+                    </select>
+                </div>
 
-				<div class="control-group">
-					<label>Tamanho:</label>
-					<input type="number" id="fontSizeInput" class="text-input" value="20" min="1">
-				</div>
+                <div class="control-group">
+                    <label>Tamanho:</label>
+                    <input type="number" id="fontSizeInput" class="text-input" value="20" min="1">
+                </div>
 
-				<div class="control-group">
-					<button id="solidColorBtn" class="menu-item active">Cor Padrão</button>
-					<button id="gradientColorBtn" class="menu-item">Gradiente</button>
-				</div>
+                <div class="control-group">
+                    <button id="solidColorBtn" class="menu-item active">Cor Padrão</button>
+                    <button id="gradientColorBtn" class="menu-item">Gradiente</button>
+                </div>
 
-				<div id="solidColorPicker" class="control-group">
-					<input type="color" id="textColorInput" value="#000000">
-				</div>
+                <div id="solidColorPicker" class="control-group">
+                    <input type="color" id="textColorInput" value="#000000">
+                </div>
 
-				<div id="gradientPicker" class="control-group" style="display: none;">
-					<div class="gradient-stops">
-						<div class="gradient-stop">
-							<input type="color" class="gradient-color" value="#000000">
-							<input type="number" class="gradient-position" value="100" min="0" max="100">
-							<button class="remove-stop">&times;</button>
-						</div>
-						<div class="gradient-stop">
-							<input type="color" class="gradient-color" value="#ff0000">
-							<input type="number" class="gradient-position" value="20" min="0" max="100">
-							<button class="remove-stop">&times;</button>
-						</div>
-					</div>
-					<button id="addGradientStop" class="menu-item">Adicionar Cor</button>
-				</div>
-				<div class="separator"></div>
-				<div class="control-group">
-					<input type="checkbox" id="stroke1Enable">
-					<label>Contorno</label>
-					<input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
-					<input type="color" id="stroke1Color" value="#000000">
-				</div>
-			</div>
-		</div>
+                <div id="gradientPicker" class="control-group" style="display: none;">
+                    <div class="gradient-stops">
+                        <div class="gradient-stop">
+                            <input type="color" class="gradient-color" value="#000000">
+                            <input type="number" class="gradient-position" value="100" min="0" max="100">
+                            <button class="remove-stop">&times;</button>
+                        </div>
+                        <div class="gradient-stop">
+                            <input type="color" class="gradient-color" value="#ff0000">
+                            <input type="number" class="gradient-position" value="20" min="0" max="100">
+                            <button class="remove-stop">&times;</button>
+                        </div>
+                    </div>
+                    <button id="addGradientStop" class="menu-item">Adicionar Cor</button>
+                </div>
+                <div class="separator"></div>
+                <div class="control-group">
+                    <input type="checkbox" id="stroke1Enable">
+                    <label>Contorno</label>
+                    <input type="number" id="stroke1Width" class="text-input" value="1" min="0" disabled>
+                    <input type="color" id="stroke1Color" value="#000000">
+                </div>
+            </div>
+        </div>
         <div id="menu-formas" class="menu-content">
             <button class="menu-item" id="squareBtn">Quadrado</button>
             <button class="menu-item" id="circleBtn">Circulo</button>
@@ -644,7 +731,7 @@ input[type="color"] {
             <button class="menu-item" id="cakeBtn">Bolo</button>
         </div>
         <div id="menu-filtros" class="menu-content">
-			<!-- Conteúdo do menu Filtros -->
+            <!-- Conteúdo do menu Filtros -->
         </div>
     </div>
     <input type="file" id="openFileInput" accept=".cloudapp" style="display: none;">
@@ -664,9 +751,33 @@ input[type="color"] {
             </div>
         </div>
     </div>
-	<div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.18 - 25/12/2024</div>
-<script>
+<div id="removeColorModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-body">
+            <canvas id="removeColorCanvas"></canvas>
+        </div>
+        <div class="modal-footer">
+            <button id="removeRegionBtn" class="menu-item" style="width: auto; margin: 0 5px; background-color: #ffd700; color: black;">Remover Região Clicada</button>
+            <button id="removeTotalBtn" class="menu-item" style="width: auto; margin: 0 5px;">Remover Cor Total</button>
+            <input type="range" id="sensitivityRange" min="0" max="100" value="30" style="margin: 0 10px;">
+            <button id="undoRemoveColor" class="menu-item" style="width: auto; margin: 0 5px;">Voltar</button>
+            <div style="flex: 1;"></div>
+            <button id="closeRemoveColorModal" class="menu-item" style="width: auto; margin: 0 5px;">Fechar</button>
+            <button id="saveRemoveColor" class="menu-item" style="width: auto; margin: 0 5px; background-color: #ffd700; color: black;">Salvar</button>
+        </div>
+    </div>
+</div>
+<div id="customAlertModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-body">
+            <p id="customAlertMessage"></p>
+        </div>
+    </div>
+</div>
+    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.19 - 25/12/2024</div>
+	
 
+ <script>
 const container = document.getElementById('canvas-container');
 if (!container) {
   console.error('Canvas container not found');
@@ -727,6 +838,13 @@ let guides = [];
 let textIdCounter = 0;
 const textSettings = {};
 let isTextEditing = false;
+
+// Add these variables at the top of your script with other global variables
+let removeColorHistory = [];
+let currentRemoveColorIndex = -1;
+let currentRemoveMode = 'region';
+let removeColorCtx = null;
+let removeColorHistoryIndex = -1;
 
 // ---------- Final Seção Variáveis Globais ----------
 
@@ -941,7 +1059,7 @@ function undo() {
         // If CloudFolha is missing, recreate it
         updatePageDimensions();
       }
-      
+
       canvas.discardActiveObject();
       canvas.renderAll();
     });
@@ -967,7 +1085,7 @@ function redo() {
         // If CloudFolha is missing, recreate it
         updatePageDimensions();
       }
-      
+
       canvas.discardActiveObject();
       canvas.renderAll();
     });
@@ -986,6 +1104,7 @@ canvas.on('selection:updated', saveState);
 canvas.on('selection:cleared', saveState);
 
 // ---------- Final Seção Histórico ----------
+
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Delete' || e.key === 'Backspace') {
         const activeObjects = canvas.getActiveObjects();
@@ -1003,7 +1122,7 @@ document.addEventListener('keydown', function(e) {
                     canvas.remove(obj);
                 }
             });
-        } 
+        }
         else if (activeObject) {
             canvas.remove(activeObject);
         }
@@ -1117,8 +1236,8 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         undo();
     }
-    
-    if ((e.ctrlKey || e.metaKey) && 
+
+    if ((e.ctrlKey || e.metaKey) &&
         (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
         e.preventDefault();
         redo();
@@ -1189,7 +1308,7 @@ document.addEventListener('keydown', function(e) {
             </style>
           </head>
           <body>
-            <img src="${dataUrl}" onload="window.print();window.close()">
+            <img src="\${dataUrl}" onload="window.print();window.close()">
           </body>
         </html>
       `);
@@ -1745,7 +1864,6 @@ document.querySelectorAll('.export-btn').forEach(btn => {
   }
 });
 
-
 imageWidthInput.addEventListener('change', () => {
   const activeObj = canvas.getActiveObject();
   if (!activeObj) return;
@@ -2200,6 +2318,7 @@ let activeObject = null;
 document.getElementById('cropImageBtn').addEventListener('click', function() {
     activeObject = canvas.getActiveObject();
     if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para cortar');
         return;
     }
 
@@ -2295,7 +2414,10 @@ document.getElementById('cropperModal').addEventListener('click', function(e) {
 
 function duplicateObjects(numDuplicates) {
   const activeObjects = canvas.getActiveObjects();
-  if (!activeObjects || activeObjects.length === 0) return;
+  if (!activeObjects || activeObjects.length === 0) {
+	showCustomAlert('Por favor, selecione uma ou mais imagens para duplicar.');
+    return;
+  }
 
   let newObjects = [];
   activeObjects.forEach(obj => {
@@ -2324,10 +2446,15 @@ function duplicateObjects(numDuplicates) {
 function organizeObjects(marginCm) {
   const marginPx = marginCm * CM_TO_PX;
   const activeObjects = canvas.getActiveObjects();
-  if (!activeObjects || activeObjects.length === 0) return;
+  if (!activeObjects || activeObjects.length === 0) {
+	showCustomAlert('Por favor, selecione uma ou mais imagens para organizar.');
+    return;
+  }
 
   const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-  if (!cloudFolha) return;
+  if (!cloudFolha) {
+    return;
+  }
 
   const folhaLeft = cloudFolha.left;
   const folhaTop = cloudFolha.top;
@@ -2371,169 +2498,216 @@ document.getElementById('organizeBtn').addEventListener('click', function() {
   organizeObjects(marginCm);
 });
 
-// ---------- Final Seção Duplicar e organizar ----------
+// ---------- Final Seção Duplicar e organizar ---------- 
 
 // ---------- Inicio Seção Drag and Drop ----------
 function handleDrop(e) {
-  e.preventDefault();
-  e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 
-  const files = e.dataTransfer.files;
-  handleFiles(files);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) {
+        showCustomAlert('Nenhum arquivo foi detectado. Por favor, tente novamente.');
+        return;
+    }
+
+    handleFiles(files);
 }
 
 function handleFiles(files) {
-  Array.from(files).forEach(file => {
-    if (file.type.startsWith('image/')) {
-      handleImageFile(file);
-    } else if (file.type === 'application/pdf') {
-      handlePdfFile(file);
-    } else if (file.name.endsWith('.cloudapp')) {
-      loadDocumentFile(file);
-    }
-  });
+    Array.from(files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+            handleImageFile(file);
+        } else if (file.type === 'application/pdf') {
+            handlePdfFile(file);
+        } else if (file.name.endsWith('.cloudapp')) {
+            loadDocumentFile(file);
+        } else {
+            showCustomAlert('Arquivo não suportado. Por favor, insira imagens, PDFs ou arquivos .cloudapp.');
+        }
+    });
 }
 
 function handleImageFile(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    if (!canvas || !canvas.add) {
-      console.error('Canvas not properly initialized');
-      return;
-    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (!canvas || !canvas.add) {
+            showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app..');
+            return;
+        }
 
-    fabric.Image.fromURL(e.target.result, function(img) {
-      if (!img) {
-        console.error('Failed to load image');
-        return;
-      }
+        fabric.Image.fromURL(e.target.result, function(img) {
+            if (!img) {
+                showCustomAlert('Falha ao carregar a imagem.');
+                return;
+            }
 
-      const canvasCenter = getCanvasCenter();
-      img.set({
-        left: canvasCenter.left,
-        top: canvasCenter.top,
-        originX: 'center',
-        originY: 'center',
-        perPixelTargetFind: true,
-        lockMovementX: false,
-        lockMovementY: false
-      });
+            const canvasCenter = getCanvasCenter();
+            img.set({
+                left: canvasCenter.left,
+                top: canvasCenter.top,
+                originX: 'center',
+                originY: 'center',
+                perPixelTargetFind: true,
+                lockMovementX: false,
+                lockMovementY: false
+            });
 
-      resizeImageToMaxSize(img);
+            resizeImageToMaxSize(img);
 
-      try {
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-        saveState();
-      } catch (error) {
-        console.error('Error adding image to canvas:', error);
-      }
-    });
-  };
-  reader.readAsDataURL(file);
+            try {
+                canvas.add(img);
+                canvas.setActiveObject(img);
+                canvas.renderAll();
+                saveState();
+            } catch (error) {
+                showCustomAlert('Erro ao adicionar a imagem ao canvas.');
+            }
+        });
+    };
+    reader.readAsDataURL(file);
 }
 
 function handlePdfFile(file) {
-  const modalHtml = `
-    <div id="pdfModal" class="modal-overlay" style="display: flex;">
-      <div class="modal-content" style="height: auto; padding: 20px; min-width: 300px;">
-        <h3 style="color: white; margin-bottom: 20px;">Selecionar Página do PDF</h3>
-        <div style="margin-bottom: 20px;">
-          <input type="number" id="pdfPageInput" value="1" min="1"
-                 style="width: 100%; padding: 8px; background: #1a4b8c; color: white; border: 1px solid #235ab4;">
+    const modalHtml = `
+        <div id="pdfModal" class="modal-overlay" style="display: flex;">
+            <div class="modal-content" style="width: 600px; height: auto; padding: 20px; min-width: 300px; max-height: 80%; overflow-y: auto; display: flex;">
+                <div id="pdfImageContainer" style="flex: 1; display: flex; justify-content: center; align-items: center; margin-right: 20px;">
+                    <img id="pdfPageImage" src="" alt="PDF Page" style="max-width: 100%; max-height: 400px; border: 1px solid #ccc;">
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="color: white; margin-bottom: 20px;">Selecionar Página do PDF</h3>
+                    <div style="margin-bottom: 20px;">
+                        <input type="number" id="pdfPageInput" value="1" min="1"
+                               style="width: 100%; padding: 8px; background: #1a4b8c; color: white; border: 1px solid #235ab4;">
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button id="pdfCancelBtn" class="menu-item" style="width: auto;">Cancelar</button>
+                        <button id="pdfConfirmBtn" class="menu-item" style="width: auto; background: #ffd700; color: black;">Importar</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button id="pdfCancelBtn" class="menu-item" style="width: auto;">Cancelar</button>
-          <button id="pdfConfirmBtn" class="menu-item" style="width: auto; background: #ffd700; color: black;">Importar</button>
-        </div>
-      </div>
-    </div>
-  `;
+    `;
 
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-  const modal = document.getElementById('pdfModal');
-  const cancelBtn = document.getElementById('pdfCancelBtn');
-  const confirmBtn = document.getElementById('pdfConfirmBtn');
-  const pageInput = document.getElementById('pdfPageInput');
+    const modal = document.getElementById('pdfModal');
+    const cancelBtn = document.getElementById('pdfCancelBtn');
+    const confirmBtn = document.getElementById('pdfConfirmBtn');
+    const pageInput = document.getElementById('pdfPageInput');
+    const pdfPageImage = document.getElementById('pdfPageImage');
 
-  cancelBtn.onclick = () => {
-    modal.remove();
-  };
-
-  confirmBtn.onclick = () => {
-    const pageNumber = parseInt(pageInput.value) || 1;
-    convertPdfToImage(file, pageNumber - 1).then(() => {
-      modal.remove();
+    // Adiciona evento para mudar a página
+    pageInput.addEventListener('input', () => {
+        const pageNumber = parseInt(pageInput.value) || 1;
+        loadPdfPageImage(file, pageNumber - 1);
     });
-  };
+
+    // Função para carregar a imagem da página do PDF
+    async function loadPdfPageImage(file, pageNumber) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+
+        if (pageNumber >= pdf.numPages) {
+            return;
+        }
+
+        const page = await pdf.getPage(pageNumber + 1);
+        const scale = 2;
+        const viewport = page.getViewport({ scale });
+
+        const tempCanvas = document.createElement('canvas');
+        const context = tempCanvas.getContext('2d');
+        tempCanvas.height = viewport.height;
+        tempCanvas.width = viewport.width;
+
+        await page.render({
+            canvasContext: context,
+            viewport: viewport
+        }).promise;
+
+        pdfPageImage.src = tempCanvas.toDataURL('image/png');
+    }
+
+    // Carrega a primeira página ao abrir o modal
+    loadPdfPageImage(file, 0);
+
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+
+    confirmBtn.addEventListener('click', () => {
+        const selectedPage = parseInt(pageInput.value) || 1;
+        convertPdfToImage(file, selectedPage - 1).then(() => {
+            modal.remove();
+        });
+    });
 }
 
 async function convertPdfToImage(file, pageNumber) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
 
-  if (pageNumber >= pdf.numPages) {
-    return;
-  }
-
-  const page = await pdf.getPage(pageNumber + 1);
-  const scale = 2;
-  const viewport = page.getViewport({ scale });
-
-  const tempCanvas = document.createElement('canvas');
-  const context = tempCanvas.getContext('2d');
-  tempCanvas.height = viewport.height;
-  tempCanvas.width = viewport.width;
-
-  await page.render({
-    canvasContext: context,
-    viewport: viewport
-  }).promise;
-
-  if (!canvas || !canvas.add) {
-    console.error('Canvas not properly initialized');
-    return;
-  }
-
-  fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
-    if (!img) {
-      console.error('Failed to load PDF page as image');
-      return;
+    if (pageNumber >= pdf.numPages) {
+        return;
     }
 
-    const canvasCenter = getCanvasCenter();
-    img.set({
-      left: canvasCenter.left,
-      top: canvasCenter.top,
-      originX: 'center',
-      originY: 'center',
-      perPixelTargetFind: true,
-      lockMovementX: false,
-      lockMovementY: false
+    const page = await pdf.getPage(pageNumber + 1);
+    const scale = 2;
+    const viewport = page.getViewport({ scale });
+
+    const tempCanvas = document.createElement('canvas');
+    const context = tempCanvas.getContext('2d');
+    tempCanvas.height = viewport.height;
+    tempCanvas.width = viewport.width;
+
+    await page.render({
+        canvasContext: context,
+        viewport: viewport
+    }).promise;
+
+    if (!canvas || !canvas.add) {
+        showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app..');
+        return;
+    }
+
+    fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
+        if (!img) {
+            showCustomAlert('Erro ao carregar páginas do PDF.');
+            return;
+        }
+
+        const canvasCenter = getCanvasCenter();
+        img.set({
+            left: canvasCenter.left,
+            top: canvasCenter.top,
+            originX: 'center',
+            originY: 'center',
+            perPixelTargetFind: true,
+            lockMovementX: false,
+            lockMovementY: false
+        });
+
+        resizeImageToMaxSize(img);
+
+        try {
+            canvas.add(img);
+            canvas.setActiveObject(img);
+            canvas.renderAll();
+            saveState();
+        } catch (error) {
+            showCustomAlert('Erro ao adicionar a página do PDF na área de trabalho.');
+        }
     });
-
-    resizeImageToMaxSize(img);
-
-    try {
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.renderAll();
-      saveState();
-    } catch (error) {
-      console.error('Error adding PDF page to canvas:', error);
-    }
-  });
 }
 
-canvas.wrapperEl.addEventListener('dragover', function(e) {
-  e.preventDefault();
-  e.stopPropagation();
+document.addEventListener('dragover', (e) => {
+    e.preventDefault();
 });
 
-canvas.wrapperEl.addEventListener('drop', handleDrop);
-// ---------- Final Seção Drag and Drop ----------
+document.addEventListener('drop', handleDrop);
+// ---------- Fim Seção Drag and Drop ----------
 
 // ---------- Inicio Seção Texto ----------
 const DEFAULT_TEXT_SETTINGS = {
@@ -2636,7 +2810,6 @@ function loadTextSettings(textObject) {
     }
 }
 
-// Função para atualizar o texto ativo com as configurações do menu
 function updateActiveText() {
     return debugTextOperation('updateActiveText', () => {
         const activeObject = canvas.getActiveObject();
@@ -2652,7 +2825,6 @@ function updateActiveText() {
             fill: activeObject.fill
         });
 
-        // Collect new settings
         const newSettings = {
             fontFamily: document.getElementById('fontSelect').value,
             fontSize: parseInt(document.getElementById('fontSizeInput').value),
@@ -2660,14 +2832,12 @@ function updateActiveText() {
             editable: true
         };
 
-        // Update fill based on color mode
         if (activeTextSettings.gradientMode) {
             newSettings.fill = createGradientFromStops(activeObject);
         } else {
             newSettings.fill = document.getElementById('textColorInput').value;
         }
 
-        // Apply stroke settings
         if (activeTextSettings.stroke1.enabled) {
             newSettings.stroke = activeTextSettings.stroke1.color;
             newSettings.strokeWidth = parseInt(activeTextSettings.stroke1.width);
@@ -2679,7 +2849,6 @@ function updateActiveText() {
 
         console.log('Applying new settings:', newSettings);
 
-        // Apply settings individually and log any errors
         Object.entries(newSettings).forEach(([key, value]) => {
             try {
                 activeObject.set(key, value);
@@ -2696,7 +2865,6 @@ function updateActiveText() {
     });
 }
 
-// Função para criar um gradiente a partir das paradas (stops)
 function createGradientFromStops(obj) {
     const stops = activeTextSettings.gradientStops.sort((a, b) => a.position - b.position);
     const coords = calculateGradientCoords(obj, activeTextSettings.gradientAngle);
@@ -2711,7 +2879,6 @@ function createGradientFromStops(obj) {
     });
 }
 
-// Função para calcular as coordenadas do gradiente
 function calculateGradientCoords(obj, angle) {
     const angleRad = angle * Math.PI / 180;
     const cos = Math.cos(angleRad);
@@ -2725,7 +2892,6 @@ function calculateGradientCoords(obj, angle) {
     };
 }
 
-// Função para atualizar os contornos do texto
 function updateTextStrokes(obj) {
     const stroke1 = activeTextSettings.stroke1;
 
@@ -2746,7 +2912,6 @@ function updateTextStrokes(obj) {
     }
 }
 
-// Função para ativar a categoria "TEXTO"
 function activateTextCategory() {
     categoryItems.forEach(i => i.classList.remove('active'));
     menuContents.forEach(m => m.classList.remove('active'));
@@ -2755,7 +2920,6 @@ function activateTextCategory() {
     document.getElementById('menu-texto').classList.add('active');
 }
 
-// Evento para adicionar um novo texto
 document.getElementById('addTextBtn').addEventListener('click', function() {
     debugTextOperation('addTextBtn click', () => {
         const text = new fabric.IText('CloudApp', {
@@ -2773,16 +2937,13 @@ document.getElementById('addTextBtn').addEventListener('click', function() {
         text.textId = generateUniqueId();
         console.log('Created new text object with ID:', text.textId);
 
-        // Update UI controls
         document.getElementById('fontSizeInput').value = DEFAULT_TEXT_SETTINGS.fontSize;
         document.getElementById('textColorInput').value = DEFAULT_TEXT_SETTINGS.fill;
         document.getElementById('fontSelect').value = DEFAULT_TEXT_SETTINGS.fontFamily;
 
-        // Reset and save settings
         activeTextSettings = JSON.parse(JSON.stringify(DEFAULT_TEXT_SETTINGS));
         saveTextSettings(text);
 
-        // Add to canvas and activate
         canvas.add(text);
         canvas.setActiveObject(text);
         canvas.requestRenderAll();
@@ -2793,11 +2954,9 @@ document.getElementById('addTextBtn').addEventListener('click', function() {
     });
 });
 
-// Remova eventos existentes de duplo clique
 canvas.off('mouse:dblclick');
 canvas.off('text:editing:exited');
 
-// Adicione o novo evento de duplo clique
 canvas.on('mouse:dblclick', function(options) {
     if (options.target && options.target.type.includes('text')) {
         const textObject = options.target;
@@ -2812,13 +2971,12 @@ canvas.on('mouse:dblclick', function(options) {
         if(typeof textObject.enterEditing === 'function') {
             textObject.enterEditing();
             textObject.selectAll();
+            return true;
         }
-
-        canvas.requestRenderAll();
     }
+    return false;
 });
 
-// Eventos para quando a edição de texto é iniciada e finalizada
 canvas.on('text:editing:entered', function(e) {
     if (e.target) {
         e.target.set({
@@ -2859,11 +3017,9 @@ function updateTextControlsUI(textObject) {
     const settings = textSettingsMap.get(textObject.textId);
     if (!settings) return;
 
-    // Update font settings
     document.getElementById('fontSizeInput').value = textObject.fontSize;
     document.getElementById('fontSelect').value = textObject.fontFamily;
 
-    // Update color mode
     document.getElementById('gradientColorBtn').classList.toggle('active', settings.gradientMode);
     document.getElementById('solidColorBtn').classList.toggle('active', !settings.gradientMode);
     document.getElementById('gradientPicker').style.display = settings.gradientMode ? 'block' : 'none';
@@ -2873,7 +3029,6 @@ function updateTextControlsUI(textObject) {
         document.getElementById('textColorInput').value = textObject.fill;
     }
 
-    // Update stroke settings
     document.getElementById('stroke1Enable').checked = settings.stroke1.enabled;
     document.getElementById('stroke1Width').value = settings.stroke1.width;
     document.getElementById('stroke1Color').value = settings.stroke1.color;
@@ -2886,14 +3041,12 @@ function updateTextControlsUI(textObject) {
     }
 }
 
-// Eventos para atualizar o texto ativo quando as configurações mudarem
 document.getElementById('fontSelect').addEventListener('input', updateActiveText);
 document.getElementById('fontSizeInput').addEventListener('input', updateActiveText);
 document.getElementById('textColorInput').addEventListener('input', updateActiveText);
 document.getElementById('stroke1Color').addEventListener('input', updateActiveText);
 document.getElementById('stroke1Width').addEventListener('input', updateActiveText);
 
-// Eventos para alternar entre cor sólida e gradiente
 document.getElementById('solidColorBtn').addEventListener('click', () => {
     activeTextSettings.gradientMode = false;
     document.getElementById('solidColorPicker').style.display = 'block';
@@ -2913,7 +3066,6 @@ document.getElementById('gradientColorBtn').addEventListener('click', () => {
     updateActiveText();
 });
 
-// Evento para adicionar uma nova parada de gradiente
 document.getElementById('addGradientStop').addEventListener('click', () => {
     const stop = { color: '#000000', position: 50 };
     activeTextSettings.gradientStops.push(stop);
@@ -2921,7 +3073,6 @@ document.getElementById('addGradientStop').addEventListener('click', () => {
     updateActiveText();
 });
 
-// Eventos para atualizar o contorno do texto
 document.getElementById('stroke1Enable').addEventListener('change', function () {
     activeTextSettings.stroke1.enabled = this.checked;
     document.getElementById('stroke1Width').disabled = !this.checked;
@@ -2939,7 +3090,6 @@ document.getElementById('stroke1Color').addEventListener('input', function () {
     updateActiveText();
 });
 
-// Função para atualizar a interface do gradiente
 function updateGradientStopsUI() {
     const container = document.querySelector('.gradient-stops');
     container.innerHTML = '';
@@ -2948,12 +3098,11 @@ function updateGradientStopsUI() {
         const stopEl = document.createElement('div');
         stopEl.className = 'gradient-stop';
         stopEl.innerHTML = `
-            <input type="color" class="gradient-color" value="${stop.color}">
-            <input type="number" class="gradient-position" value="${stop.position}" min="0" max="100">
+            <input type="color" class="gradient-color" value="\${stop.color}">
+            <input type="number" class="gradient-position" value="\${stop.position}" min="0" max="100">
             <button class="remove-stop">&times;</button>
         `;
 
-        // Update event listeners to trigger immediate updates
         stopEl.querySelector('.gradient-color').addEventListener('input', (e) => {
             stop.color = e.target.value;
             updateActiveText();
@@ -2976,7 +3125,6 @@ function updateGradientStopsUI() {
     });
 }
 
-// Eventos para seleção de texto
 canvas.on('selection:created', function (e) {
     if (e.selected[0].type.includes('text')) {
         activateTextCategory();
@@ -3062,15 +3210,12 @@ canvas.on('object:modified', function(e) {
 });
 
 canvas.on('selection:cleared', function () {
-    // Do not hide text controls anymore
-    // Just clear text input if it exists
     const textInput = document.getElementById('textInput');
     if (textInput) {
         textInput.value = '';
     }
 });
 
-// Evento para atualizar o tamanho da fonte do texto
 document.getElementById('fontSizeInput').addEventListener('input', function () {
     const activeObject = canvas.getActiveObject();
     if (activeObject && activeObject.type.includes('text')) {
@@ -3085,7 +3230,6 @@ document.getElementById('fontSizeInput').addEventListener('input', function () {
     }
 });
 
-// Add event handler for double click on IText objects
 fabric.IText.prototype.dblClickHandler = function() {
     if (this.selectable && this.editable) {
         this.enterEditing();
@@ -3105,14 +3249,12 @@ function calculateGradientAngle(coords) {
 // ---------- Final Seção Texto ----------
 
 // ---------- Inicio Seção Eventos de Texto ----------
-// Função para processar o texto mantendo espaços e quebras de linha
 function processText(text) {
     return text
-        .replace(/\r\n/g, '\n')  // Normaliza quebras de linha
-        .replace(/\r/g, '\n');   // Converte retornos de carro em quebras de linha
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n');
 }
 
-// Atualizar o evento de input do textInput
 const textInput = document.getElementById('textInput');
 if (textInput) {
     textInput.addEventListener('input', function(e) {
@@ -3137,7 +3279,6 @@ if (textInput) {
     });
 }
 
-// Atualizar os eventos de seleção para preservar formatação
 canvas.on('selection:created', function(e) {
     if (e.selected[0] && e.selected[0].type.includes('text')) {
         const textObject = e.selected[0];
@@ -3160,7 +3301,6 @@ canvas.on('selection:updated', function(e) {
     }
 });
 
-// Adicionar CSS para o textInput
 const style = document.createElement('style');
 style.textContent = `
 #textInput {
@@ -3217,6 +3357,715 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---------- Final Seção Eventos de Texto ----------
 
+// ---------- Seção Inicio Edição de imagem ---------
+
+document.getElementById('btnPincel').addEventListener('click', function () {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'image') {
+		showCustomAlert('Selecione uma imagem primeiro');
+        return;
+    }
+
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    modal.style.zIndex = '1000';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'column';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+
+    const modalContent = document.createElement('div');
+    modalContent.style.width = '100%';
+    modalContent.style.height = 'calc(100% - 80px)';
+    modalContent.style.backgroundColor = '#16213e';
+    modalContent.style.display = 'flex';
+    modalContent.style.alignItems = 'center';
+    modalContent.style.justifyContent = 'center';
+
+    const paintingCanvas = document.createElement('canvas');
+    paintingCanvas.style.maxWidth = '100%';
+    paintingCanvas.style.maxHeight = '100%';
+    paintingCanvas.style.border = '1px solid #ccc';
+    modalContent.appendChild(paintingCanvas);
+
+    const paintingCtx = paintingCanvas.getContext('2d');
+    const imageElement = activeObject.getElement();
+
+    const originalWidth = imageElement.naturalWidth;
+    const originalHeight = imageElement.naturalHeight;
+
+    paintingCanvas.width = originalWidth;
+    paintingCanvas.height = originalHeight;
+
+    paintingCtx.drawImage(imageElement, 0, 0, originalWidth, originalHeight);
+
+    let history = [];
+    let historyIndex = -1;
+    saveHistory();
+
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let currentTool = 'brush';
+
+    const modalMenu = document.createElement('div');
+    modalMenu.style.width = '100%';
+    modalMenu.style.height = '80px';
+    modalMenu.style.backgroundColor = '#0f3460';
+    modalMenu.style.display = 'flex';
+    modalMenu.style.alignItems = 'center';
+    modalMenu.style.justifyContent = 'center';
+    modalMenu.style.gap = '10px';
+
+    const createButton = (text, id) => {
+        const button = document.createElement('button');
+        button.textContent = text;
+        button.id = id;
+        button.style.padding = '10px 20px';
+        button.style.border = 'none';
+        button.style.borderRadius = '5px';
+        button.style.backgroundColor = '#1a4b8c';
+        button.style.color = '#fff';
+        button.style.cursor = 'pointer';
+        button.style.fontSize = '14px';
+        button.style.transition = 'all 0.3s ease';
+        return button;
+    };
+
+    const brushButton = createButton('Pincel', 'brushBtn');
+    const eraserButton = createButton('Borracha', 'eraserBtn');
+    const bucketButton = createButton('Balde de Tinta', 'bucketBtn');
+    const closeButton = createButton('Fechar', 'closeBrushModal');
+    const saveButton = createButton('Salvar', 'saveBrushModal');
+    const undoButton = createButton('Voltar', 'undoBrushModal');
+
+    brushButton.style.backgroundColor = '#ffd700';
+    brushButton.style.color = '#000';
+
+    const sizeSlider = document.createElement('input');
+    sizeSlider.type = 'range';
+    sizeSlider.min = '1';
+    sizeSlider.max = '200';
+    sizeSlider.value = '50';
+    sizeSlider.style.width = '200px';
+
+    const colorPicker = document.createElement('input');
+    colorPicker.type = 'color';
+    colorPicker.value = '#000000';
+
+    modalMenu.appendChild(brushButton);
+    modalMenu.appendChild(eraserButton);
+    modalMenu.appendChild(bucketButton);
+    modalMenu.appendChild(sizeSlider);
+    modalMenu.appendChild(colorPicker);
+    modalMenu.appendChild(undoButton);
+    modalMenu.appendChild(closeButton);
+    modalMenu.appendChild(saveButton);
+
+    function resetButtonStyles() {
+        [brushButton, eraserButton, bucketButton].forEach(btn => {
+            btn.style.backgroundColor = '#1a4b8c';
+            btn.style.color = '#fff';
+        });
+    }
+
+    brushButton.addEventListener('click', () => {
+        resetButtonStyles();
+        brushButton.style.backgroundColor = '#ffd700';
+        brushButton.style.color = '#000';
+        currentTool = 'brush';
+    });
+
+    eraserButton.addEventListener('click', () => {
+        resetButtonStyles();
+        eraserButton.style.backgroundColor = '#ffd700';
+        eraserButton.style.color = '#000';
+        currentTool = 'eraser';
+    });
+
+    bucketButton.addEventListener('click', () => {
+        resetButtonStyles();
+        bucketButton.style.backgroundColor = '#ffd700';
+        bucketButton.style.color = '#000';
+        currentTool = 'bucket';
+    });
+
+    function getMousePos(canvas, e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
+        };
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        if (currentTool === 'bucket') return;
+
+        const pos = getMousePos(paintingCanvas, e);
+        const brushSizeValue = parseInt(sizeSlider.value);
+
+        paintingCtx.lineWidth = brushSizeValue;
+        paintingCtx.lineCap = 'round';
+        paintingCtx.lineJoin = 'round';
+
+        if (currentTool === 'eraser') {
+            paintingCtx.globalCompositeOperation = 'destination-out';
+            paintingCtx.strokeStyle = 'rgba(0,0,0,1)';
+        } else {
+            paintingCtx.globalCompositeOperation = 'source-over';
+            paintingCtx.strokeStyle = colorPicker.value;
+        }
+
+        paintingCtx.beginPath();
+        paintingCtx.moveTo(lastX, lastY);
+        paintingCtx.lineTo(pos.x, pos.y);
+        paintingCtx.stroke();
+
+        [lastX, lastY] = [pos.x, pos.y];
+    }
+
+    function getPixel(imageData, x, y) {
+        const index = (y * imageData.width + x) * 4;
+        return {
+            r: imageData.data[index],
+            g: imageData.data[index + 1],
+            b: imageData.data[index + 2],
+            a: imageData.data[index + 3]
+        };
+    }
+
+    function setPixel(imageData, x, y, color) {
+        const index = (y * imageData.width + x) * 4;
+        imageData.data[index] = color.r;
+        imageData.data[index + 1] = color.g;
+        imageData.data[index + 2] = color.b;
+        imageData.data[index + 3] = color.a;
+    }
+
+    function colorMatch(c1, c2, tolerance) {
+        return Math.abs(c1.r - c2.r) <= tolerance &&
+               Math.abs(c1.g - c2.g) <= tolerance &&
+               Math.abs(c1.b - c2.b) <= tolerance &&
+               Math.abs(c1.a - c2.a) <= tolerance;
+    }
+
+    function floodFill(imageData, startX, startY, fillColor, tolerance) {
+        const width = imageData.width;
+        const height = imageData.height;
+        const visited = new Uint8Array(width * height);
+        const queue = [];
+
+        const targetColor = getPixel(imageData, startX, startY);
+        const fillColorRGB = {
+            r: parseInt(fillColor.slice(1,3), 16),
+            g: parseInt(fillColor.slice(3,5), 16),
+            b: parseInt(fillColor.slice(5,7), 16),
+            a: 255
+        };
+
+        if (colorMatch(targetColor, fillColorRGB, 0)) {
+            return;
+        }
+
+        queue.push([startX, startY]);
+        visited[startY * width + startX] = 1;
+
+        const processChunk = () => {
+            let processCount = 0;
+            const chunkSize = 1000;
+
+            while (queue.length > 0 && processCount < chunkSize) {
+                const [x, y] = queue.shift();
+                const currentPixel = getPixel(imageData, x, y);
+
+                if (colorMatch(currentPixel, targetColor, tolerance)) {
+                    setPixel(imageData, x, y, fillColorRGB);
+
+                    const neighbors = [
+                        [x - 1, y], [x + 1, y],
+                        [x, y - 1], [x, y + 1]
+                    ];
+
+                    for (const [nx, ny] of neighbors) {
+                        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                            const index = ny * width + nx;
+                            if (!visited[index]) {
+                                visited[index] = 1;
+                                queue.push([nx, ny]);
+                            }
+                        }
+                    }
+                }
+                processCount++;
+            }
+
+            paintingCtx.putImageData(imageData, 0, 0);
+
+            if (queue.length > 0) {
+                requestAnimationFrame(processChunk);
+            }
+        };
+
+        requestAnimationFrame(processChunk);
+    }
+
+    paintingCanvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        const pos = getMousePos(paintingCanvas, e);
+        [lastX, lastY] = [pos.x, pos.y];
+
+        saveHistory();
+
+        if (currentTool === 'bucket') {
+            const imageData = paintingCtx.getImageData(0, 0, paintingCanvas.width, paintingCanvas.height);
+            floodFill(imageData, Math.floor(pos.x), Math.floor(pos.y), colorPicker.value, parseInt(sizeSlider.value));
+        }
+    });
+
+    paintingCanvas.addEventListener('mousemove', draw);
+    paintingCanvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+    });
+    paintingCanvas.addEventListener('mouseout', () => {
+        isDrawing = false;
+    });
+
+    saveButton.addEventListener('click', () => {
+        const imageURL = paintingCanvas.toDataURL('image/png', 1.0);
+        fabric.Image.fromURL(imageURL, (img) => {
+            const scaleX = activeObject.getScaledWidth() / img.width;
+            const scaleY = activeObject.getScaledHeight() / img.height;
+
+            img.set({
+                left: activeObject.left,
+                top: activeObject.top,
+                scaleX: scaleX,
+                scaleY: scaleY,
+                angle: activeObject.angle
+            });
+            canvas.remove(activeObject);
+            canvas.add(img);
+            canvas.renderAll();
+            document.body.removeChild(modal);
+        });
+    });
+
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+
+    function saveHistory() {
+        history = history.slice(0, historyIndex + 1);
+        history.push(paintingCtx.getImageData(0, 0, paintingCanvas.width, paintingCanvas.height));
+        historyIndex++;
+    }
+
+    undoButton.addEventListener('click', () => {
+        if (historyIndex > 0) {
+            historyIndex--;
+            const previousState = history[historyIndex];
+            paintingCtx.putImageData(previousState, 0, 0);
+        }
+    });
+
+    modal.appendChild(modalContent);
+    modal.appendChild(modalMenu);
+    document.body.appendChild(modal);
+});
+
+// ----------------------------------------- Seção Final Edição de imagem ----------------------------------------------------
+
+// ----------------------------------------- Seção Inicio Remover Cor ----------------------------------------------------
+
+document.getElementById('removeColorBtn').addEventListener('click', function() {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para remover a cor');
+        return;
+    }
+
+    const removeColorModal = document.getElementById('removeColorModal');
+    const removeColorCanvas = document.getElementById('removeColorCanvas');
+
+    const originalImage = activeObject._element;
+    removeColorCanvas.width = originalImage.width;
+    removeColorCanvas.height = originalImage.height;
+
+    const ctx = removeColorCanvas.getContext('2d');
+    ctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
+
+    removeColorHistory = [];
+    currentRemoveColorIndex = -1;
+    saveRemoveColorHistory(ctx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
+
+    removeColorModal.style.display = 'flex';
+});
+
+function saveRemoveColorHistory(imageData) {
+    removeColorHistory = removeColorHistory.slice(0, currentRemoveColorIndex + 1);
+
+    removeColorHistory.push(imageData);
+    currentRemoveColorIndex++;
+
+    if (removeColorHistory.length > 10) {
+        removeColorHistory.shift();
+        currentRemoveColorIndex--;
+    }
+}
+
+document.getElementById('closeRemoveColorModal').addEventListener('click', function() {
+    document.getElementById('removeColorModal').style.display = 'none';
+});
+
+document.getElementById('undoRemoveColor').addEventListener('click', function() {
+    if (currentRemoveColorIndex > 0) {
+        currentRemoveColorIndex--;
+        const previousState = removeColorHistory[currentRemoveColorIndex];
+        const ctx = removeColorCanvas.getContext('2d');
+        ctx.putImageData(previousState, 0, 0);
+    }
+});
+
+const saveRemoveColor = document.getElementById('saveRemoveColor');
+const oldSaveElement = saveRemoveColor.cloneNode(true);
+saveRemoveColor.parentNode.replaceChild(oldSaveElement, saveRemoveColor);
+
+document.getElementById('saveRemoveColor').addEventListener('click', function () {
+    const removeColorCanvas = document.getElementById('removeColorCanvas');
+    const activeObject = canvas.getActiveObject();
+    const removeColorModal = document.getElementById('removeColorModal');
+
+    if (!activeObject || activeObject.type !== 'image') {
+        removeColorModal.style.display = 'none';
+        return;
+    }
+
+    const originalWidth = activeObject._element.width;
+    const originalHeight = activeObject._element.height;
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = originalWidth;
+    tempCanvas.height = originalHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    tempCtx.drawImage(removeColorCanvas, 0, 0, originalWidth, originalHeight);
+
+    const dataURL = tempCanvas.toDataURL('image/png');
+
+    canvas.remove(activeObject);
+
+    fabric.Image.fromURL(dataURL, function (newImage) {
+        newImage.set({
+            left: activeObject.left,
+            top: activeObject.top,
+            scaleX: activeObject.scaleX,
+            scaleY: activeObject.scaleY,
+            angle: activeObject.angle,
+            flipX: activeObject.flipX,
+            flipY: activeObject.flipY
+        });
+
+        canvas.add(newImage);
+        canvas.setActiveObject(newImage);
+        canvas.renderAll();
+        saveState();
+
+        removeColorModal.style.display = 'none';
+    });
+});
+
+removeColorBtn.addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para remover a cor');
+        return;
+    }
+    activeImage = activeObject;
+    prepareRemoveColorCanvas(activeImage);
+});
+
+removeRegionBtn.addEventListener('click', () => {
+    currentRemoveMode = 'region';
+    removeRegionBtn.classList.add('active');
+    removeTotalBtn.classList.remove('active');
+});
+
+removeTotalBtn.addEventListener('click', () => {
+    currentRemoveMode = 'total';
+    removeTotalBtn.classList.add('active');
+    removeRegionBtn.classList.remove('active');
+});
+
+removeColorCanvas.addEventListener('click', (e) => {
+    if (currentRemoveMode === 'region') {
+        handleRemoveColorRegion(e);
+    } else {
+        handleRemoveColorTotal(e);
+    }
+});
+
+closeRemoveColorModal.addEventListener('click', () => {
+    removeColorModal.style.display = 'none';
+});
+
+undoRemoveColor.addEventListener('click', () => {
+    if (removeColorHistoryIndex > 0) {
+        removeColorHistoryIndex--;
+        const previousState = removeColorHistory[removeColorHistoryIndex];
+        const ctx = removeColorCanvas.getContext('2d');
+        ctx.putImageData(previousState, 0, 0);
+    }
+});
+
+function handleRemoveColorRegion(e) {
+    if (!removeColorCtx) return;
+
+    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    saveRemoveColorHistory(currentState);
+
+    const rect = removeColorCanvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
+
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    const tolerance = parseInt(sensitivityRange.value);
+
+    const processedImageData = floodFillAtPoint(
+        imageData,
+        x,
+        y,
+        { r: 0, g: 0, b: 0, a: 0 },
+        tolerance
+    );
+
+    removeColorCtx.putImageData(processedImageData, 0, 0);
+}
+
+function handleRemoveColorTotal(e) {
+    if (!removeColorCtx) return;
+
+    // Save state before making changes
+    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    saveRemoveColorHistory(currentState);
+
+    const rect = removeColorCanvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
+
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    const tolerance = parseInt(sensitivityRange.value);
+    const targetColor = getPixel(imageData, x, y);
+
+    const processedImageData = floodFillEntireImage(
+        imageData,
+        targetColor,
+        { r: 0, g: 0, b: 0, a: 0 },
+        tolerance
+    );
+
+    removeColorCtx.putImageData(processedImageData, 0, 0);
+}
+
+function prepareRemoveColorCanvas(activeImage) {
+    const removeColorCanvas = document.getElementById('removeColorCanvas');
+    const removeColorModal = document.getElementById('removeColorModal');
+
+    removeColorCtx = removeColorCanvas.getContext('2d');
+
+    // Obtém as dimensões do modal
+    const modalWidth = removeColorModal.clientWidth;
+    const modalHeight = removeColorModal.clientHeight;
+
+    // Calcula a proporção da imagem
+    const imageRatio = activeImage.width / activeImage.height;
+    const modalRatio = modalWidth / modalHeight;
+
+    let canvasWidth, canvasHeight;
+
+    if (imageRatio > modalRatio) {
+        // A imagem é mais larga que o modal
+        canvasWidth = modalWidth;
+        canvasHeight = modalWidth / imageRatio;
+    } else {
+        // A imagem é mais alta que o modal
+        canvasHeight = modalHeight;
+        canvasWidth = modalHeight * imageRatio;
+    }
+
+    // Define as dimensões do canvas
+    removeColorCanvas.width = canvasWidth;
+    removeColorCanvas.height = canvasHeight;
+
+    // Desenha a imagem no canvas
+    removeColorCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+    removeColorCtx.drawImage(activeImage.getElement(), 0, 0, canvasWidth, canvasHeight);
+
+    // Limpa o histórico e salva o estado inicial
+    removeColorHistory = [];
+    removeColorHistoryIndex = -1;
+    saveRemoveColorHistory();
+
+    // Exibe o modal
+    removeColorModal.style.display = 'flex';
+}
+
+function saveRemoveColorHistory() {
+    if (!removeColorCtx) return;
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    removeColorHistory = removeColorHistory.slice(0, removeColorHistoryIndex + 1);
+    removeColorHistory.push(imageData);
+    removeColorHistoryIndex = removeColorHistory.length - 1;
+}
+
+function floodFillAtPoint(imageData, startX, startY, fillColor, tolerance) {
+    const width = imageData.width;
+    const height = imageData.height;
+    const visited = new Uint8Array(width * height);
+    const queue = [];
+
+    const targetColor = getPixel(imageData, startX, startY);
+    if (!targetColor) return imageData;
+
+    queue.push([startX, startY]);
+    visited[startY * width + startX] = 1;
+
+    while (queue.length > 0) {
+        const [x, y] = queue.shift();
+        const currentPixel = getPixel(imageData, x, y);
+
+        if (colorMatch(currentPixel, targetColor, tolerance)) {
+            setPixel(imageData, x, y, fillColor);
+
+            [[x-1,y], [x+1,y], [x,y-1], [x,y+1]].forEach(([nx,ny]) => {
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    const index = ny * width + nx;
+                    if (!visited[index]) {
+                        visited[index] = 1;
+                        queue.push([nx,ny]);
+                    }
+                }
+            });
+        }
+    }
+
+    return imageData;
+}
+
+function handleRemoveColorTotal(e) {
+    if (!removeColorCtx) return;
+
+    // Save state before making changes
+    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    saveRemoveColorHistory(currentState);
+
+    const rect = removeColorCanvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
+
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    const tolerance = parseInt(sensitivityRange.value);
+    const targetColor = getPixel(imageData, x, y);
+
+    const processedImageData = floodFillEntireImage(
+        imageData,
+        targetColor,
+        { r: 0, g: 0, b: 0, a: 0 },
+        tolerance
+    );
+
+    removeColorCtx.putImageData(processedImageData, 0, 0);
+}
+
+function floodFillEntireImage(imageData, targetColor, fillColor, tolerance) {
+    const width = imageData.width;
+    const height = imageData.height;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const currentPixel = getPixel(imageData, x, y);
+            if (colorMatch(currentPixel, targetColor, tolerance)) {
+                setPixel(imageData, x, y, fillColor);
+            }
+        }
+    }
+
+    return imageData;
+}
+
+function getPixel(imageData, x, y) {
+    const index = (y * imageData.width + x) * 4;
+    if (index >= imageData.data.length) return null;
+    return {
+        r: imageData.data[index],
+        g: imageData.data[index + 1],
+        b: imageData.data[index + 2],
+        a: imageData.data[index + 3]
+    };
+}
+
+function setPixel(imageData, x, y, color) {
+    const index = (y * imageData.width + x) * 4;
+    if (index >= imageData.data.length) return;
+    imageData.data[index] = color.r;
+    imageData.data[index + 1] = color.g;
+    imageData.data[index + 2] = color.b;
+    imageData.data[index + 3] = color.a;
+}
+
+function colorMatch(c1, c2, tolerance) {
+    if (!c1 || !c2) return false;
+    return Math.abs(c1.r - c2.r) <= tolerance &&
+           Math.abs(c1.g - c2.g) <= tolerance &&
+           Math.abs(c1.b - c2.b) <= tolerance;
+}
+document.getElementById('removeRegionBtn').addEventListener('click', () => {
+    currentRemoveMode = 'region';
+    removeRegionBtn.classList.add('active');
+    removeTotalBtn.classList.remove('active');
+});
+document.getElementById('removeTotalBtn').addEventListener('click', () => {
+    currentRemoveMode = 'total';
+    removeTotalBtn.classList.add('active');
+    removeRegionBtn.classList.remove('active');
+});
+document.getElementById('removeColorModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.style.display = 'none';
+    }
+});
+// ----------------------------------------- Seção Final Remover Cor ----------------------------------------------------
+
+// ----------------------------------------- Seção Inicio Alerta Personalizado ----------------------------------------------------
+// Função para exibir o modal personalizado
+function showCustomAlert(message) {
+    const modal = document.getElementById('customAlertModal');
+    const messageElement = document.getElementById('customAlertMessage');
+
+    messageElement.textContent = message;
+    modal.style.display = 'flex';
+}
+
+// Função para fechar o modal personalizado
+function closeCustomAlert() {
+    const modal = document.getElementById('customAlertModal');
+    modal.style.display = 'none';
+}
+
+// Evento para fechar o modal ao clicar fora da área do modal
+document.getElementById('customAlertModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCustomAlert();
+    }
+});
+// ----------------------------------------- Seção Final Alerta Personalizado ----------------------------------------------------
 </script>
 </body>
 </html>
