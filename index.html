@@ -774,7 +774,7 @@
         </div>
     </div>
 </div>
-    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.19 - 25/12/2024</div>
+    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.20 - 26/12/2024</div>
 	
 
  <script>
@@ -1791,79 +1791,222 @@ exportButton.addEventListener('click', () => {
   exportOptions.classList.toggle('active');
 });
 
-function exportCanvas(format) {
-  const dpi = parseInt(resolutionInput.value) || 600;
+async function exportCanvas(format) {
+  const dpi = parseInt(resolutionInput.value) || 300; // Reduzido para 300 DPI padrão
   const scale = dpi / 96;
 
   const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
   if (!cloudFolha) return;
 
+  // Criar um canvas temporário com dimensões otimizadas
   const tempContainer = document.createElement('div');
-  tempContainer.style.position = 'absolute';
-  tempContainer.style.left = '-9999px';
-  tempContainer.style.top = '-9999px';
   document.body.appendChild(tempContainer);
 
   const exportCanvas = document.createElement('canvas');
-  exportCanvas.width = cloudFolha.width;
-  exportCanvas.height = cloudFolha.height;
+  // Calcular dimensões ideais mantendo a proporção
+  const maxDimension = 4096; // Limite máximo para garantir performance
+  const aspectRatio = cloudFolha.width / cloudFolha.height;
+  let targetWidth = cloudFolha.width * scale;
+  let targetHeight = cloudFolha.height * scale;
+
+  // Ajustar dimensões se excederem o máximo
+  if (targetWidth > maxDimension || targetHeight > maxDimension) {
+    if (aspectRatio > 1) {
+      targetWidth = maxDimension;
+      targetHeight = maxDimension / aspectRatio;
+    } else {
+      targetHeight = maxDimension;
+      targetWidth = maxDimension * aspectRatio;
+    }
+  }
+
+  exportCanvas.width = targetWidth;
+  exportCanvas.height = targetHeight;
   tempContainer.appendChild(exportCanvas);
 
-  const exportFabricCanvas = new fabric.Canvas(exportCanvas);
-  exportFabricCanvas.setWidth(cloudFolha.width);
-  exportFabricCanvas.setHeight(cloudFolha.height);
+  const exportFabricCanvas = new fabric.Canvas(exportCanvas, {
+    enableRetinaScaling: true,
+    imageSmoothingQuality: 'high'
+  });
 
+  // Configurar canvas de exportação
+  exportFabricCanvas.setWidth(targetWidth);
+  exportFabricCanvas.setHeight(targetHeight);
+
+  // Clonar e ajustar objetos
   const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-  objects.forEach(obj => {
-    const clonedObj = fabric.util.object.clone(obj);
-
+  const promises = objects.map(async (obj) => {
+    const clonedObj = await cloneObjectWithQuality(obj);
+    
     const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
     const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
 
+    const scaleFactor = targetWidth / cloudFolha.width;
+    
     clonedObj.set({
-      left: relativeLeft,
-      top: relativeTop,
-      scaleX: obj.scaleX / cloudFolha.scaleX,
-      scaleY: obj.scaleY / cloudFolha.scaleY
+      left: relativeLeft * scaleFactor,
+      top: relativeTop * scaleFactor,
+      scaleX: (obj.scaleX / cloudFolha.scaleX) * scaleFactor,
+      scaleY: (obj.scaleY / cloudFolha.scaleY) * scaleFactor
     });
 
-    exportFabricCanvas.add(clonedObj);
+    return clonedObj;
   });
+
+  // Aguardar todos os objetos serem processados
+  const clonedObjects = await Promise.all(promises);
+  clonedObjects.forEach(obj => exportFabricCanvas.add(obj));
 
   exportFabricCanvas.renderAll();
 
-  html2canvas(exportCanvas, {
-    scale: scale,
-    backgroundColor: format === 'jpg' ? '#ffffff' : null,
-    logging: false,
-    useCORS: true
-  }).then(outputCanvas => {
-    const link = document.createElement('a');
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+  // Configurações específicas por formato
+  const exportOptions = {
+    format: format,
+    quality: 1.0,
+    enableRetinaScaling: true,
+    multiplier: 1,
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high'
+  };
 
-    if (format === 'png' || format === 'jpg') {
-      link.href = outputCanvas.toDataURL(`image/${format}`, 1.0);
-      link.download = `CloudApp_${timestamp}.${format}`;
-      link.click();
+  if (format === 'jpg') {
+    exportOptions.backgroundColor = '#ffffff';
+  }
+
+  // Exportar com qualidade otimizada
+  const dataUrl = exportFabricCanvas.toDataURL(exportOptions);
+  
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+  link.href = dataUrl;
+  link.download = `CloudApp_${timestamp}.${format}`;
+  link.click();
+
+  // Limpar recursos
+  tempContainer.remove();
+  exportFabricCanvas.dispose();
+}
+
+// Função auxiliar para clonar objetos mantendo qualidade
+async function cloneObjectWithQuality(obj) {
+  return new Promise(async (resolve) => {
+    const clonedObj = fabric.util.object.clone(obj);
+    
+    // Se for uma imagem, recarregá-la em alta qualidade
+    if (obj.type === 'image' && obj.getSrc) {
+      const imgSrc = obj.getSrc();
+      fabric.Image.fromURL(imgSrc, function(img) {
+        img.set(clonedObj);
+        resolve(img);
+      }, {
+        crossOrigin: 'anonymous',
+        quality: 1.0
+      });
+    } else {
+      resolve(clonedObj);
     }
-
-    tempContainer.remove();
-    exportFabricCanvas.dispose();
   });
 }
 
-document.querySelectorAll('.export-btn').forEach(btn => {
-  if (btn.id !== 'previewExportBtn') {
-    btn.addEventListener('click', () => {
-      const format = btn.dataset.format;
-      if (format === 'pdf' || format === 'vector-pdf') {
-        return;
-      }
-      exportCanvas(format);
+function cmToPoints(cm) {
+  return cm * 28.3465;
+}
+
+// Função para exportar PDF com qualidade otimizada
+async function exportPdf() {
+  const dpi = parseInt(resolutionInput.value) || 300;
+  const scale = dpi / 96;
+
+  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  if (!cloudFolha) return;
+
+  const pageWidth = cmToPoints(cloudFolha.width / CM_TO_PX);
+  const pageHeight = cmToPoints(cloudFolha.height / CM_TO_PX);
+
+  // Criar canvas temporário com dimensões otimizadas
+  const tempCanvas = document.createElement('canvas');
+  const targetWidth = Math.min(cloudFolha.width * scale, 4096);
+  const targetHeight = Math.min(cloudFolha.height * scale, 4096);
+  
+  tempCanvas.width = targetWidth;
+  tempCanvas.height = targetHeight;
+  
+  const tempFabricCanvas = new fabric.StaticCanvas(tempCanvas, {
+    enableRetinaScaling: true,
+    imageSmoothingQuality: 'high'
+  });
+
+  // Clonar e processar objetos com alta qualidade
+  const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+  const clonedObjects = await Promise.all(
+    objects.map(obj => cloneObjectWithQuality(obj))
+  );
+
+  clonedObjects.forEach(obj => {
+    const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
+    const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
+    
+    const scaleFactor = targetWidth / cloudFolha.width;
+    
+    obj.set({
+      left: relativeLeft * scaleFactor,
+      top: relativeTop * scaleFactor,
+      scaleX: (obj.scaleX / cloudFolha.scaleX) * scaleFactor,
+      scaleY: (obj.scaleY / cloudFolha.scaleY) * scaleFactor
     });
-  }
+    
+    tempFabricCanvas.add(obj);
+  });
+
+  tempFabricCanvas.renderAll();
+
+  // Criar PDF com qualidade otimizada
+  const pdfDoc = await PDFLib.PDFDocument.create();
+  const page = pdfDoc.addPage([pageWidth, pageHeight]);
+  
+  const pngImage = await pdfDoc.embedPng(
+    tempCanvas.toDataURL('image/png', 1.0)
+  );
+  
+  page.drawImage(pngImage, {
+    x: 0,
+    y: 0,
+    width: pageWidth,
+    height: pageHeight
+  });
+
+  const pdfBytes = await pdfDoc.save({
+    useObjectStreams: true,
+    addDefaultPage: false,
+    compress: true
+  });
+
+  // Download do PDF
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+  link.download = `CloudApp_${timestamp}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+  
+  tempFabricCanvas.dispose();
+}
+
+// Event Listeners para exportação
+document.querySelectorAll('.export-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const format = btn.dataset.format;
+    if (format === 'pdf') {
+      exportPdf();
+    } else if (format !== 'vector-pdf') {
+      exportCanvas(format);
+    }
+  });
 });
 
+// Event Listeners para inputs de dimensões
 imageWidthInput.addEventListener('change', () => {
   const activeObj = canvas.getActiveObject();
   if (!activeObj) return;
@@ -1900,82 +2043,6 @@ imageHeightInput.addEventListener('change', () => {
 
   canvas.renderAll();
   saveState();
-});
-
-function cmToPoints(cm) {
-    return cm * 28.3465;
-}
-
-document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-    const dpi = parseInt(document.getElementById('resolutionInput').value) || 600;
-    const scale = dpi / 96;
-
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (!cloudFolha) return;
-
-    const pageWidth = cmToPoints(cloudFolha.width / CM_TO_PX);
-    const pageHeight = cmToPoints(cloudFolha.height / CM_TO_PX);
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = Math.floor(cloudFolha.width * scale);
-    tempCanvas.height = Math.floor(cloudFolha.height * scale);
-    const ctx = tempCanvas.getContext('2d');
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-    const tempFabricCanvas = new fabric.StaticCanvas(tempCanvas, {
-        enableRetinaScaling: false,
-        renderOnAddRemove: false,
-    });
-
-    tempFabricCanvas.setWidth(cloudFolha.width * scale);
-    tempFabricCanvas.setHeight(cloudFolha.height * scale);
-
-    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-    objects.forEach(obj => {
-        const clonedObj = fabric.util.object.clone(obj);
-
-        const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
-        const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
-
-        clonedObj.set({
-            left: relativeLeft * scale,
-            top: relativeTop * scale,
-            scaleX: (obj.scaleX / cloudFolha.scaleX) * scale,
-            scaleY: (obj.scaleY / cloudFolha.scaleY) * scale
-        });
-
-        tempFabricCanvas.add(clonedObj);
-    });
-
-    tempFabricCanvas.renderAll();
-
-    const outputCanvas = document.createElement('canvas');
-    outputCanvas.width = tempCanvas.width;
-    outputCanvas.height = tempCanvas.height;
-    const outputCtx = outputCanvas.getContext('2d');
-    outputCtx.drawImage(tempCanvas, 0, 0);
-
-    const pdfDoc = await PDFLib.PDFDocument.create();
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    const pngImage = await pdfDoc.embedPng(outputCanvas.toDataURL('image/png'));
-    page.drawImage(pngImage, {
-        x: 0,
-        y: 0,
-        width: pageWidth,
-        height: pageHeight
-    });
-
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
-    link.download = `CloudApp_${timestamp}.pdf`;
-    link.click();
-    URL.revokeObjectURL(url);
 });
 
 // ---------- Final Seção Exportação ----------
@@ -2536,34 +2603,49 @@ function handleImageFile(file) {
             return;
         }
 
-        fabric.Image.fromURL(e.target.result, function(img) {
-            if (!img) {
-                showCustomAlert('Falha ao carregar a imagem.');
-                return;
-            }
+        // Criar uma imagem temporária para obter dimensões originais
+        const tempImg = new Image();
+        tempImg.onload = function() {
+            const originalWidth = this.width;
+            const originalHeight = this.height;
 
-            const canvasCenter = getCanvasCenter();
-            img.set({
-                left: canvasCenter.left,
-                top: canvasCenter.top,
-                originX: 'center',
-                originY: 'center',
-                perPixelTargetFind: true,
-                lockMovementX: false,
-                lockMovementY: false
-            });
+            fabric.Image.fromURL(e.target.result, function(img) {
+                if (!img) {
+                    showCustomAlert('Falha ao carregar a imagem.');
+                    return;
+                }
 
-            resizeImageToMaxSize(img);
+                const canvasCenter = getCanvasCenter();
+                
+                // Configurar a imagem com alta qualidade
+                img.set({
+                    left: canvasCenter.left,
+                    top: canvasCenter.top,
+                    originX: 'center',
+                    originY: 'center',
+                    perPixelTargetFind: true,
+                    lockMovementX: false,
+                    lockMovementY: false,
+                    scaleX: 1,
+                    scaleY: 1,
+                    width: originalWidth,
+                    height: originalHeight
+                });
 
-            try {
-                canvas.add(img);
-                canvas.setActiveObject(img);
-                canvas.renderAll();
-                saveState();
-            } catch (error) {
-                showCustomAlert('Erro ao adicionar a imagem ao canvas.');
-            }
-        });
+                // Definir DPI para 300
+                img.set('dpi', 300);
+
+                try {
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                    canvas.renderAll();
+                    saveState();
+                } catch (error) {
+                    showCustomAlert('Erro ao adicionar a imagem ao canvas.');
+                }
+            }, { crossOrigin: 'Anonymous' });
+        };
+        tempImg.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
@@ -2598,7 +2680,7 @@ function handlePdfFile(file) {
     const pageInput = document.getElementById('pdfPageInput');
     const pdfPageImage = document.getElementById('pdfPageImage');
 
-    // Adiciona evento para mudar a página
+    // Evento para mudar a página
     pageInput.addEventListener('input', () => {
         const pageNumber = parseInt(pageInput.value) || 1;
         loadPdfPageImage(file, pageNumber - 1);
@@ -2608,12 +2690,17 @@ function handlePdfFile(file) {
     async function loadPdfPageImage(file, pageNumber) {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        
+        // Atualizar o máximo de páginas no input
+        pageInput.max = pdf.numPages;
 
         if (pageNumber >= pdf.numPages) {
+            showCustomAlert('Página não existente no PDF.');
             return;
         }
 
         const page = await pdf.getPage(pageNumber + 1);
+        // Escala para preview
         const scale = 2;
         const viewport = page.getViewport({ scale });
 
@@ -2622,12 +2709,16 @@ function handlePdfFile(file) {
         tempCanvas.height = viewport.height;
         tempCanvas.width = viewport.width;
 
+        // Configurar contexto para melhor qualidade mesmo no preview
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+
         await page.render({
             canvasContext: context,
             viewport: viewport
         }).promise;
 
-        pdfPageImage.src = tempCanvas.toDataURL('image/png');
+        pdfPageImage.src = tempCanvas.toDataURL('image/png', 1.0);
     }
 
     // Carrega a primeira página ao abrir o modal
@@ -2650,17 +2741,25 @@ async function convertPdfToImage(file, pageNumber) {
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
 
     if (pageNumber >= pdf.numPages) {
+        showCustomAlert('Página não existente no PDF.');
         return;
     }
 
     const page = await pdf.getPage(pageNumber + 1);
-    const scale = 2;
+    // Aumentar a escala para 300 DPI (300/72 = 4.17)
+    const scale = 4.17;
     const viewport = page.getViewport({ scale });
 
     const tempCanvas = document.createElement('canvas');
     const context = tempCanvas.getContext('2d');
+    
+    // Configurar o canvas com dimensões maiores para maior qualidade
     tempCanvas.height = viewport.height;
     tempCanvas.width = viewport.width;
+    
+    // Configurar contexto para melhor qualidade
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
 
     await page.render({
         canvasContext: context,
@@ -2672,7 +2771,7 @@ async function convertPdfToImage(file, pageNumber) {
         return;
     }
 
-    fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
+    fabric.Image.fromURL(tempCanvas.toDataURL('image/png', 1.0), function(img) {
         if (!img) {
             showCustomAlert('Erro ao carregar páginas do PDF.');
             return;
@@ -2686,10 +2785,13 @@ async function convertPdfToImage(file, pageNumber) {
             originY: 'center',
             perPixelTargetFind: true,
             lockMovementX: false,
-            lockMovementY: false
+            lockMovementY: false,
+            scaleX: 1,
+            scaleY: 1
         });
 
-        resizeImageToMaxSize(img);
+        // Definir DPI para 300
+        img.set('dpi', 300);
 
         try {
             canvas.add(img);
@@ -2702,8 +2804,17 @@ async function convertPdfToImage(file, pageNumber) {
     });
 }
 
+function getCanvasCenter() {
+    return {
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2
+    };
+}
+
+// Prevenção de eventos padrão de drag and drop
 document.addEventListener('dragover', (e) => {
     e.preventDefault();
+    e.stopPropagation();
 });
 
 document.addEventListener('drop', handleDrop);
@@ -3357,6 +3468,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---------- Final Seção Eventos de Texto ----------
 
+// ----------------------------------------- Seção Inicio Alerta Personalizado ----------------------------------------------------
+// Função para exibir o modal personalizado
+function showCustomAlert(message) {
+    const modal = document.getElementById('customAlertModal');
+    const messageElement = document.getElementById('customAlertMessage');
+
+    messageElement.textContent = message;
+    modal.style.display = 'flex';
+}
+
+// Função para fechar o modal personalizado
+function closeCustomAlert() {
+    const modal = document.getElementById('customAlertModal');
+    modal.style.display = 'none';
+}
+
+// Evento para fechar o modal ao clicar fora da área do modal
+document.getElementById('customAlertModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCustomAlert();
+    }
+});
+// ----------------------------------------- Seção Final Alerta Personalizado ----------------------------------------------------
+
 // ---------- Seção Inicio Edição de imagem ---------
 
 document.getElementById('btnPincel').addEventListener('click', function () {
@@ -3748,31 +3883,31 @@ document.getElementById('saveRemoveColor').addEventListener('click', function ()
         return;
     }
 
-    const originalWidth = activeObject._element.width;
-    const originalHeight = activeObject._element.height;
+    const dataURL = removeColorCanvas.toDataURL('image/png', 1.0);
 
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = originalWidth;
-    tempCanvas.height = originalHeight;
-    const tempCtx = tempCanvas.getContext('2d');
-
-    tempCtx.drawImage(removeColorCanvas, 0, 0, originalWidth, originalHeight);
-
-    const dataURL = tempCanvas.toDataURL('image/png');
+    const originalProps = {
+        left: activeObject.left,
+        top: activeObject.top,
+        scaleX: activeObject.scaleX,
+        scaleY: activeObject.scaleY,
+        angle: activeObject.angle,
+        flipX: activeObject.flipX,
+        flipY: activeObject.flipY,
+        width: activeObject.width,
+        height: activeObject.height,
+        originX: activeObject.originX,
+        originY: activeObject.originY,
+        centeredScaling: activeObject.centeredScaling,
+        centeredRotation: activeObject.centeredRotation
+    };
 
     canvas.remove(activeObject);
 
     fabric.Image.fromURL(dataURL, function (newImage) {
-        newImage.set({
-            left: activeObject.left,
-            top: activeObject.top,
-            scaleX: activeObject.scaleX,
-            scaleY: activeObject.scaleY,
-            angle: activeObject.angle,
-            flipX: activeObject.flipX,
-            flipY: activeObject.flipY
-        });
-
+        newImage.set(originalProps);
+        
+        newImage.setCoords();
+        
         canvas.add(newImage);
         canvas.setActiveObject(newImage);
         canvas.renderAll();
@@ -3877,43 +4012,39 @@ function handleRemoveColorTotal(e) {
 function prepareRemoveColorCanvas(activeImage) {
     const removeColorCanvas = document.getElementById('removeColorCanvas');
     const removeColorModal = document.getElementById('removeColorModal');
-
+    
     removeColorCtx = removeColorCanvas.getContext('2d');
-
-    // Obtém as dimensões do modal
+    
+    // Usar as dimensões originais da imagem
+    const originalWidth = activeImage.getElement().naturalWidth;
+    const originalHeight = activeImage.getElement().naturalHeight;
+    
+    // Definir as dimensões do canvas para a resolução original
+    removeColorCanvas.width = originalWidth;
+    removeColorCanvas.height = originalHeight;
+    
+    // Desenhar a imagem em resolução original
+    removeColorCtx.drawImage(activeImage.getElement(), 0, 0, originalWidth, originalHeight);
+    
+    // Ajustar apenas o CSS para exibição (não afeta a resolução real)
     const modalWidth = removeColorModal.clientWidth;
     const modalHeight = removeColorModal.clientHeight;
-
-    // Calcula a proporção da imagem
-    const imageRatio = activeImage.width / activeImage.height;
+    const imageRatio = originalWidth / originalHeight;
     const modalRatio = modalWidth / modalHeight;
-
-    let canvasWidth, canvasHeight;
-
+    
     if (imageRatio > modalRatio) {
-        // A imagem é mais larga que o modal
-        canvasWidth = modalWidth;
-        canvasHeight = modalWidth / imageRatio;
+        removeColorCanvas.style.width = '90%';
+        removeColorCanvas.style.height = 'auto';
     } else {
-        // A imagem é mais alta que o modal
-        canvasHeight = modalHeight;
-        canvasWidth = modalHeight * imageRatio;
+        removeColorCanvas.style.width = 'auto';
+        removeColorCanvas.style.height = '90%';
     }
-
-    // Define as dimensões do canvas
-    removeColorCanvas.width = canvasWidth;
-    removeColorCanvas.height = canvasHeight;
-
-    // Desenha a imagem no canvas
-    removeColorCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-    removeColorCtx.drawImage(activeImage.getElement(), 0, 0, canvasWidth, canvasHeight);
-
+    
     // Limpa o histórico e salva o estado inicial
     removeColorHistory = [];
     removeColorHistoryIndex = -1;
     saveRemoveColorHistory();
-
-    // Exibe o modal
+    
     removeColorModal.style.display = 'flex';
 }
 
@@ -4043,29 +4174,6 @@ document.getElementById('removeColorModal').addEventListener('click', function(e
 });
 // ----------------------------------------- Seção Final Remover Cor ----------------------------------------------------
 
-// ----------------------------------------- Seção Inicio Alerta Personalizado ----------------------------------------------------
-// Função para exibir o modal personalizado
-function showCustomAlert(message) {
-    const modal = document.getElementById('customAlertModal');
-    const messageElement = document.getElementById('customAlertMessage');
-
-    messageElement.textContent = message;
-    modal.style.display = 'flex';
-}
-
-// Função para fechar o modal personalizado
-function closeCustomAlert() {
-    const modal = document.getElementById('customAlertModal');
-    modal.style.display = 'none';
-}
-
-// Evento para fechar o modal ao clicar fora da área do modal
-document.getElementById('customAlertModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeCustomAlert();
-    }
-});
-// ----------------------------------------- Seção Final Alerta Personalizado ----------------------------------------------------
 </script>
 </body>
 </html>
