@@ -638,7 +638,7 @@
             <div id="exportOptions" class="export-options">
                 <div class="resolution-control">
                     <span>Resolução:</span>
-                    <input type="number" id="resolutionInput" value="600" min="72" max="2400">
+                    <input type="number" id="resolutionInput" value="150" min="72" max="2400">
                 </div>
                 <button class="menu-item export-btn" data-format="png">PNG</button>
                 <button class="menu-item export-btn" data-format="jpg">JPG</button>
@@ -2197,7 +2197,7 @@ function exportSelectedObjects() {
   setTimeout(() => {
     tempFabricCanvas.renderAll();
 
-    const scaleFactor = 600 / 96;
+    const scaleFactor = 300 / 96;
     const scaledCanvas = document.createElement('canvas');
     scaledCanvas.width = width * scaleFactor;
     scaledCanvas.height = height * scaleFactor;
