@@ -931,7 +931,7 @@
     </div>
 </div>
 
-    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.23 - 26/12/2024</div>
+    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.24 - 26/12/2024</div>
 	
 
  <script>
@@ -4449,29 +4449,6 @@ function handleDragLeave(e) {
     this.classList.remove('over');
 }
 
-function handleDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (draggedItem !== this) {
-        const allItems = [...this.parentNode.children];
-        const draggedIndex = canvas.getObjects().length - 1 - allItems.indexOf(draggedItem);
-        const droppedIndex = canvas.getObjects().length - 1 - allItems.indexOf(this);
-        
-        // Move object in canvas
-        const obj = canvas.getObjects()[draggedIndex];
-        canvas.moveTo(obj, droppedIndex);
-        
-        // Update layers list
-        updateLayersList();
-    }
-    
-    this.classList.remove('over');
-    draggedItem.classList.remove('dragging');
-    draggedItem = null;
-    
-    return false;
-}
 
 // Add event listeners for canvas changes
 canvas.on('object:added', updateLayersList);
