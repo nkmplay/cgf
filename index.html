@@ -707,6 +707,7 @@
     <button id="invertDimensionsBtn" class="mini-highlight-button">⇅</button>
     <span class="dimension-label">&#x2195;</span>
     <input type="number" id="height-input" class="dimension-input" value="29.7" min="1" step="0.1">
+    <button id="lockAspectRatioPageBtn" class="mini-highlight-button">🔓</button>
 </div>
             <div class="separator"></div>
             <button id="openDocumentBtn" class="menu-item">Abrir Documento</button>
@@ -746,13 +747,14 @@
         <div id="menu-editar" class="menu-content active">
             <button id="loadImageBtn2" class="highlight-button">Carregar Imagem</button>
             <input type="file" id="fileInput" accept="image/*">
-			<div class="image-dimension-controls">
-				<span class="image-dimension-label">&#x2194;</span>
-				<input type="number" id="image-width-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
-				<button id="invertObjectDimensionsBtn" class="mini-highlight-button">⇅</button>
-				<span class="image-dimension-label">&#x2195;</span>
-				<input type="number" id="image-height-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
-			</div>
+<div class="image-dimension-controls">
+    <span class="image-dimension-label">&#x2194;</span>
+    <input type="number" id="image-width-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
+    <button id="invertObjectDimensionsBtn" class="mini-highlight-button">⇅</button>
+    <span class="image-dimension-label">&#x2195;</span>
+    <input type="number" id="image-height-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
+    <button id="lockAspectRatioImageBtn" class="mini-highlight-button">🔓</button>
+</div>
             <div class="separator"></div>
             <button id="cropImageBtn" class="menu-item">Recortar</button>
             <div class="separator"></div>
@@ -931,7 +933,7 @@
     </div>
 </div>
 
-    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.25 - 26/12/2024</div>
+    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.26 - 26/12/2024</div>
 	
 
  <script>
@@ -1022,32 +1024,114 @@ loadImageBtn2.addEventListener('click', () => {
 // ---------- Final Seção Eventos de Categoria ----------
 
 // ---------- Inicio Seção Dimensões da Página ----------
+
+let isPageAspectRatioLocked = false;
+let isImageAspectRatioLocked = false;
+
+document.getElementById('lockAspectRatioPageBtn').addEventListener('click', function () {
+    isPageAspectRatioLocked = !isPageAspectRatioLocked;
+    this.textContent = isPageAspectRatioLocked ? '🔒' : '🔓';
+    if (isPageAspectRatioLocked) {
+        const width = parseFloat(widthInput.value);
+        const height = parseFloat(heightInput.value);
+        aspectRatioPage = width / height;
+    }
+});
+
+document.getElementById('lockAspectRatioImageBtn').addEventListener('click', function () {
+    isImageAspectRatioLocked = !isImageAspectRatioLocked;
+    this.textContent = isImageAspectRatioLocked ? '🔒' : '🔓';
+    if (isImageAspectRatioLocked) {
+        const width = parseFloat(imageWidthInput.value);
+        const height = parseFloat(imageHeightInput.value);
+        aspectRatioImage = width / height;
+    }
+});
+
+widthInput.addEventListener('input', function () {
+    if (isPageAspectRatioLocked) {
+        const newWidth = parseFloat(this.value);
+        const newHeight = newWidth / aspectRatioPage;
+        heightInput.value = newHeight.toFixed(1);
+        updatePageDimensions();
+    }
+});
+
+heightInput.addEventListener('input', function () {
+    if (isPageAspectRatioLocked) {
+        const newHeight = parseFloat(this.value);
+        const newWidth = newHeight * aspectRatioPage;
+        widthInput.value = newWidth.toFixed(1);
+        updatePageDimensions();
+    }
+});
+
+imageWidthInput.addEventListener('input', function () {
+    if (isImageAspectRatioLocked) {
+        const newWidth = parseFloat(this.value);
+        const newHeight = newWidth / aspectRatioImage;
+        imageHeightInput.value = newHeight.toFixed(1);
+        updateImageDimensions();
+    }
+});
+
+imageHeightInput.addEventListener('input', function () {
+    if (isImageAspectRatioLocked) {
+        const newHeight = parseFloat(this.value);
+        const newWidth = newHeight * aspectRatioImage;
+        imageWidthInput.value = newWidth.toFixed(1);
+        updateImageDimensions();
+    }
+});
+
+let aspectRatioPage = 21 / 29.7;
+let aspectRatioImage = 1;
+
 function updatePageDimensions() {
-  const width = parseFloat(widthInput.value) * CM_TO_PX;
-  const height = parseFloat(heightInput.value) * CM_TO_PX;
+    const width = parseFloat(widthInput.value) * CM_TO_PX;
+    const height = parseFloat(heightInput.value) * CM_TO_PX;
 
-  const existingFolha = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
-  existingFolha.forEach(obj => canvas.remove(obj));
+    const existingFolha = canvas.getObjects().filter(obj => obj.id === 'CloudFolha');
+    existingFolha.forEach(obj => canvas.remove(obj));
 
-  a4Page = new fabric.Rect({
-    id: 'CloudFolha',
-    left: (canvas.width - width) / 2,
-    top: (canvas.height - height) / 2,
-    width: width,
-    height: height,
-    fill: 'white',
-    selectable: false,
-    evented: false,
-    scaleX: 1,
-    scaleY: 1
-  });
+    a4Page = new fabric.Rect({
+        id: 'CloudFolha',
+        left: (canvas.width - width) / 2,
+        top: (canvas.height - height) / 2,
+        width: width,
+        height: height,
+        fill: 'white',
+        selectable: false,
+        evented: false,
+        scaleX: 1,
+        scaleY: 1
+    });
 
-  canvas.add(a4Page);
-  canvas.sendToBack(a4Page);
-  canvas.renderAll();
-  saveState();
+    canvas.add(a4Page);
+    canvas.sendToBack(a4Page);
+    canvas.renderAll();
+    saveState();
 }
 
+// Função para atualizar as dimensões da imagem
+function updateImageDimensions() {
+    const activeObj = canvas.getActiveObject();
+    if (!activeObj) return;
+
+    const widthInPx = parseFloat(imageWidthInput.value) * CM_TO_PX;
+    const heightInPx = parseFloat(imageHeightInput.value) * CM_TO_PX;
+
+    const scaleX = widthInPx / activeObj.width;
+    const scaleY = heightInPx / activeObj.height;
+
+    activeObj.set({
+        scaleX: scaleX,
+        scaleY: scaleY
+    });
+
+    canvas.renderAll();
+    saveState();
+}
 widthInput.addEventListener('input', updatePageDimensions);
 widthInput.addEventListener('change', updatePageDimensions);
 heightInput.addEventListener('input', updatePageDimensions);
@@ -4375,19 +4459,19 @@ document.getElementById('removeColorModal').addEventListener('click', function(e
 });
 // ----------------------------------------- Seção Final Remover Cor ----------------------------------------------------
 
-// Update layers list when canvas objects change
+// ----------------------------------------- Seção Inicio Camadas ----------------------------------------------------
+
+
 function updateLayersList() {
     const layersList = document.getElementById('layersList');
     layersList.innerHTML = '';
     
-    // Get all objects except CloudFolha
     const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
     
     objects.reverse().forEach((obj, index) => {
         const li = document.createElement('li');
         li.setAttribute('data-index', canvas.getObjects().indexOf(obj));
         
-        // Set layer name based on object type
         let layerName = obj.type;
         if (obj.name) {
             layerName = obj.name;
@@ -4401,22 +4485,18 @@ function updateLayersList() {
         
         li.textContent = layerName;
         
-        // Highlight selected objects
         if (obj === canvas.getActiveObject() || (canvas.getActiveObjects() && canvas.getActiveObjects().includes(obj))) {
             li.classList.add('selected');
         }
         
-        // Make list items draggable
         li.draggable = true;
         
-        // Add event listeners for drag and drop
         li.addEventListener('dragstart', handleDragStart);
         li.addEventListener('dragover', handleDragOver);
         li.addEventListener('drop', handleDrop);
         li.addEventListener('dragenter', handleDragEnter);
         li.addEventListener('dragleave', handleDragLeave);
         
-        // Add click event to select object
         li.addEventListener('click', () => {
             canvas.discardActiveObject();
             canvas.setActiveObject(obj);
@@ -4427,7 +4507,6 @@ function updateLayersList() {
     });
 }
 
-// Drag and drop handlers
 let draggedItem = null;
 
 function handleDragStart(e) {
@@ -4451,14 +4530,12 @@ function handleDragLeave(e) {
 }
 
 
-// Add event listeners for canvas changes
 canvas.on('object:added', updateLayersList);
 canvas.on('object:removed', updateLayersList);
 canvas.on('selection:created', updateLayersList);
 canvas.on('selection:updated', updateLayersList);
 canvas.on('selection:cleared', updateLayersList);
 
-// Layer button handlers
 document.getElementById('newLayerBtn').addEventListener('click', () => {
     const rect = new fabric.Rect({
         left: canvas.width / 2,
@@ -4498,8 +4575,10 @@ document.getElementById('centerLayerBtn').addEventListener('click', () => {
     }
 });
 
-// Initial update of layers list
 updateLayersList();
+
+// ----------------------------------------- Seção Final Camadas ----------------------------------------------------
+
 </script>
 </body>
 </html>
