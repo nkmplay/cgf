@@ -548,6 +548,48 @@
     word-wrap: break-word; /* Quebra de texto para não ultrapassar o modal */
     line-height: 1.5; /* Espaçamento entre linhas */
 }
+#cropperModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#cropperModal .modal-content {
+    width: 95%;
+    height: 95%;
+    max-width: none;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    background-color: #0f3460;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#cropperModal .modal-body {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding: 10px;
+}
+
+#cropperModal .modal-footer {
+    height: 50px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 10px;
+    background: #1a4b8c;
+}
     </style>
 </head>
 <body>
@@ -774,7 +816,7 @@
         </div>
     </div>
 </div>
-    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.20 - 26/12/2024</div>
+    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.21 - 26/12/2024</div>
 	
 
  <script>
@@ -4161,11 +4203,28 @@ document.getElementById('removeRegionBtn').addEventListener('click', () => {
     currentRemoveMode = 'region';
     removeRegionBtn.classList.add('active');
     removeTotalBtn.classList.remove('active');
+    updateButtonStyles();
 });
+
+function updateButtonStyles() {
+    if (currentRemoveMode === 'region') {
+        removeRegionBtn.style.backgroundColor = '#ffd700';
+        removeRegionBtn.style.color = 'black';
+        removeTotalBtn.style.backgroundColor = '#1a4b8c';
+        removeTotalBtn.style.color = 'white';
+    } else {
+        removeTotalBtn.style.backgroundColor = '#ffd700';
+        removeTotalBtn.style.color = 'black';
+        removeRegionBtn.style.backgroundColor = '#1a4b8c';
+        removeRegionBtn.style.color = 'white';
+    }
+}
+
 document.getElementById('removeTotalBtn').addEventListener('click', () => {
     currentRemoveMode = 'total';
     removeTotalBtn.classList.add('active');
     removeRegionBtn.classList.remove('active');
+    updateButtonStyles();
 });
 document.getElementById('removeColorModal').addEventListener('click', function(e) {
     if (e.target === this) {
