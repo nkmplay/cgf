@@ -88,15 +88,15 @@
             background: #235ab4;
         }
 
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 366px;
-            right: 0;
-            bottom: 0;
-            background-color: transparent;
-            overflow: hidden;
-        }
+#canvas-container {
+    position: fixed;
+    top: 0;
+    left: 366px;
+    right: 230px; /* Adicionar esta linha */
+    bottom: 0;
+    background-color: transparent;
+    overflow: hidden;
+}
 
         .separator-vertical {
             width: 2px;
@@ -292,19 +292,21 @@
         .guides-position span {
             margin-right: 10px;
         }
-        .version-badge {
-        position: fixed;
-        bottom: 5px;
-        right: 5px;
-        background-color: #ffd700;
-        color: Black;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 20px;
-        font-family: Arial, sans-serif;
-        z-index: 100;
-        pointer-events: none;
-        }
+.version-badge {
+    position: fixed;
+    bottom: 5px; /* Mudando de 'top' para 'bottom' */
+    left: 400px;
+    right: 250px;
+    background-color: #ffd700;
+    color: Black;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 20px;
+    font-family: Arial, sans-serif;
+    z-index: 100;
+    pointer-events: none;
+    text-align: center;
+}
         .modal-overlay {
             display: none;
             position: fixed;
@@ -590,6 +592,101 @@
     padding: 0 10px;
     background: #1a4b8c;
 }
+.menu-right {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 200px;
+    background-color: #0f3460;
+    height: 100%;
+    padding: 20px;
+    color: white;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    z-index: 90;
+}
+
+.layers-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 30px);
+    margin-bottom: 30px;
+}
+
+.layers-list-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.layers-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.layers-list li {
+    padding: 10px;
+    border-bottom: 1px solid #2861b3;
+    cursor: pointer;
+    user-select: none;
+}
+
+.layers-list li:hover {
+    background-color: #1a4b8c;
+}
+
+.layers-list li.selected {
+    color: yellow;
+}
+
+.layers-list li.over {
+    border-top: 2px solid yellow;
+}
+
+.layers-list li.dragging {
+    opacity: 0.5;
+    background-color: #1a4b8c;
+}
+
+.layers-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    padding-bottom: 5px;
+}
+
+.layer-btn {
+    flex: 1;
+    background-color: #1a4b8c;
+    color: white;
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.layer-btn:hover {
+    background-color: #2861b3;
+}
+.mini-highlight-button {
+    background-color: #ffd700 !important;
+    color: black !important;
+    font-weight: bold;
+    padding: 2px 6px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    height: 25px;
+    width: auto;
+    min-width: 25px;
+    margin: 0 5px;
+}
+
+.mini-highlight-button:hover {
+    background-color: #ffed4a !important;
+}
+
     </style>
 </head>
 <body>
@@ -604,12 +701,13 @@
     <div id="left-menu">
         <div id="menu-documento" class="menu-content">
             <h3>Tamanho da Folha:</h3>
-            <div class="dimension-controls">
-                <span class="dimension-label">&#x2194;</span>
-                <input type="number" id="width-input" class="dimension-input" value="21" min="1" step="0.1">
-                <span class="dimension-label">&#x2195;</span>
-                <input type="number" id="height-input" class="dimension-input" value="29.7" min="1" step="0.1">
-            </div>
+<div class="dimension-controls">
+    <span class="dimension-label">&#x2194;</span>
+    <input type="number" id="width-input" class="dimension-input" value="21" min="1" step="0.1">
+    <button id="invertDimensionsBtn" class="mini-highlight-button">⇅</button>
+    <span class="dimension-label">&#x2195;</span>
+    <input type="number" id="height-input" class="dimension-input" value="29.7" min="1" step="0.1">
+</div>
             <div class="separator"></div>
             <button id="openDocumentBtn" class="menu-item">Abrir Documento</button>
             <button id="saveDocumentBtn" class="menu-item">Salvar Documento</button>
@@ -648,12 +746,13 @@
         <div id="menu-editar" class="menu-content active">
             <button id="loadImageBtn2" class="highlight-button">Carregar Imagem</button>
             <input type="file" id="fileInput" accept="image/*">
-            <div class="image-dimension-controls">
-                <span class="image-dimension-label">&#x2194;</span>
-                <input type="number" id="image-width-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
-                <span class="image-dimension-label">&#x2195;</span>
-                <input type="number" id="image-height-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
-            </div>
+			<div class="image-dimension-controls">
+				<span class="image-dimension-label">&#x2194;</span>
+				<input type="number" id="image-width-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
+				<button id="invertObjectDimensionsBtn" class="mini-highlight-button">⇅</button>
+				<span class="image-dimension-label">&#x2195;</span>
+				<input type="number" id="image-height-input" class="image-dimension-input" value="0" min="0.1" step="0.1">
+			</div>
             <div class="separator"></div>
             <button id="cropImageBtn" class="menu-item">Recortar</button>
             <div class="separator"></div>
@@ -816,7 +915,23 @@
         </div>
     </div>
 </div>
-    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.21 - 26/12/2024</div>
+<div class="menu-right">
+    <div class="layers-container">
+        <h3>Camadas</h3>
+        <div class="layers-list-wrapper">
+            <ul class="layers-list" id="layersList">
+                <!-- Layers will be added here dynamically -->
+            </ul>
+        </div>
+        <div class="layers-buttons">
+            <button id="newLayerBtn" class="layer-btn">Novo</button>
+            <button id="deleteLayerBtn" class="layer-btn">Excluir</button>
+            <button id="centerLayerBtn" class="layer-btn">Centro</button>
+        </div>
+    </div>
+</div>
+
+    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.23 - 26/12/2024</div>
 	
 
  <script>
@@ -937,6 +1052,32 @@ widthInput.addEventListener('input', updatePageDimensions);
 widthInput.addEventListener('change', updatePageDimensions);
 heightInput.addEventListener('input', updatePageDimensions);
 heightInput.addEventListener('change', updatePageDimensions);
+
+document.getElementById('invertDimensionsBtn').addEventListener('click', function() {
+    const widthInput = document.getElementById('width-input');
+    const heightInput = document.getElementById('height-input');
+    
+    const tempWidth = widthInput.value;
+    
+    widthInput.value = heightInput.value;
+    heightInput.value = tempWidth;
+    
+    widthInput.dispatchEvent(new Event('change'));
+    heightInput.dispatchEvent(new Event('change'));
+});
+
+document.getElementById('invertObjectDimensionsBtn').addEventListener('click', function() {
+    const widthInput = document.getElementById('image-width-input');
+    const heightInput = document.getElementById('image-height-input');
+    
+    const tempWidth = widthInput.value;
+    
+    widthInput.value = heightInput.value;
+    heightInput.value = tempWidth;
+    
+    widthInput.dispatchEvent(new Event('change'));
+    heightInput.dispatchEvent(new Event('change'));
+});
 // ---------- Final Seção Dimensões da Página ----------
 
 // ---------- Inicio Seção Redimensionamento do Canvas ----------
@@ -4233,6 +4374,154 @@ document.getElementById('removeColorModal').addEventListener('click', function(e
 });
 // ----------------------------------------- Seção Final Remover Cor ----------------------------------------------------
 
+// Update layers list when canvas objects change
+function updateLayersList() {
+    const layersList = document.getElementById('layersList');
+    layersList.innerHTML = '';
+    
+    // Get all objects except CloudFolha
+    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+    
+    objects.reverse().forEach((obj, index) => {
+        const li = document.createElement('li');
+        li.setAttribute('data-index', canvas.getObjects().indexOf(obj));
+        
+        // Set layer name based on object type
+        let layerName = obj.type;
+        if (obj.name) {
+            layerName = obj.name;
+        } else if (obj.type === 'i-text' || obj.type === 'text') {
+            layerName = `Text: ${obj.text.substring(0, 15)}${obj.text.length > 15 ? '...' : ''}`;
+        } else if (obj.type === 'image') {
+            layerName = `Image ${index + 1}`;
+        } else {
+            layerName = `${obj.type.charAt(0).toUpperCase() + obj.type.slice(1)} ${index + 1}`;
+        }
+        
+        li.textContent = layerName;
+        
+        // Highlight selected objects
+        if (obj === canvas.getActiveObject() || (canvas.getActiveObjects() && canvas.getActiveObjects().includes(obj))) {
+            li.classList.add('selected');
+        }
+        
+        // Make list items draggable
+        li.draggable = true;
+        
+        // Add event listeners for drag and drop
+        li.addEventListener('dragstart', handleDragStart);
+        li.addEventListener('dragover', handleDragOver);
+        li.addEventListener('drop', handleDrop);
+        li.addEventListener('dragenter', handleDragEnter);
+        li.addEventListener('dragleave', handleDragLeave);
+        
+        // Add click event to select object
+        li.addEventListener('click', () => {
+            canvas.discardActiveObject();
+            canvas.setActiveObject(obj);
+            canvas.requestRenderAll();
+        });
+        
+        layersList.appendChild(li);
+    });
+}
+
+// Drag and drop handlers
+let draggedItem = null;
+
+function handleDragStart(e) {
+    draggedItem = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.classList.add('dragging');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    this.classList.add('over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (draggedItem !== this) {
+        const allItems = [...this.parentNode.children];
+        const draggedIndex = canvas.getObjects().length - 1 - allItems.indexOf(draggedItem);
+        const droppedIndex = canvas.getObjects().length - 1 - allItems.indexOf(this);
+        
+        // Move object in canvas
+        const obj = canvas.getObjects()[draggedIndex];
+        canvas.moveTo(obj, droppedIndex);
+        
+        // Update layers list
+        updateLayersList();
+    }
+    
+    this.classList.remove('over');
+    draggedItem.classList.remove('dragging');
+    draggedItem = null;
+    
+    return false;
+}
+
+// Add event listeners for canvas changes
+canvas.on('object:added', updateLayersList);
+canvas.on('object:removed', updateLayersList);
+canvas.on('selection:created', updateLayersList);
+canvas.on('selection:updated', updateLayersList);
+canvas.on('selection:cleared', updateLayersList);
+
+// Layer button handlers
+document.getElementById('newLayerBtn').addEventListener('click', () => {
+    const rect = new fabric.Rect({
+        left: canvas.width / 2,
+        top: canvas.height / 2,
+        width: 100,
+        height: 100,
+        fill: '#ffffff',
+        originX: 'center',
+        originY: 'center'
+    });
+    canvas.add(rect);
+    canvas.setActiveObject(rect);
+    saveState();
+});
+
+document.getElementById('deleteLayerBtn').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+        canvas.remove(activeObject);
+        canvas.discardActiveObject();
+        saveState();
+    }
+});
+
+document.getElementById('centerLayerBtn').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+        if (cloudFolha) {
+            activeObject.set({
+                left: cloudFolha.left + cloudFolha.width * cloudFolha.scaleX / 2,
+                top: cloudFolha.top + cloudFolha.height * cloudFolha.scaleY / 2
+            });
+            canvas.renderAll();
+            saveState();
+        }
+    }
+});
+
+// Initial update of layers list
+updateLayersList();
 </script>
 </body>
 </html>
