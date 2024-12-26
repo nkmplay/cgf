@@ -931,7 +931,7 @@
     </div>
 </div>
 
-    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.24 - 26/12/2024</div>
+    <div class="version-badge">EM DESENVOLVIMENTO - CloudPhoto Alfa V0.25 - 26/12/2024</div>
 	
 
  <script>
@@ -1449,15 +1449,16 @@ document.addEventListener('keydown', function(e) {
     if (cloudFolha) {
       const printCanvas = document.createElement('canvas');
       const ctx = printCanvas.getContext('2d');
-      printCanvas.width = cloudFolha.width;
-      printCanvas.height = cloudFolha.height;
+      
+      printCanvas.width = cloudFolha.width * cloudFolha.scaleX;
+      printCanvas.height = cloudFolha.height * cloudFolha.scaleY;
 
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, printCanvas.width, printCanvas.height);
 
       const tempCanvas = new fabric.Canvas(printCanvas);
-      tempCanvas.setWidth(cloudFolha.width);
-      tempCanvas.setHeight(cloudFolha.height);
+      tempCanvas.setWidth(printCanvas.width);
+      tempCanvas.setHeight(printCanvas.height);
 
       const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
       objects.forEach(obj => {
@@ -1491,7 +1492,7 @@ document.addEventListener('keydown', function(e) {
             </style>
           </head>
           <body>
-            <img src="\${dataUrl}" onload="window.print();window.close()">
+            <img src="${dataUrl}" onload="window.print();window.close()">
           </body>
         </html>
       `);
