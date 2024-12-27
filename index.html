@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://nkmplay.github.io/cgf/scripts/cropper.min.css">
     <script src="https://nkmplay.github.io/cgf/scripts/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.4.0/dist/pdf-lib.min.js"></script>
+	<script src="https://cloudgraficaweb.github.io/CGVendas/scripts/potrace.js"></script>
     <style>
         body, html {
             margin: 0;
@@ -768,9 +769,11 @@
             <div class="separator"></div>
             <button id="removeColorBtn" class="menu-item">Remover Cor</button>
             <div class="separator"></div>
-            <button id="aiRemoverBtn" class="menu-item" style="color: red;">Removedor IA</button>
-			<button id="vectorizePBBtn" class="menu-item" style="color: red;">Vetorizar PB</button>
-            <div class="separator"></div>
+			<div class="duplicate-control">
+				<button id="vectorizePBBtn" class="menu-item" style="width: 48%; margin-right: 4%;">Vetorizar PB</button>
+				<button id="aiRemoverBtn" class="menu-item" style="width: 48%; color: red;">Removedor IA</button>
+			</div>
+			<div class="separator"></div>
             <div class="duplicate-control">
                 <button id="duplicateImageBtn" class="menu-item" style="margin-right: 5px;">Duplicar</button>
                 <input type="number" id="duplicateInput" class="duplicate-input" value="1" min="1" step="1">
@@ -1289,7 +1292,13 @@ window.addEventListener('keydown', function(e) {
   }
 });
 
+// Redimensionar o canvas ao carregar a página
 window.addEventListener('load', resizeCanvas);
+
+// Redimensionar o canvas ao redimensionar a janela
+window.addEventListener('resize', function () {
+    resizeCanvas();
+});
 // ---------- Final Seção Redimensionamento do Canvas ----------
 
 // ---------- Inicio Seção Histórico ----------
@@ -4711,6 +4720,77 @@ function addRegionToCanvas(region, imgElement) {
 }
 
 // ----------------------------------------- Seção Final Extrair Regiões da imagem ----------------------------------------------------
+
+// ----------------------------------------- Seção Inicio Vetorizar PB ----------------------------------------------------
+
+document.getElementById('vectorizePBBtn').addEventListener('click', function () {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para vetorizar.');
+        return;
+    }
+
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Folha "CloudFolha" não encontrada.');
+        return;
+    }
+
+    const centerX = cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2;
+    const centerY = cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2;
+
+    const imgElement = activeObject.getElement();
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = imgElement.width;
+    tempCanvas.height = imgElement.height;
+    const ctx = tempCanvas.getContext('2d');
+
+    ctx.drawImage(imgElement, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const brightness = (r + g + b) / 3;
+        const threshold = 128;
+
+        data[i] = data[i + 1] = data[i + 2] = brightness > threshold ? 255 : 0;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    tempCanvas.toBlob(function (blob) {
+        Potrace.loadImageFromFile(new File([blob], "image.png", { type: "image/png" }));
+        Potrace.process(function () {
+            const svgContent = Potrace.getSVG(1, {
+                turdsize: 2,
+                alphamax: 1,
+                optcurve: true,
+                detail: 5
+            });
+
+            fabric.loadSVGFromString(svgContent, function (objects, options) {
+                const svgGroup = fabric.util.groupSVGElements(objects, options);
+
+                svgGroup.set({
+                    left: centerX - (svgGroup.width * svgGroup.scaleX) / 2,
+                    top: centerY - (svgGroup.height * svgGroup.scaleY) / 2,
+                    selectable: true,
+                    evented: true
+                });
+
+                canvas.add(svgGroup);
+                canvas.renderAll();
+                saveState();
+            });
+        });
+    }, 'image/png');
+});
+// ----------------------------------------- Seção Final Vetorizar PB ----------------------------------------------------
 
 </script>
 </body>
