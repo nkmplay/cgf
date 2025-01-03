@@ -1,0 +1,651 @@
+<html><head><base href=".">
+    <meta charset="UTF-8">
+    <title>Gerador de Calend&#xe1;rios Personalizado</title>
+    <style>
+        :root {
+            --month-bg: #ffffff;
+            --month-border: #e0e0e0;
+            --month-title-bg: #4a90e2;
+            --month-title-color: #ffffff;
+            --weekday-color: #757575;
+            --day-color: #333333;
+            --border-radius: 10px;
+            --border-width: 1px;
+            --title-font: 'Segoe UI';
+            --title-size: 16px;
+            --weekday-font: 'Segoe UI';
+            --weekday-size: 14px;
+            --day-size: 14px;
+            --holiday-highlight-bg: #ffebee;
+            --holiday-highlight-color: #d32f2f;
+            --holiday-highlight-weight: normal;
+            --holiday-highlight-size: 14px;
+            --holiday-highlight-round: 50%;
+            --celebration-highlight-bg: #e3f2fd;
+            --celebration-highlight-color: #1976d2;
+            --celebration-highlight-weight: normal;
+            --celebration-highlight-size: 14px;
+            --celebration-highlight-round: 50%;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        input[type="number"],
+        input[type="color"],
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        input[type="color"] {
+            height: 40px;
+            width: 60px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .calendar-container {
+            display: grid;
+            gap: 20px;
+        }
+
+        .month {
+            background: var(--month-bg);
+            border: var(--border-width) solid var(--month-border);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            position: relative;
+            padding-bottom: 30px;
+        }
+
+        .month-title {
+            background: var(--month-title-bg);
+            color: var(--month-title-color);
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-family: var(--title-font);
+            font-size: var(--title-size);
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            color: var(--weekday-color);
+            padding: 10px 0;
+            font-size: var(--weekday-size);
+            font-family: var(--weekday-font);
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            color: var(--day-color);
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .days span {
+            padding: 5px;
+            border-radius: 50%;
+            position: relative;
+            font-size: var(--day-size);
+        }
+
+        .holiday, .celebration {
+            position: relative;
+        }
+
+        .holiday::after, .celebration::after {
+            display: none;
+        }
+
+        .holiday-text, .celebration-text {
+            position: absolute;
+            bottom: 5px;
+            font-size: 14px;
+        }
+
+        .holiday-text {
+            left: 5px;
+            color: #e74c3c;
+        }
+
+        .celebration-text {
+            right: 5px;
+            color: #3498db;
+        }
+
+        .moon-phase {
+            display: none;
+        }
+
+        .highlight-holiday {
+            background-color: var(--holiday-highlight-bg);
+            color: var(--holiday-highlight-color);
+            font-weight: var(--holiday-highlight-weight);
+            font-size: var(--holiday-highlight-size);
+            border-radius: 0;
+        }
+
+        .highlight-celebration {
+            background-color: var(--celebration-highlight-bg);
+            color: var(--celebration-highlight-color);
+            font-weight: var(--celebration-highlight-weight);
+            font-size: var(--celebration-highlight-size); 
+            border-radius: 0;
+        }
+
+        #downloadBtn:hover {
+            background: #357abd !important;
+        }
+        
+        #copyBtn:hover {
+            background: #357abd !important;
+        }
+
+        /* Add tab styles */
+        .tab-container {
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .tab-button.active {
+            background: #4a90e2;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="colors">Cores</button>
+            <button class="tab-button" data-tab="borders">Bordas</button>
+            <button class="tab-button" data-tab="fonts">Fontes</button>
+            <button class="tab-button" data-tab="dates">Datas</button>
+            <button class="tab-button" data-tab="highlights">Destaques</button>
+            <button class="tab-button" data-tab="export">Exportar</button>
+        </div>
+        
+        <div id="colors" class="tab-content active">
+            <div class="control-group">
+                <div class="control-item">
+                    <label>Cor de fundo do t&#xed;tulo</label>
+                    <input type="color" id="titleBg" value="#4a90e2">
+                </div>
+                <div class="control-item">
+                    <label>Cor do texto do t&#xed;tulo</label>
+                    <input type="color" id="titleColor" value="#ffffff">
+                </div>
+                <div class="control-item">
+                    <label>Cor dos dias da semana</label>
+                    <input type="color" id="weekdayColor" value="#757575">
+                </div>
+                <div class="control-item">
+                    <label>Cor dos n&#xfa;meros</label>
+                    <input type="color" id="dayColor" value="#333333">
+                </div>
+                <div class="control-item">
+                    <label>Cor de fundo do m&#xea;s</label>
+                    <input type="color" id="monthBg" value="#ffffff">
+                </div>
+            </div>
+        </div>
+
+        <div id="borders" class="tab-content">
+            <div class="control-group">
+                <div class="control-item">
+                    <label>Cor da borda</label>
+                    <input type="color" id="borderColor" value="#e0e0e0">
+                </div>
+                <div class="control-item">
+                    <label>Espessura da borda (px)</label>
+                    <input type="number" id="borderWidth" value="1" min="0" max="10">
+                </div>
+                <div class="control-item">
+                    <label>Arredondamento (px)</label>
+                    <input type="number" id="borderRadius" value="10" min="0" max="30">
+                </div>
+            </div>
+        </div>
+
+        <div id="fonts" class="tab-content">
+            <div class="control-group">
+                <div class="control-item">
+                    <label>Fonte do t&#xed;tulo</label>
+                    <select id="titleFont">
+                        <option value="&apos;Segoe UI&apos;">Segoe UI</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label>Tamanho do t&#xed;tulo (px)</label>
+                    <input type="number" id="titleSize" value="24" min="10" max="30">
+                </div>
+                <div class="control-item">
+                    <label>Fonte dos dias da semana</label>
+                    <select id="weekdayFont">
+                        <option value="&apos;Segoe UI&apos;">Segoe UI</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label>Tamanho dos dias da semana (px)</label>
+                    <input type="number" id="weekdaySize" value="20" min="10" max="24">
+                </div>
+                <div class="control-item">
+                    <label>Tamanho dos n&#xfa;meros (px)</label>
+                    <input type="number" id="daySize" value="24" min="10" max="24">
+                </div>
+            </div>
+        </div>
+
+        <div id="dates" class="tab-content">
+            <div class="control-group">
+                <div class="control-item">
+                    <label>Ano</label>
+                    <input type="number" id="year" value="2024" min="1900" max="2100">
+                </div>
+                <div class="control-item">
+                    <label>Meses por linha</label>
+                    <input type="number" id="monthsPerRow" value="3" min="1" max="12">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showHolidays" checked>
+                    <label>Mostrar feriados</label>
+                </div>
+                <div class="control-item">
+                    <label>Tamanho do texto dos feriados (px)</label>
+                    <input type="number" id="holidayTextSize" value="14" min="6" max="16">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showCelebrations" checked>
+                    <label>Mostrar datas comemorativas</label>
+                </div>
+                <div class="control-item">
+                    <label>Tamanho do texto das datas comemorativas (px)</label>
+                    <input type="number" id="celebrationTextSize" value="14" min="6" max="16">
+                </div>
+            </div>
+        </div>
+
+        <div id="highlights" class="tab-content">
+            <div class="control-group">
+                <h4>Feriados</h4>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableHolidayHighlight" checked>
+                    <label>Ativar destaque</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="holidayHighlightRound" checked>
+                    <label>Destaque redondo</label>
+                </div>
+                <div class="control-item">
+                    <label>Cor de fundo</label>
+                    <input type="color" id="holidayHighlightBg" value="#ffebee">
+                </div>
+                <div class="control-item">
+                    <label>Cor do texto</label>
+                    <input type="color" id="holidayHighlightColor" value="#d32f2f">
+                </div>
+                <div class="control-item">
+                    <label>Tamanho da fonte (px)</label>
+                    <input type="number" id="holidayHighlightSize" value="14" min="10" max="24">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="holidayHighlightBold">
+                    <label>Negrito</label>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h4>Datas Comemorativas</h4>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableCelebrationHighlight" checked>
+                    <label>Ativar destaque</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="celebrationHighlightRound" checked>
+                    <label>Destaque redondo</label>
+                </div>
+                <div class="control-item">
+                    <label>Cor de fundo</label>
+                    <input type="color" id="celebrationHighlightBg" value="#e3f2fd">
+                </div>
+                <div class="control-item">
+                    <label>Cor do texto</label>
+                    <input type="color" id="celebrationHighlightColor" value="#1976d2">
+                </div>
+                <div class="control-item">
+                    <label>Tamanho da fonte (px)</label>
+                    <input type="number" id="celebrationHighlightSize" value="14" min="10" max="24">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="celebrationHighlightBold">
+                    <label>Negrito</label>
+                </div>
+            </div>
+        </div>
+
+        <div id="export" class="tab-content">
+            <div class="control-group">
+                <div class="control-item">
+                    <label>DPI para download</label>
+                    <input type="number" id="downloadDpi" value="300" min="72" max="600">
+                </div>
+                <div class="control-item">
+                    <button id="downloadBtn" style="padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Baixar Calendário (PNG)
+                    </button>
+                </div>
+                <div class="control-item">
+                    <button id="copyBtn" style="padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        Copiar Calendário
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="calendar" class="calendar-container"></div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const holidays = {
+  "01/01": "Ano Novo",
+  "17/02": "Carnaval",
+  "03/04": "Sexta-feira Santa",
+  "05/04": "Páscoa",
+  "21/04": "Tiradentes",
+  "01/05": "Dia do Trabalhador",
+  "04/06": "Corpus Christi",
+  "07/09": "Independência do Brasil",
+  "12/10": "Nossa Senhora Aparecida",
+  "02/11": "Finados",
+  "15/11": "Proclamação da República",
+  "25/12": "Natal"
+};
+const celebrations = {
+  "08/03": "Dia Internacional da Mulher",
+  "10/05": "Dia das Mães",
+  "12/06": "Dia dos Namorados",
+  "24/06": "Dia de São João",
+  "09/08": "Dia dos Pais",
+  "12/10": "Dia das Crianças",
+  "31/10": "Halloween"
+};
+function formatDate(day, month) {
+  return `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}`;
+}
+function getDaysInMonth(month, year) {
+  return new Date(year, month + 1, 0).getDate();
+}
+function getFirstDayOfMonth(month, year) {
+  return new Date(year, month, 1).getDay();
+}
+function createMonth(monthIndex, year) {
+  const monthDiv = document.createElement('div');
+  monthDiv.className = 'month';
+  const titleDiv = document.createElement('div');
+  titleDiv.className = 'month-title';
+  titleDiv.textContent = months[monthIndex];
+  monthDiv.appendChild(titleDiv);
+  const weekdaysDiv = document.createElement('div');
+  weekdaysDiv.className = 'weekdays';
+  weekdays.forEach(day => {
+    const daySpan = document.createElement('span');
+    daySpan.textContent = day;
+    weekdaysDiv.appendChild(daySpan);
+  });
+  monthDiv.appendChild(weekdaysDiv);
+  const daysDiv = document.createElement('div');
+  daysDiv.className = 'days';
+  const firstDay = getFirstDayOfMonth(monthIndex, year);
+  const daysInMonth = getDaysInMonth(monthIndex, year);
+  for (let i = 0; i < firstDay; i++) {
+    daysDiv.appendChild(document.createElement('span'));
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    const daySpan = document.createElement('span');
+    daySpan.textContent = i;
+    const date = formatDate(i, monthIndex);
+    const showHolidays = document.getElementById('showHolidays').checked;
+    const showCelebrations = document.getElementById('showCelebrations').checked;
+    if (showHolidays && holidays[date]) {
+      daySpan.classList.add('holiday');
+      if (document.getElementById('enableHolidayHighlight').checked) {
+        daySpan.classList.add('highlight-holiday');
+      }
+      daySpan.setAttribute('data-info', holidays[date]);
+    }
+    if (showCelebrations && celebrations[date]) {
+      daySpan.classList.add('celebration');
+      if (document.getElementById('enableCelebrationHighlight').checked) {
+        daySpan.classList.add('highlight-celebration');
+      }
+      daySpan.setAttribute('data-info', celebrations[date]);
+    }
+    daysDiv.appendChild(daySpan);
+  }
+  monthDiv.appendChild(daysDiv);
+  if (document.getElementById('showHolidays').checked) {
+    const monthHolidays = Object.entries(holidays).filter(([date]) => parseInt(date.split('/')[1]) === monthIndex + 1).map(([date, name]) => `${date} - ${name}`).join('\n');
+    if (monthHolidays) {
+      const holidayTextDiv = document.createElement('div');
+      holidayTextDiv.className = 'holiday-text';
+      holidayTextDiv.textContent = monthHolidays;
+      monthDiv.appendChild(holidayTextDiv);
+    }
+  }
+  if (document.getElementById('showCelebrations').checked) {
+    const monthCelebrations = Object.entries(celebrations).filter(([date]) => parseInt(date.split('/')[1]) === monthIndex + 1).map(([date, name]) => `${date} - ${name}`).join('\n');
+    if (monthCelebrations) {
+      const celebrationTextDiv = document.createElement('div');
+      celebrationTextDiv.className = 'celebration-text';
+      celebrationTextDiv.textContent = monthCelebrations;
+      monthDiv.appendChild(celebrationTextDiv);
+    }
+  }
+  return monthDiv;
+}
+function updateCalendar() {
+  const calendar = document.getElementById('calendar');
+  calendar.innerHTML = '';
+  const monthsPerRow = parseInt(document.getElementById('monthsPerRow').value);
+  calendar.style.gridTemplateColumns = `repeat(${monthsPerRow}, 1fr)`;
+  const year = parseInt(document.getElementById('year').value);
+  for (let i = 0; i < 12; i++) {
+    calendar.appendChild(createMonth(i, year));
+  }
+  document.documentElement.style.setProperty('--month-title-bg', document.getElementById('titleBg').value);
+  document.documentElement.style.setProperty('--month-title-color', document.getElementById('titleColor').value);
+  document.documentElement.style.setProperty('--weekday-color', document.getElementById('weekdayColor').value);
+  document.documentElement.style.setProperty('--day-color', document.getElementById('dayColor').value);
+  document.documentElement.style.setProperty('--month-bg', document.getElementById('monthBg').value);
+  document.documentElement.style.setProperty('--month-border', document.getElementById('borderColor').value);
+  document.documentElement.style.setProperty('--border-width', `${document.getElementById('borderWidth').value}px`);
+  document.documentElement.style.setProperty('--border-radius', `${document.getElementById('borderRadius').value}px`);
+  const holidayTextSize = document.getElementById('holidayTextSize').value;
+  const celebrationTextSize = document.getElementById('celebrationTextSize').value;
+  document.querySelectorAll('.holiday-text').forEach(el => {
+    el.style.fontSize = `${holidayTextSize}px`;
+  });
+  document.querySelectorAll('.celebration-text').forEach(el => {
+    el.style.fontSize = `${celebrationTextSize}px`;
+  });
+  document.documentElement.style.setProperty('--holiday-highlight-bg', document.getElementById('holidayHighlightBg').value);
+  document.documentElement.style.setProperty('--holiday-highlight-color', document.getElementById('holidayHighlightColor').value);
+  document.documentElement.style.setProperty('--holiday-highlight-size', `${document.getElementById('holidayHighlightSize').value}px`);
+  document.documentElement.style.setProperty('--holiday-highlight-weight', document.getElementById('holidayHighlightBold').checked ? 'bold' : 'normal');
+  document.documentElement.style.setProperty('--celebration-highlight-bg', document.getElementById('celebrationHighlightBg').value);
+  document.documentElement.style.setProperty('--celebration-highlight-color', document.getElementById('celebrationHighlightColor').value);
+  document.documentElement.style.setProperty('--celebration-highlight-size', `${document.getElementById('celebrationHighlightSize').value}px`);
+  document.documentElement.style.setProperty('--celebration-highlight-weight', document.getElementById('celebrationHighlightBold').checked ? 'bold' : 'normal');
+  document.documentElement.style.setProperty('--title-font', document.getElementById('titleFont').value);
+  document.documentElement.style.setProperty('--weekday-font', document.getElementById('weekdayFont').value);
+  document.documentElement.style.setProperty('--title-size', `${document.getElementById('titleSize').value}px`);
+  document.documentElement.style.setProperty('--weekday-size', `${document.getElementById('weekdaySize').value}px`);
+  document.documentElement.style.setProperty('--day-size', `${document.getElementById('daySize').value}px`);
+  document.documentElement.style.setProperty('--holiday-highlight-round', document.getElementById('holidayHighlightRound').checked ? '50%' : '0');
+  document.documentElement.style.setProperty('--celebration-highlight-round', document.getElementById('celebrationHighlightRound').checked ? '50%' : '0');
+  const holidayHighlightElements = document.querySelectorAll('.highlight-holiday');
+  const celebrationHighlightElements = document.querySelectorAll('.highlight-celebration');
+  holidayHighlightElements.forEach(el => {
+    el.style.borderRadius = document.getElementById('holidayHighlightRound').checked ? '50%' : '0';
+  });
+  celebrationHighlightElements.forEach(el => {
+    el.style.borderRadius = document.getElementById('celebrationHighlightRound').checked ? '50%' : '0';
+  });
+  document.getElementById('titleSize').value = 24;
+  document.getElementById('weekdaySize').value = 20;
+  document.getElementById('daySize').value = 24;
+}
+async function downloadCalendar() {
+  const calendar = document.getElementById('calendar');
+  const dpi = parseInt(document.getElementById('downloadDpi').value);
+  const scale = dpi / 96;
+  const canvas = await html2canvas(calendar, {
+    scale: scale,
+    useCORS: true,
+    backgroundColor: null
+  });
+  const link = document.createElement('a');
+  link.download = `calendario-${document.getElementById('year').value}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+async function copyCalendarToClipboard() {
+    const calendar = document.getElementById('calendar');
+    const canvas = await html2canvas(calendar, {
+        scale: 1,
+        useCORS: true,
+        backgroundColor: null
+    });
+    
+    canvas.toBlob(async (blob) => {
+        try {
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    'image/png': blob
+                })
+            ]);
+            alert('Calendário copiado para a área de transferência!');
+        } catch (err) {
+            console.error('Falha ao copiar para área de transferência:', err);
+            alert('Não foi possível copiar o calendário. Seu navegador pode não suportar esta funcionalidade.');
+        }
+    });
+}
+document.querySelectorAll('input').forEach(input => {
+  input.addEventListener('input', e => {
+    if (e.target.id === 'holidayTextSize' || e.target.id === 'celebrationTextSize') {
+      document.querySelectorAll(`.${e.target.id === 'holidayTextSize' ? 'holiday' : 'celebration'}-text`).forEach(el => {
+        el.style.fontSize = `${e.target.value}px`;
+      });
+    }
+    updateCalendar();
+  });
+});
+document.getElementById('downloadBtn').addEventListener('click', downloadCalendar);
+document.getElementById('copyBtn').addEventListener('click', copyCalendarToClipboard);
+updateCalendar();
+document.querySelectorAll('.tab-button').forEach(button => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    button.classList.add('active');
+    document.getElementById(button.dataset.tab).classList.add('active');
+  });
+});
+document.getElementById('holidayHighlightBg').addEventListener('input', updateCalendar);
+document.getElementById('holidayHighlightColor').addEventListener('input', updateCalendar);
+document.getElementById('holidayHighlightSize').addEventListener('input', updateCalendar);
+document.getElementById('holidayHighlightBold').addEventListener('change', updateCalendar);
+document.getElementById('celebrationHighlightBg').addEventListener('input', updateCalendar);
+document.getElementById('celebrationHighlightColor').addEventListener('input', updateCalendar);
+document.getElementById('celebrationHighlightSize').addEventListener('input', updateCalendar);
+document.getElementById('celebrationHighlightBold').addEventListener('change', updateCalendar);
+document.getElementById('titleFont').addEventListener('change', updateCalendar);
+document.getElementById('weekdayFont').addEventListener('change', updateCalendar);
+document.getElementById('enableHolidayHighlight').addEventListener('change', updateCalendar);
+document.getElementById('enableCelebrationHighlight').addEventListener('change', updateCalendar);
+document.getElementById('holidayHighlightRound').addEventListener('change', () => {
+  const elements = document.querySelectorAll('.highlight-holiday');
+  elements.forEach(el => {
+    el.style.borderRadius = document.getElementById('holidayHighlightRound').checked ? '50%' : '0';
+  });
+});
+document.getElementById('celebrationHighlightRound').addEventListener('change', () => {
+  const elements = document.querySelectorAll('.highlight-celebration');
+  elements.forEach(el => {
+    el.style.borderRadius = document.getElementById('celebrationHighlightRound').checked ? '50%' : '0';
+  });
+});</script>
+</body>
+</html>
