@@ -1,4 +1,6 @@
-<html><head><base href=".">
+<html>
+<head>
+    <base href=".">
     <meta charset="UTF-8">
     <title>Gerador de Calend&#xe1;rios Personalizado</title>
     <style>
@@ -174,10 +176,6 @@
         }
 
         #downloadBtn:hover {
-            background: #357abd !important;
-        }
-        
-        #copyBtn:hover {
             background: #357abd !important;
         }
 
@@ -400,12 +398,7 @@
                 </div>
                 <div class="control-item">
                     <button id="downloadBtn" style="padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                        Baixar Calendário (PNG)
-                    </button>
-                </div>
-                <div class="control-item">
-                    <button id="copyBtn" style="padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                        Copiar Calendário
+                        Baixar Calend&#xe1;rio (PNG)
                     </button>
                 </div>
             </div>
@@ -580,28 +573,6 @@ async function downloadCalendar() {
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
-async function copyCalendarToClipboard() {
-    const calendar = document.getElementById('calendar');
-    const canvas = await html2canvas(calendar, {
-        scale: 1,
-        useCORS: true,
-        backgroundColor: null
-    });
-    
-    canvas.toBlob(async (blob) => {
-        try {
-            await navigator.clipboard.write([
-                new ClipboardItem({
-                    'image/png': blob
-                })
-            ]);
-            alert('Calendário copiado para a área de transferência!');
-        } catch (err) {
-            console.error('Falha ao copiar para área de transferência:', err);
-            alert('Não foi possível copiar o calendário. Seu navegador pode não suportar esta funcionalidade.');
-        }
-    });
-}
 document.querySelectorAll('input').forEach(input => {
   input.addEventListener('input', e => {
     if (e.target.id === 'holidayTextSize' || e.target.id === 'celebrationTextSize') {
@@ -613,7 +584,6 @@ document.querySelectorAll('input').forEach(input => {
   });
 });
 document.getElementById('downloadBtn').addEventListener('click', downloadCalendar);
-document.getElementById('copyBtn').addEventListener('click', copyCalendarToClipboard);
 updateCalendar();
 document.querySelectorAll('.tab-button').forEach(button => {
   button.addEventListener('click', () => {
