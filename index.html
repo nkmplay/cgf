@@ -13,6 +13,7 @@
     <script src="https://nkmplay.github.io/cgf/scripts/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.4.0/dist/pdf-lib.min.js"></script>
 	<script src="https://cloudgraficaweb.github.io/CGVendas/scripts/potrace.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   body,html{margin:0;padding:0;height:100%;overflow:hidden;font-family:Arial,sans-serif}
@@ -328,7 +329,7 @@
     border-radius: 8px;
     color: white;
     width: 200px;
-    height: 210px;
+    height: 240px;
     display: none;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     z-index: 1000;
@@ -338,7 +339,7 @@
   .menu-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
     margin-bottom: 15px;
   }
 
@@ -803,6 +804,84 @@ resolution-controls {
     flex: 1;
     background: white;
 }
+#floating-shape-menu {
+  position: absolute;
+  background: #0f3460;
+  padding: 15px;
+  border-radius: 8px;
+  color: white;
+  width: 200px;
+  height: auto;
+  display: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  z-index: 1000;
+  font-size: 12px;
+}
+
+.menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-row label {
+  min-width: 80px;
+}
+
+.menu-row input[type="number"] {
+  width: 60px;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #4a90e2;
+  background: #16213e;
+  color: white;
+  font-size: 12px;
+}
+
+#export-text-svg-btn {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  width: 100%;
+  margin-top: 10px; /* Espaçamento acima do botão */
+}
+
+#export-text-svg-btn:hover {
+  background: #3a70b2;
+}
+
+.menu-row input[type="color"] {
+  width: 30px;
+  padding: 0;
+  border: 1px solid #4a90e2;
+  background: #16213e;
+}
+
+#export-svg-btn {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  width: 100%;
+}
+
+#export-svg-btn:hover {
+  background: #3a70b2;
+}
 </style>
 </head>
 <body>
@@ -890,6 +969,12 @@ resolution-controls {
     </div>
   </div>
   <div class="menu-item">
+    Formas
+    <div class="dropdown">
+        <a href="javascript:void(0)" id="formaquadradoBtn">Quadrado</a>
+    </div>
+</div>
+  <div class="menu-item">
     Ferramentas
     <div class="dropdown">
         <a href="javascript:void(0)" id="calendarBtn">Calendário</a>
@@ -914,7 +999,7 @@ resolution-controls {
   </div>
   <div class="menu-item" style="margin-left: auto;">
         <button id="infoButton" style="background-color: yellow; color: black; border: none; padding: 8px 16px; border-radius: 4px; cursor: default;">
-            CloudPhoto - Alfa - 03/Jan/23
+            CloudPhoto - Alfa - 04/Jan/23
         </button>
     </div>
 </div>
@@ -1036,12 +1121,16 @@ resolution-controls {
     </div>
     <div class="outline-row">
 	  <span>Contorno:</span>
-	  <input type="checkbox" id="second-color-check" unchecked>
-	  <input type="number" class="outline-size" value="0" min="0" max="20" step="0.1">
-	  <input type="color" class="outline-color" value="#000000">
-	</div>
+      <input type="checkbox" id="second-color-check" unchecked>
+      <input type="number" class="outline-size" value="0" min="0" max="20" step="0.1">
+      <input type="color" class="outline-color" value="#000000">
+    </div>
+    <div class="menu-row">
+      <button id="export-text-svg-btn">Exportar SVG</button>
+    </div>
   </div>
 </div>
+
 <div id="docSizeModal" style="display: none;">
   <div class="doc-size-content">
     <div class="doc-size-header">
@@ -1152,6 +1241,23 @@ resolution-controls {
         <button id="closeDynamicModal" class="modal-btn">Fechar</button>
     </div>
     <iframe id="dynamicIframe" src="" style="width: 100%; height: calc(100% - 40px); border: none;"></iframe>
+</div>
+
+<div id="floating-shape-menu" style="display: none;">
+  <div class="menu-group">
+    <div class="menu-row">
+      <label>Cor:</label>
+      <input type="color" id="shape-color" value="#000000">
+    </div>
+    <div class="menu-row">
+      <label>Traço:</label>
+      <input type="number" id="stroke-width" min="0" value="0">
+      <input type="color" id="stroke-color" value="#000000">
+    </div>
+    <div class="menu-row">
+      <button id="export-svg-btn">Exportar SVG</button>
+    </div>
+  </div>
 </div>
 	
 <script>
@@ -2116,6 +2222,47 @@ document.addEventListener('keydown', function (e) {
 
 // ----------------------------------------- Seção Inicio Texto ---------------------------------
 
+document.getElementById('newLayerBtn').addEventListener('click', () => {
+    const rect = new fabric.Rect({
+        left: canvas.width / 2,
+        top: canvas.height / 2,
+        width: 100,
+        height: 100,
+        fill: '#ffffff',
+        originX: 'center',
+        originY: 'center'
+    });
+    canvas.add(rect);
+    canvas.setActiveObject(rect);
+    saveState();
+});
+
+document.getElementById('deleteLayerBtn').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+        canvas.remove(activeObject);
+        canvas.discardActiveObject();
+        saveState();
+    }
+});
+
+document.getElementById('centerLayerBtn').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+        if (cloudFolha) {
+            activeObject.set({
+                left: cloudFolha.left + cloudFolha.width * cloudFolha.scaleX / 2,
+                top: cloudFolha.top + cloudFolha.height * cloudFolha.scaleY / 2
+            });
+            canvas.renderAll();
+            saveState();
+        }
+    }
+});
+
+updateLayersList();
+
 function getLayerName(obj, index) {
     if (obj.type === 'i-text') {
         return obj.text.substring(0, 10) || `Texto ${index + 1}`;
@@ -2788,6 +2935,45 @@ document.getElementById('gradient-color').addEventListener('input', function (e)
     }));
     canvas.renderAll();
   }
+});
+
+document.getElementById('export-text-svg-btn').addEventListener('click', function () {
+    const activeObject = canvas.getActiveObject();
+
+    if (activeObject && activeObject.type === 'i-text') {
+        // Calcular o tamanho necessário do SVG
+        const padding = 20; // Espaçamento extra ao redor do texto
+        const width = activeObject.width * activeObject.scaleX + padding * 2;
+        const height = activeObject.height * activeObject.scaleY + padding * 2;
+
+        // Criar um SVG com svg.js
+        const draw = SVG().size(width, height); // Tamanho dinâmico do SVG
+
+        // Adicionar o texto ao SVG
+        const text = draw.text(activeObject.text)
+            .font({
+                family: activeObject.fontFamily,
+                size: activeObject.fontSize,
+                anchor: activeObject.textAlign, // Alinhamento do texto
+                fill: activeObject.fill // Cor do texto
+            })
+            .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) // Contorno do texto
+            .move(padding, padding); // Posicionar o texto com espaçamento
+
+        // Exportar o SVG como string
+        const svg = draw.svg();
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'text.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } else {
+        alert('Selecione um texto para exportar como SVG.');
+    }
 });
 
 //--------------------------------- Seção Final Texto ---------------------------------
@@ -4666,6 +4852,135 @@ document.getElementById('calendarBtn').addEventListener('click', function () {
     openDynamicModal('https://nkmplay.github.io/cgf/ferramentas/calend.html');
 });
 // ---------- Fim Seção Modal Ferramenta links -------------------------------------------
+
+// ---------- Inicio Seção Formas -------------------------------------------
+function updateFloatingShapeMenu() {
+  const activeObject = canvas.getActiveObject();
+  const menu = document.getElementById('floating-shape-menu');
+
+  if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'path' || activeObject.type === 'circle')) {
+    const zoom = canvas.getZoom();
+    const objRect = activeObject.getBoundingRect();
+    const canvasRect = canvas.getElement().getBoundingClientRect();
+
+    let left = canvasRect.left + objRect.left + objRect.width + 10;
+    let top = canvasRect.top + objRect.top;
+
+    const menuWidth = 200;
+    const menuHeight = 150;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    if (left + menuWidth > windowWidth) {
+      left = canvasRect.left + objRect.left - menuWidth - 10;
+    }
+    if (top + menuHeight > windowHeight) {
+      top = windowHeight - menuHeight - 10;
+    }
+
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.style.display = 'block';
+
+    // Preencher os valores atuais da forma
+    document.getElementById('shape-color').value = activeObject.fill || '#000000';
+    document.getElementById('stroke-width').value = activeObject.strokeWidth || 0;
+    document.getElementById('stroke-color').value = activeObject.stroke || '#000000';
+  } else {
+    menu.style.display = 'none';
+  }
+}
+
+document.getElementById('shape-color').addEventListener('input', function (e) {
+  const activeObject = canvas.getActiveObject();
+  if (activeObject) {
+    activeObject.set('fill', e.target.value);
+    canvas.renderAll();
+  }
+});
+
+document.getElementById('stroke-width').addEventListener('input', function (e) {
+  const activeObject = canvas.getActiveObject();
+  if (activeObject) {
+    activeObject.set('strokeWidth', parseInt(e.target.value));
+    canvas.renderAll();
+  }
+});
+
+document.getElementById('stroke-color').addEventListener('input', function (e) {
+  const activeObject = canvas.getActiveObject();
+  if (activeObject) {
+    activeObject.set('stroke', e.target.value);
+    canvas.renderAll();
+  }
+});
+
+
+document.getElementById('export-svg-btn').addEventListener('click', function () {
+    const activeObject = canvas.getActiveObject();
+
+    if (activeObject) {
+        const padding = 20; 
+        const width = activeObject.width * activeObject.scaleX + padding * 2;
+        const height = activeObject.height * activeObject.scaleY + padding * 2;
+
+        const draw = SVG().size(width, height);
+
+        if (activeObject.type === 'rect') {
+            const rect = draw.rect(activeObject.width * activeObject.scaleX, activeObject.height * activeObject.scaleY)
+                .fill(activeObject.fill)
+                .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) // Traço
+                .move(padding, padding); 
+        } else if (activeObject.type === 'path') {
+            const pathData = activeObject.path.map(point => point.join(' ')).join(' ');
+            const path = draw.path(pathData)
+                .fill(activeObject.fill) 
+                .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) 
+                .move(padding, padding); 
+        }
+
+        const svg = draw.svg();
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'shape.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } else {
+        alert('Selecione um objeto válido para exportar como SVG.');
+    }
+});
+
+
+canvas.on('selection:created', updateFloatingShapeMenu);
+canvas.on('selection:updated', updateFloatingShapeMenu);
+canvas.on('selection:cleared', function () {
+  document.getElementById('floating-shape-menu').style.display = 'none';
+});
+
+canvas.on('object:moving', updateFloatingShapeMenu);
+canvas.on('object:scaling', updateFloatingShapeMenu);
+canvas.on('object:rotating', updateFloatingShapeMenu);
+
+document.getElementById('formaquadradoBtn').addEventListener('click', () => {
+    const rect = new fabric.Rect({
+        left: canvas.width / 2,
+        top: canvas.height / 2,
+        width: 100,
+        height: 100,
+        fill: '#000000',
+        originX: 'center',
+        originY: 'center'
+    });
+	saveState();
+    canvas.add(rect);
+    canvas.setActiveObject(rect);
+});
+
+// ---------- Fim Seção Formas -------------------------------------------
 
 </script>
 </body>
