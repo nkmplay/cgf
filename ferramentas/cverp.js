@@ -388,6 +388,142 @@ function openRemoveColorModal(canvas, activeObject) {
     });
 }
 
+function saveRemoveColorHistory(imageData) {
+    removeColorHistory = removeColorHistory.slice(0, currentRemoveColorIndex + 1);
+    removeColorHistory.push(imageData);
+    currentRemoveColorIndex++;
+
+    if (removeColorHistory.length > 10) {
+        removeColorHistory.shift();
+        currentRemoveColorIndex--;
+    }
+}
+
+function handleRemoveColorRegion(e) {
+    if (!removeColorCtx) return;
+
+    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    saveRemoveColorHistory(currentState);
+
+    const rect = removeColorCanvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
+
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    const tolerance = parseInt(sensitivityRange.value);
+
+    const processedImageData = floodFillAtPoint(
+        imageData,
+        x,
+        y,
+        { r: 0, g: 0, b: 0, a: 0 },
+        tolerance
+    );
+
+    removeColorCtx.putImageData(processedImageData, 0, 0);
+}
+
+function handleRemoveColorTotal(e) {
+    if (!removeColorCtx) return;
+
+    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    saveRemoveColorHistory(currentState);
+
+    const rect = removeColorCanvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
+
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    const tolerance = parseInt(sensitivityRange.value);
+    const targetColor = getPixel(imageData, x, y);
+
+    const processedImageData = floodFillEntireImage(
+        imageData,
+        targetColor,
+        { r: 0, g: 0, b: 0, a: 0 },
+        tolerance
+    );
+
+    removeColorCtx.putImageData(processedImageData, 0, 0);
+}
+
+function floodFillAtPoint(imageData, startX, startY, fillColor, tolerance) {
+    const width = imageData.width;
+    const height = imageData.height;
+    const visited = new Uint8Array(width * height);
+    const queue = [];
+
+    const targetColor = getPixel(imageData, startX, startY);
+    if (!targetColor) return imageData;
+
+    queue.push([startX, startY]);
+    visited[startY * width + startX] = 1;
+
+    while (queue.length > 0) {
+        const [x, y] = queue.shift();
+        const currentPixel = getPixel(imageData, x, y);
+
+        if (colorMatch(currentPixel, targetColor, tolerance)) {
+            setPixel(imageData, x, y, fillColor);
+
+            [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].forEach(([nx, ny]) => {
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    const index = ny * width + nx;
+                    if (!visited[index]) {
+                        visited[index] = 1;
+                        queue.push([nx, ny]);
+                    }
+                }
+            });
+        }
+    }
+
+    return imageData;
+}
+
+function floodFillEntireImage(imageData, targetColor, fillColor, tolerance) {
+    const width = imageData.width;
+    const height = imageData.height;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const currentPixel = getPixel(imageData, x, y);
+            if (colorMatch(currentPixel, targetColor, tolerance)) {
+                setPixel(imageData, x, y, fillColor);
+            }
+        }
+    }
+
+    return imageData;
+}
+
+function getPixel(imageData, x, y) {
+    const index = (y * imageData.width + x) * 4;
+    if (index >= imageData.data.length) return null;
+    return {
+        r: imageData.data[index],
+        g: imageData.data[index + 1],
+        b: imageData.data[index + 2],
+        a: imageData.data[index + 3]
+    };
+}
+
+function setPixel(imageData, x, y, color) {
+    const index = (y * imageData.width + x) * 4;
+    if (index >= imageData.data.length) return;
+    imageData.data[index] = color.r;
+    imageData.data[index + 1] = color.g;
+    imageData.data[index + 2] = color.b;
+    imageData.data[index + 3] = color.a;
+}
+
+function colorMatch(c1, c2, tolerance) {
+    if (!c1 || !c2) return false;
+    return Math.abs(c1.r - c2.r) <= tolerance &&
+        Math.abs(c1.g - c2.g) <= tolerance &&
+        Math.abs(c1.b - c2.b) <= tolerance;
+}
+
 function openPaintingModal(canvas, activeObject, tool) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem primeiro');
