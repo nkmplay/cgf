@@ -524,6 +524,19 @@ function colorMatch(c1, c2, tolerance) {
         Math.abs(c1.b - c2.b) <= tolerance;
 }
 
+function updateButtonStyles() {
+    const removeRegionBtn = document.getElementById('removeRegionBtn');
+    const removeTotalBtn = document.getElementById('removeTotalBtn');
+
+    if (currentRemoveMode === 'region') {
+        removeRegionBtn.classList.add('active');
+        removeTotalBtn.classList.remove('active');
+    } else {
+        removeTotalBtn.classList.add('active');
+        removeRegionBtn.classList.remove('active');
+    }
+}
+
 function openPaintingModal(canvas, activeObject, tool) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem primeiro');
