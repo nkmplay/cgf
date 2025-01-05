@@ -1,9 +1,9 @@
 // cverp.js
 
-//Remover cor parametros
+// Remover cor parametros
 let removeColorHistory = [];
 let currentRemoveColorIndex = -1;
-let currentRemoveMode = 'region';
+let currentRemoveMode = 'region'; // Initialize currentRemoveMode
 let removeColorCtx = null;
 let removeColorHistoryIndex = -1;
 let cropper;
@@ -214,7 +214,6 @@ function findRegion(imageData, startX, startY, width, height, visited) {
     const pixels = [];
     const queue = [[startX, startY]];
     let minX = startX, minY = startY, maxX = startX, maxY = startY;
-
     while (queue.length > 0) {
         const [x, y] = queue.shift();
         const key = `${x},${y}`;
@@ -234,7 +233,6 @@ function findRegion(imageData, startX, startY, width, height, visited) {
                 [x + 1, y], [x - 1, y],
                 [x, y + 1], [x, y - 1]
             ];
-
             for (const [nx, ny] of neighbors) {
                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
                     const npos = (ny * width + nx) * 4;
