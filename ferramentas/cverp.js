@@ -589,3 +589,191 @@ function openPaintingModal(canvas, activeObject, tool) {
         isDrawing = false;
     });
 }
+
+
+// seção remover cor
+
+// cverp.js
+
+// Variáveis globais
+let removeColorHistory = [];
+let currentRemoveColorIndex = -1;
+let removeColorCtx = null;
+let originalImagePosition = { left: 0, top: 0 };
+
+// Função para abrir o modal de remover cor
+function openRemoveColorModal(canvas, activeObject) {
+    if (!activeObject || activeObject.type !== 'image') {
+        alert('Selecione uma imagem para remover a cor.');
+        return;
+    }
+
+    // Armazena a posição original da imagem
+    originalImagePosition = {
+        left: activeObject.left,
+        top: activeObject.top
+    };
+
+    // Obtém o modal e o canvas de remoção de cor
+    const removeColorModal = document.getElementById('removeColorModal');
+    const removeColorCanvas = document.getElementById('removeColorCanvas');
+
+    // Define o tamanho do canvas de remoção de cor
+    const originalImage = activeObject._element;
+    removeColorCanvas.width = originalImage.width;
+    removeColorCanvas.height = originalImage.height;
+
+    // Desenha a imagem no canvas de remoção de cor
+    removeColorCtx = removeColorCanvas.getContext('2d');
+    removeColorCtx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
+
+    // Inicializa o histórico de remoção de cor
+    removeColorHistory = [];
+    currentRemoveColorIndex = -1;
+    saveRemoveColorHistory(removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
+
+    // Exibe o modal
+    removeColorModal.style.display = 'flex';
+
+    // Adiciona os eventos de clique
+    removeColorCanvas.addEventListener('click', handleRemoveColorClick);
+    document.getElementById('removeRegionBtn').addEventListener('click', () => setRemoveMode('region'));
+    document.getElementById('removeTotalBtn').addEventListener('click', () => setRemoveMode('total'));
+    document.getElementById('closeRemoveColorModal').addEventListener('click', () => closeRemoveColorModal());
+    document.getElementById('saveRemoveColor').addEventListener('click', () => saveRemoveColor(canvas, activeObject));
+}
+
+// Função para salvar o histórico de remoção de cor
+function saveRemoveColorHistory(imageData) {
+    removeColorHistory = removeColorHistory.slice(0, currentRemoveColorIndex + 1);
+    removeColorHistory.push(imageData);
+    currentRemoveColorIndex++;
+    if (removeColorHistory.length > 10) {
+        removeColorHistory.shift();
+        currentRemoveColorIndex--;
+    }
+}
+
+// Função para lidar com o clique no canvas de remoção de cor
+function handleRemoveColorClick(e) {
+    const rect = removeColorCanvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
+
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    const tolerance = parseInt(document.getElementById('sensitivityRange').value);
+
+    const processedImageData = floodFillAtPoint(
+        imageData,
+        x,
+        y,
+        { r: 0, g: 0, b: 0, a: 0 },
+        tolerance
+    );
+
+    removeColorCtx.putImageData(processedImageData, 0, 0);
+    saveRemoveColorHistory(removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
+}
+
+// Função para preencher a região clicada
+function floodFillAtPoint(imageData, startX, startY, fillColor, tolerance) {
+    const width = imageData.width;
+    const height = imageData.height;
+    const visited = new Uint8Array(width * height);
+    const queue = [];
+
+    const targetColor = getPixel(imageData, startX, startY);
+    if (!targetColor) return imageData;
+
+    queue.push([startX, startY]);
+    visited[startY * width + startX] = 1;
+
+    while (queue.length > 0) {
+        const [x, y] = queue.shift();
+        const currentPixel = getPixel(imageData, x, y);
+
+        if (colorMatch(currentPixel, targetColor, tolerance)) {
+            setPixel(imageData, x, y, fillColor);
+
+            [[x-1,y], [x+1,y], [x,y-1], [x,y+1]].forEach(([nx,ny]) => {
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    const index = ny * width + nx;
+                    if (!visited[index]) {
+                        visited[index] = 1;
+                        queue.push([nx,ny]);
+                    }
+                }
+            });
+        }
+    }
+
+    return imageData;
+}
+
+// Função para obter o pixel de uma imagem
+function getPixel(imageData, x, y) {
+    const index = (y * imageData.width + x) * 4;
+    if (index >= imageData.data.length) return null;
+    return {
+        r: imageData.data[index],
+        g: imageData.data[index + 1],
+        b: imageData.data[index + 2],
+        a: imageData.data[index + 3]
+    };
+}
+
+// Função para definir o pixel de uma imagem
+function setPixel(imageData, x, y, color) {
+    const index = (y * imageData.width + x) * 4;
+    if (index >= imageData.data.length) return;
+    imageData.data[index] = color.r;
+    imageData.data[index + 1] = color.g;
+    imageData.data[index + 2] = color.b;
+    imageData.data[index + 3] = color.a;
+}
+
+// Função para verificar se duas cores são semelhantes
+function colorMatch(c1, c2, tolerance) {
+    if (!c1 || !c2) return false;
+    return Math.abs(c1.r - c2.r) <= tolerance &&
+           Math.abs(c1.g - c2.g) <= tolerance &&
+           Math.abs(c1.b - c2.b) <= tolerance;
+}
+
+// Função para fechar o modal
+function closeRemoveColorModal() {
+    const removeColorModal = document.getElementById('removeColorModal');
+    removeColorModal.style.display = 'none';
+}
+
+// Função para salvar a imagem com as cores removidas
+function saveRemoveColor(canvas, activeObject) {
+    const removeColorCanvas = document.getElementById('removeColorCanvas');
+    const dataURL = removeColorCanvas.toDataURL('image/png', 1.0);
+
+    const originalProps = {
+        left: originalImagePosition.left,
+        top: originalImagePosition.top,
+        scaleX: activeObject.scaleX,
+        scaleY: activeObject.scaleY,
+        angle: activeObject.angle,
+        flipX: activeObject.flipX,
+        flipY: activeObject.flipY,
+        width: activeObject.width,
+        height: activeObject.height,
+        originX: activeObject.originX,
+        originY: activeObject.originY,
+        centeredScaling: activeObject.centeredScaling,
+        centeredRotation: activeObject.centeredRotation
+    };
+
+    canvas.remove(activeObject);
+
+    fabric.Image.fromURL(dataURL, function (newImage) {
+        newImage.set(originalProps);
+        canvas.add(newImage);
+        canvas.setActiveObject(newImage);
+        canvas.renderAll();
+        closeRemoveColorModal();
+    });
+}
