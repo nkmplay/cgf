@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function initSelectModal(canvas) {
         const activeImage = canvas.getActiveObject();
         if (!activeImage || activeImage.type !== 'image') {
-            showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
-            return; // Encerra a função se não houver imagem selecionada
-        }
+                showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
+                return; // Encerra a função se não houver imagem selecionada
+            }
 
         // Remover modal anterior se existir
         const existingModal = document.getElementById('imageEditModal');
@@ -135,8 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
             editContext.strokeStyle = '#ffffff';
             editContext.strokeRect(startX, startY, x - startX, y - startY);
             editContext.strokeStyle = '#000000';
-            editContext.strokeRect(startX + ```javascript
-1, startY + 1, x - startX - 2, y - startY - 2);
+            editContext.strokeRect(startX + 1, startY + 1, x - startX - 2, y - startY - 2);
             editContext.restore();
             editState.selectionPath = [[startX, startY], [x, y]];
         }
@@ -235,8 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.drawImage(editCanvas, 0, 0);
             const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            let minX = temp ```javascript
-Canvas.width,
+            let minX = tempCanvas.width,
                 minY = tempCanvas.height,
                 maxX = 0,
                 maxY = 0;
@@ -329,8 +327,7 @@ Canvas.width,
         editCanvas.addEventListener('mousemove', function (e) {
             if (!editState.isDrawing) return;
             const rect = editCanvas.getBoundingClientRect();
-            const x = e.clientX - ```javascript
-rect.left;
+            const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
             editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
