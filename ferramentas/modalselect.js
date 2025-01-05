@@ -1,6 +1,6 @@
 // ---------- Inicio Seção Modal Selecionar -------------------------------------------
 
-document.getElementById('selectBtn').addEventListener('click', function () {
+function OpenModalSelect() {
     const activeImage = canvas.getActiveObject();
     if (!activeImage || activeImage.type !== 'image') return;
 
@@ -131,7 +131,7 @@ document.getElementById('selectBtn').addEventListener('click', function () {
         editContext.save();
         editContext.setLineDash([5, 5]);
         editContext.strokeStyle = '#ffffff';
-        editContext.strokeRect(startX, startY, x - startX, y - startY);
+        editContext.strokeRect(startX, startY, x - startX, y - startY );
         editContext.strokeStyle = '#000000';
         editContext.strokeRect(startX + 1, startY + 1, x - startX - 2, y - startY - 2);
         editContext.restore();
@@ -231,7 +231,8 @@ document.getElementById('selectBtn').addEventListener('click', function () {
         tempCanvas.height = editCanvas.height;
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.drawImage(editCanvas, 0, 0);
-        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const imageData = tempCtx.getImageData(0 ```javascript
+, 0, tempCanvas.width, tempCanvas.height);
         let minX = tempCanvas.width,
             minY = tempCanvas.height,
             maxX = 0,
@@ -324,6 +325,7 @@ document.getElementById('selectBtn').addEventListener('click', function () {
 
     editCanvas.addEventListener('mousemove', function (e) {
         if (!editState.isDrawing) return;
+        ```javascript
         const rect = editCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -394,6 +396,9 @@ document.getElementById('selectBtn').addEventListener('click', function () {
             editState.originalImageData = null;
         }
     });
-});
+}
+
+// Alterar o evento de clique para chamar OpenModalSelect
+document.getElementById('selectBtn').addEventListener('click', OpenModalSelect);
 
 // ---------- Final Seção Modal Selecionar -------------------------------------------
