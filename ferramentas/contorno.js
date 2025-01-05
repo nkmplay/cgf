@@ -1,34 +1,21 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const canvas = new fabric.Canvas('canvas', {
-        preserveObjectStacking: true,
-        selection: true
-    });
+function initContorno(canvas, activeObject) {
+    const outlineModal = document.getElementById('outlineModal');
+    const outlineImagePreview = document.getElementById('outlineImagePreview');
 
-    document.getElementById('addContorno').addEventListener('click', function() {
-        const activeObject = canvas.getActiveObject();
-        if (!activeObject || activeObject.type !== 'image') {
-            showCustomAlert('Selecione uma imagem para adicionar contorno.');
-            return;
-        }
+    outlineImagePreview.src = activeObject.toDataURL();
+    outlineImagePreview.style.display = 'block';
+    outlineImagePreview.style.maxWidth = '80%';
+    outlineImagePreview.style.maxHeight = '80vh';
+    outlineImagePreview.style.objectFit = 'contain';
+    outlineImagePreview.style.margin = 'auto';
 
-        const outlineModal = document.getElementById('outlineModal');
-        const outlineImagePreview = document.getElementById('outlineImagePreview');
+    outlineModal.style.display = 'flex';
 
-        outlineImagePreview.src = activeObject.toDataURL();
-        outlineImagePreview.style.display = 'block';
-        outlineImagePreview.style.maxWidth = '80%';
-        outlineImagePreview.style.maxHeight = '80vh';
-        outlineImagePreview.style.objectFit = 'contain';
-        outlineImagePreview.style.margin = 'auto';
-
-        outlineModal.style.display = 'flex';
-
-        updateSliderValues();
-        [outlineSlider1, outlineSlider2, colorPicker1, colorPicker2].forEach(element => {
-            element.addEventListener('input', function() {
-                applyOutlines();
-                updateSliderValues();
-            });
+    updateSliderValues();
+    [outlineSlider1, outlineSlider2, colorPicker1, colorPicker2].forEach(element => {
+        element.addEventListener('input', function() {
+            applyOutlines();
+            updateSliderValues();
         });
     });
 
@@ -41,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const width2 = parseInt(document.getElementById('outlineSlider2').value);
         const color1 = document.getElementById('colorPicker1').value;
         const color2 = document.getElementById('colorPicker2').value;
-        const activeObject = canvas.getActiveObject();
 
         if (activeObject) {
             const imgElement = activeObject.getElement();
@@ -145,4 +131,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     updateSliderValues();
-});
+}
