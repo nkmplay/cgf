@@ -202,7 +202,88 @@ function openExtractRegionsModal(canvas, activeObject) {
 
     showCustomAlert(`Extraídas ${regions.length} regiões da imagem.`);
 }
+function findRegion(imageData, startX, startY, width, height, visited) {
+    const pixels = [];
+    const queue = [[startX, startY]];
+    let minX = startX, minY = startY, maxX = startX, maxY = startY;
 
+    while (queue.length > 0) {
+        const [x, y] = queue.shift();
+        const key = `${x},${y}`;
+        
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        const pos = (y * width + x) * 4;
+        if (imageData.data[pos + 3] > 0) {
+            pixels.push([x, y]);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+
+            const neighbors = [
+                [x+1, y], [x-1, y],
+                [x, y+1], [x, y-1]
+            ];
+
+            for (const [nx, ny] of neighbors) {
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    const npos = (ny * width + nx) * 4;
+                    if (imageData.data[npos + 3] > 0) {
+                        queue.push([nx, ny]);
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        pixels,
+        bounds: {minX, minY, maxX, maxY}
+    };
+}
+
+function addRegionToCanvas(region, imgElement) {
+    const canvasTemp = document.createElement('canvas');
+    const ctxTemp = canvasTemp.getContext('2d');
+    const width = region.bounds.maxX - region.bounds.minX + 1;
+    const height = region.bounds.maxY - region.bounds.minY + 1;
+    
+    canvasTemp.width = width;
+    canvasTemp.height = height;
+
+    ctxTemp.drawImage(imgElement, 
+        region.bounds.minX, region.bounds.minY, width, height,
+        0, 0, width, height);
+
+    const imageData = ctxTemp.getImageData(0, 0, width, height);
+    const pixels = new Set(region.pixels.map(([x, y]) => `${x-region.bounds.minX},${y-region.bounds.minY}`));
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            if (!pixels.has(`${x},${y}`)) {
+                const pos = (y * width + x) * 4;
+                imageData.data[pos + 3] = 0;
+            }
+        }
+    }
+
+    ctxTemp.putImageData(imageData, 0, 0);
+
+    fabric.Image.fromURL(canvasTemp.toDataURL(), function(img) {
+        img.set({
+            left: region.bounds.minX,
+            top: region.bounds.minY,
+            originX: 'left',
+            originY: 'top',
+            selectable: true,
+            evented: true
+        });
+        canvas.add(img);
+        canvas.renderAll();
+    });
+}
 function openRemoveColorModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem para remover a cor');
