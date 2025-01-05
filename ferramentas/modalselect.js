@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const activeImage = canvas.getActiveObject();
         if (!activeImage || activeImage.type !== 'image') {
             showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
-            return;
+            return; // Encerra a função se não houver imagem selecionada
         }
 
         // Remover modal anterior se existir
@@ -43,16 +43,11 @@ document.addEventListener('DOMContentLoaded', function () {
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
         `;
 
         const editCanvas = document.createElement('canvas');
         editCanvas.id = 'editCanvas';
-        editCanvas.style.cssText = `
-            transform-origin: 0 0;
-        `;
 
-        // Toolbar
         const toolbar = document.createElement('div');
         toolbar.style.cssText = `
             height: 10%;
@@ -110,40 +105,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
         toolbar.appendChild(leftTools);
         toolbar.appendChild(rightTools);
-
-        // Configurar o canvas de edição com dimensões originais
-        const naturalWidth = activeImage.getElement().naturalWidth;
-        const naturalHeight = activeImage.getElement().naturalHeight;
-        
-        editCanvas.width = naturalWidth;
-        editCanvas.height = naturalHeight;
-        
-        const editContext = editCanvas.getContext('2d');
-        editContext.drawImage(activeImage.getElement(), 0, 0, naturalWidth, naturalHeight);
-
-        // Função para ajustar o zoom inicial
-        function setInitialZoom() {
-            const containerWidth = imageContainer.clientWidth;
-            const containerHeight = imageContainer.clientHeight;
-
-            // Calcular a escala necessária para encaixar a imagem no contêiner
-            const scaleX = containerWidth / naturalWidth;
-            const scaleY = containerHeight / naturalHeight;
-            const initialScale = Math.min(scaleX, scaleY, 1); // Não ultrapassar 100% da resolução original
-
-            // Aplicar o zoom inicial
-            editCanvas.style.transform = `scale(${initialScale})`;
-        }
-
-        // Montar a estrutura do modal
         imageContainer.appendChild(editCanvas);
         content.appendChild(imageContainer);
         modal.appendChild(content);
         modal.appendChild(toolbar);
         document.body.appendChild(modal);
 
-        // Definir zoom inicial após o modal estar montado
-        setTimeout(setInitialZoom, 0);
+        // Configurar o canvas de edição
+        const imgElement = activeImage.getElement();
+        const imgWidth = imgElement.naturalWidth;
+        const imgHeight = imgElement.naturalHeight;
+
+        // Ajustar o tamanho do canvas para a resolução original da imagem
+        editCanvas.width = imgWidth;
+        editCanvas.height = imgHeight;
+
+        const editContext = editCanvas.getContext('2d');
+        editContext.drawImage(imgElement, 0, 0, imgWidth, imgHeight);
+
+        // Ajustar o zoom da imagem no container
+        const containerWidth = imageContainer.clientWidth;
+        const containerHeight = imageContainer.clientHeight;
+        const scale = Math.min(containerWidth / imgWidth, containerHeight / imgHeight);
+        editCanvas.style.transform = `scale(${scale})`;
 
         // Criar um objeto para armazenar os estados
         const editState = {
@@ -208,104 +192,98 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function copySelectedAreaEdit() {
-    if (editState.isColorSelection) {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = editCanvas.width;
-        tempCanvas.height = editCanvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(editCanvas, 0, 0);
-        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        let minX = tempCanvas.width,
-            minY = tempCanvas.height,
-            maxX = 0,
-            maxY = 0;
-        for (let y = 0; y < tempCanvas.height; y++) {
-            for (let x = 0; x < tempCanvas.width; x++) {
-                const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
-                if (alpha > 0) {
-                    minX = Math.min(minX, x);
-                    minY = Math.min(minY, y);
-                    maxX = Math.max(maxX, x);
-                    maxY = Math.max(maxY, y);
+            if (editState.isColorSelection) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = editCanvas.width;
+                tempCanvas.height = editCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(editCanvas, 0, 0);
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                let minX = tempCanvas.width,
+                    minY = tempCanvas.height,
+                    maxX = 0,
+                    maxY = 0;
+                for (let y = 0; y < tempCanvas.height; y++) {
+                    for (let x = 0; x < tempCanvas.width; x++) {
+                        const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
+                        if (alpha > 0) {
+                            minX = Math.min(minX, x);
+                            minY = Math.min(minY, y);
+                            maxX = Math.max(maxX, x);
+                            maxY = Math.max(maxY, y);
+                        }
+                    }
+                }
+                const croppedCanvas = document.createElement('canvas');
+                croppedCanvas.width = maxX - minX + 1;
+                croppedCanvas.height = maxY - minY + 1;
+                const croppedCtx = croppedCanvas.getContext('2d');
+                croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
+
+                fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+                    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+                    if (cloudFolha) {
+                        const centerX = cloudFolha.left + cloudFolha.width / 2;
+                        const centerY = cloudFolha.top + cloudFolha.height / 2;
+
+                        img.set({
+                            left: centerX - img.width / 2,
+                            top: centerY - img.height / 2
+                        });
+                    }
+                    canvas.add(img);
+                    canvas.renderAll();
+                    modal.remove();
+                    clearSelection();
+                });
+                return;
+            }
+
+            if (!editState.selectionPath.length) return;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = editCanvas.width;
+            tempCanvas.height = editCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(editCanvas, 0, 0);
+            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            let minX = tempCanvas.width,
+                minY = tempCanvas.height,
+                maxX = 0,
+                maxY = 0;
+            for (let y = 0; y < tempCanvas.height; y++) {
+                for (let x = 0; x < tempCanvas.width; x++) {
+                    const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
+                    if (alpha > 0) {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
                 }
             }
-        }
-        const croppedCanvas = document.createElement('canvas');
-        croppedCanvas.width = maxX - minX + 1;
-        croppedCanvas.height = maxY - minY + 1;
-        const croppedCtx = croppedCanvas.getContext('2d');
-        croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = maxX - minX + 1;
+            croppedCanvas.height = maxY - minY + 1;
+            const croppedCtx = croppedCanvas.getContext('2d');
+            croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
-        // Usar toDataURL com qualidade máxima (1.0 para PNG)
-        const imageUrl = croppedCanvas.toDataURL('image/png', 1.0);
+            fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+                const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+                if (cloudFolha) {
+                    const centerX = cloudFolha.left + cloudFolha.width / 2;
+                    const centerY = cloudFolha.top + cloudFolha.height / 2;
 
-        fabric.Image.fromURL(imageUrl, img => {
-            const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-            if (cloudFolha) {
-                const centerX = cloudFolha.left + cloudFolha.width / 2;
-                const centerY = cloudFolha.top + cloudFolha.height / 2;
-
-                img.set({
-                    left: centerX - img.width / 2,
-                    top: centerY - img.height / 2
-                });
-            }
-            canvas.add(img);
-            canvas.renderAll();
-            modal.remove();
-            clearSelection();
-        });
-        return;
-    }
-
-    if (!editState.selectionPath.length) return;
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = editCanvas.width;
-    tempCanvas.height = editCanvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(editCanvas, 0, 0);
-    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    let minX = tempCanvas.width,
-        minY = tempCanvas.height,
-        maxX = 0,
-        maxY = 0;
-    for (let y = 0; y < tempCanvas.height; y++) {
-        for (let x = 0; x < tempCanvas.width; x++) {
-            const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
-            if (alpha > 0) {
-                minX = Math.min(minX, x);
-                minY = Math.min(minY, y);
-                maxX = Math.max(maxX, x);
-                maxY = Math.max(maxY, y);
-            }
-        }
-    }
-    const croppedCanvas = document.createElement('canvas');
-    croppedCanvas.width = maxX - minX + 1;
-    croppedCanvas.height = maxY - minY + 1;
-    const croppedCtx = croppedCanvas.getContext('2d');
-    croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
-
-    // Usar toDataURL com qualidade máxima (1.0 para PNG)
-    const imageUrl = croppedCanvas.toDataURL('image/png', 1.0);
-
-    fabric.Image.fromURL(imageUrl, img => {
-        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-        if (cloudFolha) {
-            const centerX = cloudFolha.left + cloudFolha.width / 2;
-            const centerY = cloudFolha.top + cloudFolha.height / 2;
-
-            img.set({
-                left: centerX - img.width / 2,
-                top: centerY - img.height / 2
+                    img.set({
+                        left: centerX - img.width / 2,
+                        top: centerY - img.height / 2
+                    });
+                }
+                canvas.add(img);
+                canvas.renderAll();
+                modal.remove();
+                clearSelection();
             });
         }
-        canvas.add(img);
-        canvas.renderAll();
-        modal.remove();
-        clearSelection();
-    });
-}
 
         // Adicionar eventos para cada ferramenta
         const toolEvents = ['squareSelect', 'circleSelect', 'lassoSelect', 'colorSelect'];
