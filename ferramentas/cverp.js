@@ -1,5 +1,4 @@
-// ----------------------------------------- Seção Inicio Recorte ----------------------------------------------------
-let cropper;
+// cverp.js
 
 function openCropModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
@@ -57,53 +56,43 @@ function openCropModal(canvas, activeObject) {
         }
     });
 
-document.getElementById('saveCrop').addEventListener('click', function () {
-    if (!cropper) return;
+    document.getElementById('saveCrop').addEventListener('click', function () {
+        if (!cropper) return;
 
-    const canvasCropped = cropper.getCroppedCanvas({
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high'
-    });
-
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') return;
-
-    const croppedImageData = canvasCropped.toDataURL();
-
-    fabric.Image.fromURL(croppedImageData, function(newImage) {
-        // Use a posição original da imagem
-        newImage.set({
-            left: activeObject.left, // Mantém a posição original
-            top: activeObject.top,   // Mantém a posição original
-            scaleX: activeObject.scaleX,
-            scaleY: activeObject.scaleY,
-            angle: activeObject.angle
+        const canvasCropped = cropper.getCroppedCanvas({
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
         });
 
-        canvas.remove(activeObject);
-        canvas.add(newImage);
-        canvas.setActiveObject(newImage);
-        canvas.renderAll();
-        saveState();
+        const croppedImageData = canvasCropped.toDataURL();
 
-        // Fechar o modal
-        document.getElementById('cropModal').style.display = 'none';
-        cropper.destroy();
+        fabric.Image.fromURL(croppedImageData, function (newImage) {
+            newImage.set({
+                left: activeObject.left,
+                top: activeObject.top,
+                scaleX: activeObject.scaleX,
+                scaleY: activeObject.scaleY,
+                angle: activeObject.angle
+            });
+
+            canvas.remove(activeObject);
+            canvas.add(newImage);
+            canvas.setActiveObject(newImage);
+            canvas.renderAll();
+            saveState();
+
+            cropModal.style.display = 'none';
+            cropper.destroy();
+        });
     });
-});
 
-document.getElementById('closeCropModal').addEventListener('click', function () {
-    const cropModal = document.getElementById('cropModal');
-    cropModal.style.display = 'none';
-    if (cropper) {
-        cropper.destroy();
-    }
-});
-
-// ----------------------------------------- Seção Final Recorte ----------------------------------------------------
-
-
-// ----------------------------------------- Seção Inicio Vetorizar PB ----------------------------------------------------
+    document.getElementById('closeCropModal').addEventListener('click', function () {
+        cropModal.style.display = 'none';
+        if (cropper) {
+            cropper.destroy();
+        }
+    });
+}
 
 function openVectorizeModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
@@ -171,9 +160,6 @@ function openVectorizeModal(canvas, activeObject) {
         });
     }, 'image/png');
 }
-// ----------------------------------------- Seção Final Vetorizar PB ----------------------------------------------------
-
-// ----------------------------------------- Seção Inicio Extrair Regiões da imagem ----------------------------------------------------
 
 function openExtractRegionsModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
@@ -224,7 +210,7 @@ function findRegion(imageData, startX, startY, width, height, visited) {
     while (queue.length > 0) {
         const [x, y] = queue.shift();
         const key = `${x},${y}`;
-        
+
         if (visited.has(key)) continue;
         visited.add(key);
 
@@ -237,8 +223,8 @@ function findRegion(imageData, startX, startY, width, height, visited) {
             maxY = Math.max(maxY, y);
 
             const neighbors = [
-                [x+1, y], [x-1, y],
-                [x, y+1], [x, y-1]
+                [x + 1, y], [x - 1, y],
+                [x, y + 1], [x, y - 1]
             ];
 
             for (const [nx, ny] of neighbors) {
@@ -254,7 +240,7 @@ function findRegion(imageData, startX, startY, width, height, visited) {
 
     return {
         pixels,
-        bounds: {minX, minY, maxX, maxY}
+        bounds: { minX, minY, maxX, maxY }
     };
 }
 
@@ -263,16 +249,16 @@ function addRegionToCanvas(region, imgElement) {
     const ctxTemp = canvasTemp.getContext('2d');
     const width = region.bounds.maxX - region.bounds.minX + 1;
     const height = region.bounds.maxY - region.bounds.minY + 1;
-    
+
     canvasTemp.width = width;
     canvasTemp.height = height;
 
-    ctxTemp.drawImage(imgElement, 
+    ctxTemp.drawImage(imgElement,
         region.bounds.minX, region.bounds.minY, width, height,
         0, 0, width, height);
 
     const imageData = ctxTemp.getImageData(0, 0, width, height);
-    const pixels = new Set(region.pixels.map(([x, y]) => `${x-region.bounds.minX},${y-region.bounds.minY}`));
+    const pixels = new Set(region.pixels.map(([x, y]) => `${x - region.bounds.minX},${y - region.bounds.minY}`));
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -285,7 +271,7 @@ function addRegionToCanvas(region, imgElement) {
 
     ctxTemp.putImageData(imageData, 0, 0);
 
-    fabric.Image.fromURL(canvasTemp.toDataURL(), function(img) {
+    fabric.Image.fromURL(canvasTemp.toDataURL(), function (img) {
         img.set({
             left: region.bounds.minX,
             top: region.bounds.minY,
@@ -299,13 +285,110 @@ function addRegionToCanvas(region, imgElement) {
     });
 }
 
-// ----------------------------------------- Seção Final Extrair Regiões da imagem ----------------------------------------------------
+function openRemoveColorModal(canvas, activeObject) {
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para remover a cor');
+        return;
+    }
 
+    originalImagePosition = {
+        left: activeObject.left,
+        top: activeObject.top
+    };
 
-// ----------------------------------------- Seção Inicio Pincel Balde e Borracha ----------------------------------------------------
+    const removeColorModal = document.getElementById('removeColorModal');
+    const removeColorCanvas = document.getElementById('removeColorCanvas');
 
-function openModal(tool) {
-    const activeObject = canvas.getActiveObject();
+    const originalImage = activeObject._element;
+    removeColorCanvas.width = originalImage.width;
+    removeColorCanvas.height = originalImage.height;
+
+    const ctx = removeColorCanvas.getContext('2d');
+    ctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
+
+    removeColorHistory = [];
+    currentRemoveColorIndex = -1;
+    saveRemoveColorHistory(ctx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
+
+    removeColorModal.style.display = 'flex';
+
+    document.getElementById('closeRemoveColorModal').addEventListener('click', function () {
+        removeColorModal.style.display = 'none';
+    });
+
+    document.getElementById('undoRemoveColor').addEventListener('click', function () {
+        if (currentRemoveColorIndex > 0) {
+            currentRemoveColorIndex--;
+            const previousState = removeColorHistory[currentRemoveColorIndex];
+            const ctx = removeColorCanvas.getContext('2d');
+            ctx.putImageData(previousState, 0, 0);
+        }
+    });
+
+    document.getElementById('saveRemoveColor').addEventListener('click', function () {
+        const dataURL = removeColorCanvas.toDataURL('image/png', 1.0);
+        const originalProps = {
+            left: originalImagePosition.left,
+            top: originalImagePosition.top,
+            scaleX: activeObject.scaleX,
+            scaleY: activeObject.scaleY,
+            angle: activeObject.angle,
+            flipX: activeObject.flipX,
+            flipY: activeObject.flipY,
+            width: activeObject.width,
+            height: activeObject.height,
+            originX: activeObject.originX,
+            originY: activeObject.originY,
+            centeredScaling: activeObject.centeredScaling,
+            centeredRotation: activeObject.centeredRotation
+        };
+
+        canvas.remove(activeObject);
+
+        fabric.Image.fromURL(dataURL, function (newImage) {
+            newImage.set(originalProps);
+
+            newImage.setCoords();
+
+            canvas.add(newImage);
+            canvas.setActiveObject(newImage);
+            canvas.renderAll();
+            saveState();
+
+            removeColorModal.style.display = 'none';
+        });
+    });
+
+    removeColorCanvas.addEventListener('click', (e) => {
+        if (currentRemoveMode === 'region') {
+            handleRemoveColorRegion(e);
+        } else {
+            handleRemoveColorTotal(e);
+        }
+    });
+
+    document.getElementById('removeRegionBtn').addEventListener('click', () => {
+        currentRemoveMode = 'region';
+        removeRegionBtn.classList.add('active');
+        removeTotalBtn.classList.remove('active');
+        updateButtonStyles();
+    });
+
+    document.getElementById('removeTotalBtn').addEventListener('click', () => {
+        currentRemoveMode = 'total';
+        removeTotalBtn.classList.add('active');
+        removeRegionBtn.classList.remove('active');
+        updateButtonStyles();
+    });
+
+    document.getElementById('removeColorModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            this.style.display = 'none';
+        }
+    });
+}
+
+function openPaintingModal(canvas, activeObject, tool) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem primeiro');
         return;
@@ -314,8 +397,7 @@ function openModal(tool) {
     let paintingHistory = [];
     let currentPaintingIndex = -1;
     const maxHistoryStates = 10;
-	let originalImagePosition = { left: 0, top: 0 };
-
+    let originalImagePosition = { left: 0, top: 0 };
     function savePaintingHistory(ctx) {
         const imageData = ctx.getImageData(0, 0, paintingCanvas.width, paintingCanvas.height);
         paintingHistory = paintingHistory.slice(0, currentPaintingIndex + 1);
@@ -391,29 +473,29 @@ function openModal(tool) {
         document.body.removeChild(modal);
     });
 
-const saveButton = document.createElement('button');
-saveButton.classList.add('modal-btn');
-saveButton.textContent = 'Salvar';
-saveButton.addEventListener('click', () => {
-    const imageURL = paintingCanvas.toDataURL('image/png', 1.0);
-    fabric.Image.fromURL(imageURL, (img) => {
-        const originalLeft = activeObject.left;
-        const originalTop = activeObject.top;
+    const saveButton = document.createElement('button');
+    saveButton.classList.add('modal-btn');
+    saveButton.textContent = 'Salvar';
+    saveButton.addEventListener('click', () => {
+        const imageURL = paintingCanvas.toDataURL('image/png', 1.0);
+        fabric.Image.fromURL(imageURL, (img) => {
+            const originalLeft = activeObject.left;
+            const originalTop = activeObject.top;
 
-        img.set({
-            left: originalLeft,
-            top: originalTop,
-            scaleX: activeObject.scaleX,
-            scaleY: activeObject.scaleY,
-            angle: activeObject.angle
+            img.set({
+                left: originalLeft,
+                top: originalTop,
+                scaleX: activeObject.scaleX,
+                scaleY: activeObject.scaleY,
+                angle: activeObject.angle
+            });
+
+            canvas.remove(activeObject);
+            canvas.add(img);
+            canvas.renderAll();
+            document.body.removeChild(modal);
         });
-
-        canvas.remove(activeObject);
-        canvas.add(img);
-        canvas.renderAll();
-        document.body.removeChild(modal);
     });
-});
 
     const undoButton = document.createElement('button');
     undoButton.classList.add('modal-btn');
@@ -573,8 +655,8 @@ saveButton.addEventListener('click', () => {
 
     const colorMatch = (c1, c2, tolerance) => {
         return Math.abs(c1.r - c2.r) <= tolerance &&
-               Math.abs(c1.g - c2.g) <= tolerance &&
-               Math.abs(c1.b - c2.b) <= tolerance;
+            Math.abs(c1.g - c2.g) <= tolerance &&
+            Math.abs(c1.b - c2.b) <= tolerance;
     };
 
     const hexToRgb = (hex) => {
@@ -609,261 +691,3 @@ saveButton.addEventListener('click', () => {
         isDrawing = false;
     });
 }
-
-document.getElementById('btnPincel').addEventListener('click', () => openModal('brush'));
-document.getElementById('btnBorracha').addEventListener('click', () => openModal('eraser'));
-document.getElementById('btnBalde').addEventListener('click', () => openModal('bucket'));
-// ----------------------------------------- Seção Final Pincel Balde e Borracha ----------------------------------------------------
-
-// cverp.js
-
-// ----------------------------------------- Seção Inicio Remover Cor ----------------------------------------------------
-
-function openRemoveColorModal(canvas, activeObject) {
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para remover a cor');
-        return;
-    }
-
-    originalImagePosition = {
-        left: activeObject.left,
-        top: activeObject.top
-    };
-
-    const removeColorModal = document.getElementById('removeColorModal');
-    const removeColorCanvas = document.getElementById('removeColorCanvas');
-
-    const originalImage = activeObject._element;
-    removeColorCanvas.width = originalImage.width;
-    removeColorCanvas.height = originalImage.height;
-
-    const ctx = removeColorCanvas.getContext('2d');
-    ctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
-
-    removeColorHistory = [];
-    currentRemoveColorIndex = -1;
-    saveRemoveColorHistory(ctx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
-
-    removeColorModal.style.display = 'flex';
-
-    document.getElementById('closeRemoveColorModal').addEventListener('click', function () {
-        removeColorModal.style.display = 'none';
-    });
-
-    document.getElementById('undoRemoveColor').addEventListener('click', function () {
-        if (currentRemoveColorIndex > 0) {
-            currentRemoveColorIndex--;
-            const previousState = removeColorHistory[currentRemoveColorIndex];
-            const ctx = removeColorCanvas.getContext('2d');
-            ctx.putImageData(previousState, 0, 0);
-        }
-    });
-
-    document.getElementById('saveRemoveColor').addEventListener('click', function () {
-        const dataURL = removeColorCanvas.toDataURL('image/png', 1.0);
-        const originalProps = {
-            left: originalImagePosition.left,
-            top: originalImagePosition.top,
-            scaleX: activeObject.scaleX,
-            scaleY: activeObject.scaleY,
-            angle: activeObject.angle,
-            flipX: activeObject.flipX,
-            flipY: activeObject.flipY,
-            width: activeObject.width,
-            height: activeObject.height,
-            originX: activeObject.originX,
-            originY: activeObject.originY,
-            centeredScaling: activeObject.centeredScaling,
-            centeredRotation: activeObject.centeredRotation
-        };
-
-        canvas.remove(activeObject);
-
-        fabric.Image.fromURL(dataURL, function (newImage) {
-            newImage.set(originalProps);
-
-            newImage.setCoords();
-
-            canvas.add(newImage);
-            canvas.setActiveObject(newImage);
-            canvas.renderAll();
-            saveState();
-
-            removeColorModal.style.display = 'none';
-        });
-    });
-
-    removeColorCanvas.addEventListener('click', (e) => {
-        if (currentRemoveMode === 'region') {
-            handleRemoveColorRegion(e);
-        } else {
-            handleRemoveColorTotal(e);
-        }
-    });
-
-    document.getElementById('removeRegionBtn').addEventListener('click', () => {
-        currentRemoveMode = 'region';
-        removeRegionBtn.classList.add('active');
-        removeTotalBtn.classList.remove('active');
-        updateButtonStyles();
-    });
-
-    document.getElementById('removeTotalBtn').addEventListener('click', () => {
-        currentRemoveMode = 'total';
-        removeTotalBtn.classList.add('active');
-        removeRegionBtn.classList.remove('active');
-        updateButtonStyles();
-    });
-
-    document.getElementById('removeColorModal').addEventListener('click', function (e) {
-        if (e.target === this) {
-            this.style.display = 'none';
-        }
-    });
-}
-
-function saveRemoveColorHistory(imageData) {
-    removeColorHistory = removeColorHistory.slice(0, currentRemoveColorIndex + 1);
-    removeColorHistory.push(imageData);
-    currentRemoveColorIndex = removeColorHistory.length - 1;
-}
-
-function handleRemoveColorRegion(e) {
-    if (!removeColorCtx) return;
-
-    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    saveRemoveColorHistory(currentState);
-
-    const rect = removeColorCanvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
-    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
-
-    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    const tolerance = parseInt(sensitivityRange.value);
-
-    const processedImageData = floodFillAtPoint(
-        imageData,
-        x,
-        y,
-        { r: 0, g: 0, b: 0, a: 0 },
-        tolerance
-    );
-
-    removeColorCtx.putImageData(processedImageData, 0, 0);
-}
-
-function handleRemoveColorTotal(e) {
-    if (!removeColorCtx) return;
-
-    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    saveRemoveColorHistory(currentState);
-
-    const rect = removeColorCanvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
-    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
-
-    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    const tolerance = parseInt(sensitivityRange.value);
-    const targetColor = getPixel(imageData, x, y);
-
-    const processedImageData = floodFillEntireImage(
-        imageData,
-        targetColor,
-        { r: 0, g: 0, b: 0, a: 0 },
-        tolerance
-    );
-
-    removeColorCtx.putImageData(processedImageData, 0, 0);
-}
-
-function floodFillAtPoint(imageData, startX, startY, fillColor, tolerance) {
-    const width = imageData.width;
-    const height = imageData.height;
-    const visited = new Uint8Array(width * height);
-    const queue = [];
-
-    const targetColor = getPixel(imageData, startX, startY);
-    if (!targetColor) return imageData;
-
-    queue.push([startX, startY]);
-    visited[startY * width + startX] = 1;
-
-    while (queue.length > 0) {
-        const [x, y] = queue.shift();
-        const currentPixel = getPixel(imageData, x, y);
-
-        if (colorMatch(currentPixel, targetColor, tolerance)) {
-            setPixel(imageData, x, y, fillColor);
-
-            [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].forEach(([nx, ny]) => {
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                    const index = ny * width + nx;
-                    if (!visited[index]) {
-                        visited[index] = 1;
-                        queue.push([nx, ny]);
-                    }
-                }
-            });
-        }
-    }
-
-    return imageData;
-}
-
-function floodFillEntireImage(imageData, targetColor, fillColor, tolerance) {
-    const width = imageData.width;
-    const height = imageData.height;
-
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const currentPixel = getPixel(imageData, x, y);
-            if (colorMatch(currentPixel, targetColor, tolerance)) {
-                setPixel(imageData, x, y, fillColor);
-            }
-        }
-    }
-
-    return imageData;
-}
-
-function getPixel(imageData, x, y) {
-    const index = (y * imageData.width + x) * 4;
-    if (index >= imageData.data.length) return null;
-    return {
-        r: imageData.data[index],
-        g: imageData.data[index + 1],
-        b: imageData.data[index + 2],
-        a: imageData.data[index + 3]
-    };
-}
-
-function setPixel(imageData, x, y, color) {
-    const index = (y * imageData.width + x) * 4;
-    if (index >= imageData.data.length) return;
-    imageData.data[index] = color.r;
-    imageData.data[index + 1] = color.g;
-    imageData.data[index + 2] = color.b;
-    imageData.data[index + 3] = color.a;
-}
-
-function colorMatch(c1, c2, tolerance) {
-    if (!c1 || !c2) return false;
-    return Math.abs(c1.r - c2.r) <= tolerance &&
-        Math.abs(c1.g - c2.g) <= tolerance &&
-        Math.abs(c1.b - c2.b) <= tolerance;
-}
-
-function updateButtonStyles() {
-    const removeRegionBtn = document.getElementById('removeRegionBtn');
-    const removeTotalBtn = document.getElementById('removeTotalBtn');
-
-    if (currentRemoveMode === 'region') {
-        removeRegionBtn.classList.add('active');
-        removeTotalBtn.classList.remove('active');
-    } else {
-        removeTotalBtn.classList.add('active');
-        removeRegionBtn.classList.remove('active');
-    }
-}
-
-// ----------------------------------------- Seção Final Remover Cor ----------------------------------------------------
