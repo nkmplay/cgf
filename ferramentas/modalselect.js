@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function initSelectModal(canvas) {
         const activeImage = canvas.getActiveObject();
         if (!activeImage || activeImage.type !== 'image') {
-                showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
-                return; // Encerra a função se não houver imagem selecionada
-            }
+            showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
+            return;
+        }
 
         // Remover modal anterior se existir
         const existingModal = document.getElementById('imageEditModal');
@@ -43,10 +43,51 @@ document.addEventListener('DOMContentLoaded', function () {
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
         `;
+
+        // Adicionar controles de zoom
+        const zoomControls = document.createElement('div');
+        zoomControls.style.cssText = `
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            gap: 10px;
+        `;
+
+        const zoomInBtn = document.createElement('button');
+        zoomInBtn.textContent = '+';
+        zoomInBtn.style.cssText = `
+            background: #4a90e2;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            cursor: pointer;
+        `;
+
+        const zoomOutBtn = document.createElement('button');
+        zoomOutBtn.textContent = '-';
+        zoomOutBtn.style.cssText = zoomInBtn.style.cssText;
+
+        const zoomResetBtn = document.createElement('button');
+        zoomResetBtn.textContent = '1:1';
+        zoomResetBtn.style.cssText = zoomInBtn.style.cssText;
+
+        zoomControls.appendChild(zoomInBtn);
+        zoomControls.appendChild(zoomOutBtn);
+        zoomControls.appendChild(zoomResetBtn);
 
         const editCanvas = document.createElement('canvas');
         editCanvas.id = 'editCanvas';
+        editCanvas.style.cssText = `
+            transform-origin: 0 0;
+        `;
 
         const toolbar = document.createElement('div');
         toolbar.style.cssText = `
@@ -105,17 +146,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
         toolbar.appendChild(leftTools);
         toolbar.appendChild(rightTools);
+
+        // Configurar o canvas de edição com dimensões originais
+        const naturalWidth = activeImage.getElement().naturalWidth;
+        const naturalHeight = activeImage.getElement().naturalHeight;
+        
+        editCanvas.width = naturalWidth;
+        editCanvas.height = naturalHeight;
+        
+        const editContext = editCanvas.getContext('2d');
+        editContext.drawImage(activeImage.getElement(), 0, 0, naturalWidth, naturalHeight);
+
+        // Estado do zoom
+        const zoomState = {
+            scale: 1,
+            minScale: 0.1,
+            maxScale: 5,
+            deltaScale: 0.1
+        };
+
+        // Função para atualizar o zoom
+        function updateZoom(newScale) {
+            zoomState.scale = Math.min(Math.max(newScale, zoomState.minScale), zoomState.maxScale);
+            editCanvas.style.transform = `scale(${zoomState.scale})`;
+        }
+
+        // Eventos de zoom
+        zoomInBtn.addEventListener('click', () => {
+            updateZoom(zoomState.scale + zoomState.deltaScale);
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            updateZoom(zoomState.scale - zoomState.deltaScale);
+        });
+
+        zoomResetBtn.addEventListener('click', () => {
+            updateZoom(1);
+        });
+
+        // Adicionar suporte para zoom com roda do mouse
+        imageContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -zoomState.deltaScale : zoomState.deltaScale;
+            updateZoom(zoomState.scale + delta);
+        });
+
+        // Ajustar zoom inicial para caber na tela
+        function setInitialZoom() {
+            const containerWidth = imageContainer.clientWidth;
+            const containerHeight = imageContainer.clientHeight;
+            const scaleX = containerWidth / naturalWidth;
+            const scaleY = containerHeight / naturalHeight;
+            const initialScale = Math.min(scaleX, scaleY, 1);
+            updateZoom(initialScale);
+        }
+
+        // Montar a estrutura do modal
         imageContainer.appendChild(editCanvas);
+        imageContainer.appendChild(zoomControls);
         content.appendChild(imageContainer);
         modal.appendChild(content);
         modal.appendChild(toolbar);
         document.body.appendChild(modal);
 
-        // Configurar o canvas de edição
-        editCanvas.width = activeImage.width * activeImage.scaleX;
-        editCanvas.height = activeImage.height * activeImage.scaleY;
-        const editContext = editCanvas.getContext('2d');
-        editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+        // Definir zoom inicial após o modal estar montado
+        setTimeout(setInitialZoom, 0);
 
         // Criar um objeto para armazenar os estados
         const editState = {
