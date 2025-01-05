@@ -1,7 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
     function initSelectModal(canvas) {
         const activeImage = canvas.getActiveObject();
-        if (!activeImage || activeImage.type !== 'image') return;
+        if (!activeImage || activeImage.type !== 'image') {
+                showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
+                return; // Encerra a função se não houver imagem selecionada
+            }
 
         // Remover modal anterior se existir
         const existingModal = document.getElementById('imageEditModal');
