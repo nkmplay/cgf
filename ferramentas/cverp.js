@@ -1,5 +1,13 @@
 // cverp.js
 
+//Remover cor parametros
+let removeColorHistory = [];
+let currentRemoveColorIndex = -1;
+let currentRemoveMode = 'region';
+let removeColorCtx = null;
+let removeColorHistoryIndex = -1;
+let cropper;
+
 function openCropModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem para recortar.');
