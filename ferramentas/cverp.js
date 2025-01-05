@@ -691,3 +691,11 @@ function openPaintingModal(canvas, activeObject, tool) {
         isDrawing = false;
     });
 }
+
+function saveRemoveColorHistory() {
+    if (!removeColorCtx) return;
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    removeColorHistory = removeColorHistory.slice(0, removeColorHistoryIndex + 1);
+    removeColorHistory.push(imageData);
+    removeColorHistoryIndex = removeColorHistory.length - 1;
+}
