@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
             transform-origin: 0 0;
         `;
 
+        // Toolbar
         const toolbar = document.createElement('div');
         toolbar.style.cssText = `
             height: 10%;
