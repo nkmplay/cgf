@@ -600,6 +600,9 @@ let removeColorHistory = [];
 let currentRemoveColorIndex = -1;
 let removeColorCtx = null;
 let originalImagePosition = { left: 0, top: 0 };
+let currentRemoveMode = 'region';
+let removeColorHistoryIndex = -1;
+let activeImage = null;
 
 // Função para abrir o modal de remover cor
 function openRemoveColorModal(canvas, activeObject) {
@@ -635,12 +638,51 @@ function openRemoveColorModal(canvas, activeObject) {
     // Exibe o modal
     removeColorModal.style.display = 'flex';
 
-    // Adiciona os eventos de clique
-    removeColorCanvas.addEventListener('click', handleRemoveColorClick);
-    document.getElementById('removeRegionBtn').addEventListener('click', () => setRemoveMode('region'));
-    document.getElementById('removeTotalBtn').addEventListener('click', () => setRemoveMode('total'));
-    document.getElementById('closeRemoveColorModal').addEventListener('click', () => closeRemoveColorModal());
-    document.getElementById('saveRemoveColor').addEventListener('click', () => saveRemoveColor(canvas, activeObject));
+    // Configura os eventos
+    setupRemoveColorEvents(canvas, activeObject);
+}
+
+// Função para configurar os eventos do modal
+function setupRemoveColorEvents(canvas, activeObject) {
+    // Evento de clique no canvas de remoção de cor
+    removeColorCanvas.addEventListener('click', (e) => {
+        if (currentRemoveMode === 'region') {
+            handleRemoveColorRegion(e);
+        } else {
+            handleRemoveColorTotal(e);
+        }
+    });
+
+    // Evento de clique no botão "Remover Região"
+    document.getElementById('removeRegionBtn').addEventListener('click', () => {
+        currentRemoveMode = 'region';
+        updateButtonStyles();
+    });
+
+    // Evento de clique no botão "Remover Cor Total"
+    document.getElementById('removeTotalBtn').addEventListener('click', () => {
+        currentRemoveMode = 'total';
+        updateButtonStyles();
+    });
+
+    // Evento de clique no botão "Fechar"
+    document.getElementById('closeRemoveColorModal').addEventListener('click', () => {
+        document.getElementById('removeColorModal').style.display = 'none';
+    });
+
+    // Evento de clique no botão "Salvar"
+    document.getElementById('saveRemoveColor').addEventListener('click', () => {
+        saveRemoveColor(canvas, activeObject);
+    });
+
+    // Evento de clique no botão "Voltar"
+    document.getElementById('undoRemoveColor').addEventListener('click', () => {
+        if (currentRemoveColorIndex > 0) {
+            currentRemoveColorIndex--;
+            const previousState = removeColorHistory[currentRemoveColorIndex];
+            removeColorCtx.putImageData(previousState, 0, 0);
+        }
+    });
 }
 
 // Função para salvar o histórico de remoção de cor
@@ -654,8 +696,8 @@ function saveRemoveColorHistory(imageData) {
     }
 }
 
-// Função para lidar com o clique no canvas de remoção de cor
-function handleRemoveColorClick(e) {
+// Função para lidar com a remoção de cor por região
+function handleRemoveColorRegion(e) {
     const rect = removeColorCanvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
     const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
@@ -667,6 +709,27 @@ function handleRemoveColorClick(e) {
         imageData,
         x,
         y,
+        { r: 0, g: 0, b: 0, a: 0 },
+        tolerance
+    );
+
+    removeColorCtx.putImageData(processedImageData, 0, 0);
+    saveRemoveColorHistory(removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
+}
+
+// Função para lidar com a remoção de cor total
+function handleRemoveColorTotal(e) {
+    const rect = removeColorCanvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
+    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
+
+    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
+    const tolerance = parseInt(document.getElementById('sensitivityRange').value);
+    const targetColor = getPixel(imageData, x, y);
+
+    const processedImageData = floodFillEntireImage(
+        imageData,
+        targetColor,
         { r: 0, g: 0, b: 0, a: 0 },
         tolerance
     );
@@ -710,6 +773,23 @@ function floodFillAtPoint(imageData, startX, startY, fillColor, tolerance) {
     return imageData;
 }
 
+// Função para preencher a imagem inteira
+function floodFillEntireImage(imageData, targetColor, fillColor, tolerance) {
+    const width = imageData.width;
+    const height = imageData.height;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const currentPixel = getPixel(imageData, x, y);
+            if (colorMatch(currentPixel, targetColor, tolerance)) {
+                setPixel(imageData, x, y, fillColor);
+            }
+        }
+    }
+
+    return imageData;
+}
+
 // Função para obter o pixel de uma imagem
 function getPixel(imageData, x, y) {
     const index = (y * imageData.width + x) * 4;
@@ -740,10 +820,18 @@ function colorMatch(c1, c2, tolerance) {
            Math.abs(c1.b - c2.b) <= tolerance;
 }
 
-// Função para fechar o modal
-function closeRemoveColorModal() {
-    const removeColorModal = document.getElementById('removeColorModal');
-    removeColorModal.style.display = 'none';
+// Função para atualizar os estilos dos botões
+function updateButtonStyles() {
+    const removeRegionBtn = document.getElementById('removeRegionBtn');
+    const removeTotalBtn = document.getElementById('removeTotalBtn');
+
+    if (currentRemoveMode === 'region') {
+        removeRegionBtn.classList.add('active');
+        removeTotalBtn.classList.remove('active');
+    } else {
+        removeTotalBtn.classList.add('active');
+        removeRegionBtn.classList.remove('active');
+    }
 }
 
 // Função para salvar a imagem com as cores removidas
@@ -774,6 +862,6 @@ function saveRemoveColor(canvas, activeObject) {
         canvas.add(newImage);
         canvas.setActiveObject(newImage);
         canvas.renderAll();
-        closeRemoveColorModal();
+        document.getElementById('removeColorModal').style.display = 'none';
     });
 }
