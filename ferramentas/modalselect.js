@@ -380,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('closeModal').addEventListener('click', function() {
             modal.remove();
             clearSelection();
+            document.body.style.cursor = 'auto'; // Restaura o cursor padrão
         });
 
         // Botão de copiar
