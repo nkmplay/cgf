@@ -29,7 +29,6 @@ function openCropModal(canvas, activeObject) {
     const imgElement = activeObject.getElement();
     const cropModal = document.getElementById('cropModal');
     const cropImage = document.getElementById('cropImage');
-
     cropModal.dataset.originalState = JSON.stringify(originalState);
 
     cropImage.src = imgElement.src;
@@ -202,6 +201,7 @@ function openExtractRegionsModal(canvas, activeObject) {
 
     showCustomAlert(`Extraídas ${regions.length} regiões da imagem.`);
 }
+
 function findRegion(imageData, startX, startY, width, height, visited) {
     const pixels = [];
     const queue = [[startX, startY]];
@@ -210,7 +210,7 @@ function findRegion(imageData, startX, startY, width, height, visited) {
     while (queue.length > 0) {
         const [x, y] = queue.shift();
         const key = `${x},${y}`;
-        
+
         if (visited.has(key)) continue;
         visited.add(key);
 
@@ -223,8 +223,8 @@ function findRegion(imageData, startX, startY, width, height, visited) {
             maxY = Math.max(maxY, y);
 
             const neighbors = [
-                [x+1, y], [x-1, y],
-                [x, y+1], [x, y-1]
+                [x + 1, y], [x - 1, y],
+                [x, y + 1], [x, y - 1]
             ];
 
             for (const [nx, ny] of neighbors) {
@@ -240,7 +240,7 @@ function findRegion(imageData, startX, startY, width, height, visited) {
 
     return {
         pixels,
-        bounds: {minX, minY, maxX, maxY}
+        bounds: { minX, minY, maxX, maxY }
     };
 }
 
@@ -249,16 +249,16 @@ function addRegionToCanvas(region, imgElement) {
     const ctxTemp = canvasTemp.getContext('2d');
     const width = region.bounds.maxX - region.bounds.minX + 1;
     const height = region.bounds.maxY - region.bounds.minY + 1;
-    
+
     canvasTemp.width = width;
     canvasTemp.height = height;
 
-    ctxTemp.drawImage(imgElement, 
+    ctxTemp.drawImage(imgElement,
         region.bounds.minX, region.bounds.minY, width, height,
         0, 0, width, height);
 
     const imageData = ctxTemp.getImageData(0, 0, width, height);
-    const pixels = new Set(region.pixels.map(([x, y]) => `${x-region.bounds.minX},${y-region.bounds.minY}`));
+    const pixels = new Set(region.pixels.map(([x, y]) => `${x - region.bounds.minX},${y - region.bounds.minY}`));
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -271,7 +271,7 @@ function addRegionToCanvas(region, imgElement) {
 
     ctxTemp.putImageData(imageData, 0, 0);
 
-    fabric.Image.fromURL(canvasTemp.toDataURL(), function(img) {
+    fabric.Image.fromURL(canvasTemp.toDataURL(), function (img) {
         img.set({
             left: region.bounds.minX,
             top: region.bounds.minY,
@@ -284,6 +284,7 @@ function addRegionToCanvas(region, imgElement) {
         canvas.renderAll();
     });
 }
+
 function openRemoveColorModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem para remover a cor');
@@ -326,7 +327,6 @@ function openRemoveColorModal(canvas, activeObject) {
 
     document.getElementById('saveRemoveColor').addEventListener('click', function () {
         const dataURL = removeColorCanvas.toDataURL('image/png', 1.0);
-
         const originalProps = {
             left: originalImagePosition.left,
             top: originalImagePosition.top,
@@ -398,7 +398,6 @@ function openPaintingModal(canvas, activeObject, tool) {
     let currentPaintingIndex = -1;
     const maxHistoryStates = 10;
     let originalImagePosition = { left: 0, top: 0 };
-
     function savePaintingHistory(ctx) {
         const imageData = ctx.getImageData(0, 0, paintingCanvas.width, paintingCanvas.height);
         paintingHistory = paintingHistory.slice(0, currentPaintingIndex + 1);
