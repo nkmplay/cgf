@@ -112,22 +112,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.appendChild(modal);
 
         // Configurar o canvas de edição
-        const imgElement = activeImage.getElement();
-        const imgWidth = imgElement.naturalWidth;
-        const imgHeight = imgElement.naturalHeight;
-
-        // Ajustar o tamanho do canvas para a resolução original da imagem
-        editCanvas.width = imgWidth;
-        editCanvas.height = imgHeight;
-
+        editCanvas.width = activeImage.width * activeImage.scaleX;
+        editCanvas.height = activeImage.height * activeImage.scaleY;
         const editContext = editCanvas.getContext('2d');
-        editContext.drawImage(imgElement, 0, 0, imgWidth, imgHeight);
-
-        // Ajustar o zoom da imagem no container
-        const containerWidth = imageContainer.clientWidth;
-        const containerHeight = imageContainer.clientHeight;
-        const scale = Math.min(containerWidth / imgWidth, containerHeight / imgHeight);
-        editCanvas.style.transform = `scale(${scale})`;
+        editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
 
         // Criar um objeto para armazenar os estados
         const editState = {
@@ -147,7 +135,8 @@ document.addEventListener('DOMContentLoaded', function () {
             editContext.strokeStyle = '#ffffff';
             editContext.strokeRect(startX, startY, x - startX, y - startY);
             editContext.strokeStyle = '#000000';
-            editContext.strokeRect(startX + 1, startY + 1, x - startX - 2, y - startY - 2);
+            editContext.strokeRect(startX + ```javascript
+1, startY + 1, x - startX - 2, y - startY - 2);
             editContext.restore();
             editState.selectionPath = [[startX, startY], [x, y]];
         }
@@ -246,7 +235,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.drawImage(editCanvas, 0, 0);
             const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            let minX = tempCanvas.width,
+            let minX = temp ```javascript
+Canvas.width,
                 minY = tempCanvas.height,
                 maxX = 0,
                 maxY = 0;
@@ -339,7 +329,8 @@ document.addEventListener('DOMContentLoaded', function () {
         editCanvas.addEventListener('mousemove', function (e) {
             if (!editState.isDrawing) return;
             const rect = editCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
+            const x = e.clientX - ```javascript
+rect.left;
             const y = e.clientY - rect.top;
             editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
             editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
