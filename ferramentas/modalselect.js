@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const canvas = window.canvas; // Certifique-se de que o objeto canvas está acessível globalmente
-
-    function initSelectModal() {
+    function initSelectModal(canvas) {
         const activeImage = canvas.getActiveObject();
         if (!activeImage || activeImage.type !== 'image') return;
 
