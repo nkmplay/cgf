@@ -919,6 +919,8 @@ resolution-controls {
   <div class="menu-item">
     Imagem
     <div class="dropdown">
+	 <a href="javascript:void(0)" id="filtroscorBtn">Brilho - Contraste - Nitidez</a>
+	<div class="separator"></div>
     <a href="javascript:void(0)" id="rotateBtn">Girar<input type="number" id="rotateInput" value="90" min="0" max="360" step="90"></a>
     <a href="javascript:void(0)" id="duplicateBtn">Duplicar<input type="number" id="duplicateInput" value="1" min="1" step="1"></a>
     <a href="javascript:void(0)" id="organizeBtn">Organizar<input type="number" id="organizeInput" value="0.1" min="0.1" step="0.1"></a>
@@ -1014,6 +1016,10 @@ resolution-controls {
     Mover
   </button>
   <div class="separator"></div>
+  <button class="tool-button" id="selectBtn">
+    <i class="fa-solid fa-vector-square" style="color: #ffffff;"></i>
+    Selecionar
+  </button>
   <button class="tool-button" id="textoBtn">
     <i class="fa-solid fa-font"></i>
     Texto
@@ -1260,7 +1266,51 @@ resolution-controls {
   </div>
 </div>
 	
+<script src="https://nkmplay.github.io/cgf/ferramentas/modalselect.js"></script>
+<script src="https://nkmplay.github.io/cgf/ferramentas/dragdrop.js"></script>
+<script src="https://nkmplay.github.io/cgf/ferramentas/exportar.js"></script>
+<script src="https://nkmplay.github.io/cgf/ferramentas/fucoesgerais.js"></script>
+<script src="https://nkmplay.github.io/cgf/ferramentas/cverp.js"></script>
 <script>
+document.getElementById('cropImageBtn').addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            openCropModal(canvas, activeObject);
+        });
+
+        document.getElementById('vectorizePBBtn').addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            openVectorizeModal(canvas, activeObject);
+        });
+
+        document.getElementById('extractRegionsBtn').addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            openExtractRegionsModal(canvas, activeObject);
+        });
+
+        document.getElementById('btnPincel').addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            openPaintingModal(canvas, activeObject, 'brush');
+        });
+
+        document.getElementById('btnBorracha').addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            openPaintingModal(canvas, activeObject, 'eraser');
+        });
+
+        document.getElementById('btnBalde').addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            openPaintingModal(canvas, activeObject, 'bucket');
+        });
+		
+		document.getElementById('removeColorBtn').addEventListener('click', function() {
+			const activeObject = canvas.getActiveObject();
+			openRemoveColorModal(canvas, activeObject);
+		});
+
+		document.getElementById('selectBtn').addEventListener('click', function () {
+			initSelectModal(canvas);
+		});
+
 //--------------------------------- Seção Variáveis Globais ---------------------------------
 
 const DPI = 96;
@@ -1294,13 +1344,6 @@ const docSwapDimsBtn = document.getElementById('doc-swap-dims');
 let docAspectRatio = 21 / 29.7;
 let draggedItem = null;
 let floatingMenu = document.getElementById('floating-text-menu');
-
-//Remover cor parametros
-let removeColorHistory = [];
-let currentRemoveColorIndex = -1;
-let currentRemoveMode = 'region';
-let removeColorCtx = null;
-let removeColorHistoryIndex = -1;
 
 //--------------------------------- Seção Canva e Dimensoes Shape Folha ---------------------------------
 
@@ -1471,7 +1514,6 @@ function updateTextPositions() {
 }
 //--------------------------------- Seção Eventos ---------------------------------
 
-// Consolidated Event Handlers
 canvas.on({
   'selection:created': function () {
     updateSizeInputs();
@@ -1784,8 +1826,6 @@ function updateObjectSize(input, dimension) {
   constrainToA4(activeObject);
   canvas.renderAll();
 }
-
-
 
 swapDimsBtn.addEventListener('click', () => {
   const activeObject = canvas.getActiveObject();
@@ -2285,13 +2325,11 @@ document.getElementById('layersList').addEventListener('click', function (e) {
     if (target.tagName === 'LI') {
         const index = parseInt(target.getAttribute('data-index'));
         const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-        const selectedObject = objects[objects.length - 1 - index]; // Inverte a ordem para corresponder à lista
+        const selectedObject = objects[objects.length - 1 - index];
 
-        // Seleciona o objeto no canvas
         canvas.setActiveObject(selectedObject);
         canvas.renderAll();
 
-        // Atualiza o estilo do item selecionado no menu de camadas
         updateLayersList();
     }
 });
@@ -2308,7 +2346,6 @@ function updateLayersList() {
         layer.setAttribute('data-index', index);
         layer.textContent = getLayerName(obj, index);
 
-        // Adiciona a classe 'selected' se o objeto estiver selecionado
         if (obj === canvas.getActiveObject()) {
             layer.classList.add('selected');
         }
@@ -2362,44 +2399,37 @@ function updateLayersList() {
     });
 }
 
-
-
 function handleDropLayer(e) {
     e.preventDefault();
     e.stopPropagation();
 
     if (!draggedItem) return;
 
-    // Determina a posição do drop
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseY = e.clientY;
     const threshold = rect.top + rect.height / 2;
     const dropAbove = mouseY < threshold;
 
-    const fromIndex = originalIndex; // Índice original do item arrastado
-    const toIndex = parseInt(e.currentTarget.getAttribute('data-index')); // Índice do item de destino
+    const fromIndex = originalIndex;
+    const toIndex = parseInt(e.currentTarget.getAttribute('data-index')); 
 
     // Filtra o CloudFolha
     const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-    const reversedObjects = objects.reverse(); // Inverte a ordem para corresponder à lista
+    const reversedObjects = objects.reverse();
 
     const movedObject = reversedObjects[fromIndex];
 
-    // Calcula o índice final baseado na posição do drop
     let finalIndex = dropAbove ? toIndex : toIndex + 1;
     if (fromIndex < toIndex) finalIndex--;
 
-    // Reordena os objetos no canvas
     canvas.remove(movedObject);
-    canvas.insertAt(movedObject, objects.length - finalIndex - 1); // Ajusta para a ordem correta
+    canvas.insertAt(movedObject, objects.length - finalIndex - 1);
 
-    // Garante que o CloudFolha permaneça no fundo
     const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
     if (cloudFolha) {
         canvas.sendToBack(cloudFolha);
     }
 
-    // Limpa classes e atualiza a lista
     document.querySelectorAll('#layersList li').forEach(item => {
         item.classList.remove('drop-above', 'drop-below');
     });
@@ -2407,99 +2437,10 @@ function handleDropLayer(e) {
     updateLayersList();
     saveState();
     draggedItem = null;
-    originalIndex = null; // Limpa o índice original
+    originalIndex = null;
 }
-
 
 // ----------------------------------------- Seção Final Texto ---------------------------------
-
-//--------------------------------- Seção Documento Abrir e Salvar ---------------------------------
-
-document.getElementById('openDocumentBtn').addEventListener('click', function () {
-    document.getElementById('loadDocInput').click();
-});
-
-document.getElementById('loadDocInput').addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function (event) {
-        const canvasState = JSON.parse(event.target.result);
-        const cloudFolhaState = canvasState.cloudFolha;
-
-        canvas.clear();
-
-        canvas.loadFromJSON(canvasState, function () {
-            let cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-
-            if (!cloudFolha) {
-                createCloudFolha();
-                cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-            }
-
-            if (cloudFolha && cloudFolhaState) {
-                cloudFolha.set({
-                    width: Number(cloudFolhaState.width) || 21 * CM_TO_PX, 
-                    height: Number(cloudFolhaState.height) || 29.7 * CM_TO_PX,
-                    left: Number(cloudFolhaState.left) || (canvas.width - cloudFolha.width) / 2,
-                    top: Number(cloudFolhaState.top) || (canvas.height - cloudFolha.height) / 2,
-                    selectable: false,
-                    evented: false
-                });
-                canvas.sendToBack(cloudFolha);
-            }
-
-            if (cloudFolha) {
-                const widthCm = convertDimensions(cloudFolha.width, 'px', 'cm');
-                const heightCm = convertDimensions(cloudFolha.height, 'px', 'cm');
-                widthInput.value = widthCm.toFixed(1);
-                heightInput.value = heightCm.toFixed(1);
-            }
-
-            canvas.renderAll();
-            updateLayersList();
-            saveState();
-        });
-    };
-    reader.readAsText(file);
-});
-
-document.getElementById('saveDocumentBtn').addEventListener('click', function () {
-    const canvasState = canvas.toJSON([
-        'id', 'excludeFromExport', 'selectable', 'evented',
-        'left', 'top', 'width', 'height', 'scaleX', 'scaleY', 'angle',
-        'fill', 'stroke', 'strokeWidth'
-    ]);
-
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (cloudFolha) {
-        canvasState.cloudFolha = {
-            width: cloudFolha.width,
-            height: cloudFolha.height,
-            left: cloudFolha.left,
-            top: cloudFolha.top
-        };
-    }
-
-    const blob = new Blob([JSON.stringify(canvasState)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'documento.cloudapp';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-});
-
-
-
-function rgbToHex(r, g, b) {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-}
-
-//--------------------------------- Seção Inicio Texto ---------------------------------
-
 const toolButtons = document.querySelectorAll('.tool-button:not(#loadImageBtn)');
 let currentTool = 'move';
 toolButtons.forEach(button => {
@@ -2598,7 +2539,7 @@ function updateOpacityControls() {
   if (activeObjects.length > 0 && activeObjects.every(obj => obj.type === 'image')) {
     opacityControls.style.display = 'flex';
     opacityInput.value = Math.round(activeObjects[0].opacity * 100);
-    activeObjects.forEach(obj => obj.set('opacity', 1.0)); // Inicializa a opacidade para 100%
+    activeObjects.forEach(obj => obj.set('opacity', 1.0));
   } else {
     opacityControls.style.display = 'none';
   }
@@ -2941,26 +2882,22 @@ document.getElementById('export-text-svg-btn').addEventListener('click', functio
     const activeObject = canvas.getActiveObject();
 
     if (activeObject && activeObject.type === 'i-text') {
-        // Calcular o tamanho necessário do SVG
-        const padding = 20; // Espaçamento extra ao redor do texto
+        const padding = 20;
         const width = activeObject.width * activeObject.scaleX + padding * 2;
         const height = activeObject.height * activeObject.scaleY + padding * 2;
 
-        // Criar um SVG com svg.js
-        const draw = SVG().size(width, height); // Tamanho dinâmico do SVG
+        const draw = SVG().size(width, height);
 
-        // Adicionar o texto ao SVG
         const text = draw.text(activeObject.text)
             .font({
                 family: activeObject.fontFamily,
                 size: activeObject.fontSize,
-                anchor: activeObject.textAlign, // Alinhamento do texto
-                fill: activeObject.fill // Cor do texto
+                anchor: activeObject.textAlign,
+                fill: activeObject.fill
             })
-            .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) // Contorno do texto
-            .move(padding, padding); // Posicionar o texto com espaçamento
+            .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) 
+            .move(padding, padding); 
 
-        // Exportar o SVG como string
         const svg = draw.svg();
         const blob = new Blob([svg], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
@@ -2977,997 +2914,6 @@ document.getElementById('export-text-svg-btn').addEventListener('click', functio
 });
 
 //--------------------------------- Seção Final Texto ---------------------------------
-
-// ----------------------------------------- Seção Inicio Recorte ----------------------------------------------------
-let cropper;
-
-document.getElementById('cropImageBtn').addEventListener('click', function () {
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para recortar.');
-        return;
-    }
-
-    const boundingRect = activeObject.getBoundingRect();
-
-    const originalState = {
-        left: activeObject.left,
-        top: activeObject.top,
-        angle: activeObject.angle,
-        flipX: activeObject.flipX,
-        flipY: activeObject.flipY,
-        skewX: activeObject.skewX,
-        skewY: activeObject.skewY,
-        originX: activeObject.originX,
-        originY: activeObject.originY,
-        width: activeObject.width,
-        height: activeObject.height,
-        scaleX: activeObject.scaleX,
-        scaleY: activeObject.scaleY,
-        boundingWidth: boundingRect.width,
-        boundingHeight: boundingRect.height
-    };
-
-    const imgElement = activeObject.getElement();
-    const cropModal = document.getElementById('cropModal');
-    const cropImage = document.getElementById('cropImage');
-
-    cropModal.dataset.originalState = JSON.stringify(originalState);
-
-    cropImage.src = imgElement.src;
-    cropModal.style.display = 'flex';
-
-    if (cropper) {
-        cropper.destroy();
-    }
-
-    cropper = new Cropper(cropImage, {
-        aspectRatio: NaN,
-        viewMode: 1,
-        autoCropArea: 0.9,
-        zoomable: true,
-        scalable: true,
-        initialAspectRatio: NaN,
-        ready() {
-            const containerData = this.cropper.getContainerData();
-            const imageData = this.cropper.getImageData();
-            const scale = Math.min(
-                containerData.width / imageData.naturalWidth,
-                containerData.height / imageData.naturalHeight
-            );
-            this.cropper.zoomTo(scale);
-        }
-    });
-});
-
-document.getElementById('saveCrop').addEventListener('click', function () {
-    if (!cropper) return;
-
-    const canvasCropped = cropper.getCroppedCanvas({
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high'
-    });
-
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') return;
-
-    const croppedImageData = canvasCropped.toDataURL();
-
-    fabric.Image.fromURL(croppedImageData, function(newImage) {
-        // Use a posição original da imagem
-        newImage.set({
-            left: activeObject.left, // Mantém a posição original
-            top: activeObject.top,   // Mantém a posição original
-            scaleX: activeObject.scaleX,
-            scaleY: activeObject.scaleY,
-            angle: activeObject.angle
-        });
-
-        canvas.remove(activeObject);
-        canvas.add(newImage);
-        canvas.setActiveObject(newImage);
-        canvas.renderAll();
-        saveState();
-
-        // Fechar o modal
-        document.getElementById('cropModal').style.display = 'none';
-        cropper.destroy();
-    });
-});
-
-document.getElementById('closeCropModal').addEventListener('click', function () {
-    const cropModal = document.getElementById('cropModal');
-    cropModal.style.display = 'none';
-    if (cropper) {
-        cropper.destroy();
-    }
-});
-
-// ----------------------------------------- Seção Final Recorte ----------------------------------------------------
-
-
-// ----------------------------------------- Seção Inicio Vetorizar PB ----------------------------------------------------
-
-document.getElementById('vectorizePBBtn').addEventListener('click', function () {
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para vetorizar.');
-        return;
-    }
-
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (!cloudFolha) {
-        showCustomAlert('Folha "CloudFolha" não encontrada.');
-        return;
-    }
-
-    const centerX = cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2;
-    const centerY = cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2;
-
-    const imgElement = activeObject.getElement();
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = imgElement.width;
-    tempCanvas.height = imgElement.height;
-    const ctx = tempCanvas.getContext('2d');
-
-    ctx.drawImage(imgElement, 0, 0);
-
-    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const brightness = (r + g + b) / 3;
-        const threshold = 128;
-
-        data[i] = data[i + 1] = data[i + 2] = brightness > threshold ? 255 : 0;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-
-    tempCanvas.toBlob(function (blob) {
-        Potrace.loadImageFromFile(new File([blob], "image.png", { type: "image/png" }));
-        Potrace.process(function () {
-            const svgContent = Potrace.getSVG(1, {
-                turdsize: 2,
-                alphamax: 1,
-                optcurve: true,
-                detail: 5
-            });
-
-            fabric.loadSVGFromString(svgContent, function (objects, options) {
-                const svgGroup = fabric.util.groupSVGElements(objects, options);
-
-                svgGroup.set({
-                    left: centerX - (svgGroup.width * svgGroup.scaleX) / 2,
-                    top: centerY - (svgGroup.height * svgGroup.scaleY) / 2,
-                    selectable: true,
-                    evented: true
-                });
-
-                canvas.add(svgGroup);
-                canvas.renderAll();
-                saveState();
-            });
-        });
-    }, 'image/png');
-});
-// ----------------------------------------- Seção Final Vetorizar PB ----------------------------------------------------
-
-// ----------------------------------------- Seção Inicio Extrair Regiões da imagem ----------------------------------------------------
-
-document.getElementById('extractRegionsBtn').addEventListener('click', function() {
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para extrair as regiões');
-        return;
-    }
-
-    const imgElement = activeObject.getElement();
-    const canvasTemp = document.createElement('canvas');
-    const ctxTemp = canvasTemp.getContext('2d');
-    canvasTemp.width = imgElement.width;
-    canvasTemp.height = imgElement.height;
-    ctxTemp.drawImage(imgElement, 0, 0);
-
-    const imageData = ctxTemp.getImageData(0, 0, canvasTemp.width, canvasTemp.height);
-    const visited = new Set();
-    const regions = [];
-
-    const minRegionSize = 10; // Tamanho mínimo da região (pode ser ajustado)
-
-    for (let y = 0; y < canvasTemp.height; y++) {
-        for (let x = 0; x < canvasTemp.width; x++) {
-            const pos = (y * canvasTemp.width + x) * 4;
-            const alpha = imageData.data[pos + 3];
-            
-            if (alpha > 0 && !visited.has(`${x},${y}`)) {
-                const region = findRegion(imageData, x, y, canvasTemp.width, canvasTemp.height, visited);
-                if (region.pixels.length > 0) {
-                    const width = region.bounds.maxX - region.bounds.minX + 1;
-                    const height = region.bounds.maxY - region.bounds.minY + 1;
-                    if (width >= minRegionSize && height >= minRegionSize) {
-                        regions.push(region);
-                        addRegionToCanvas(region, imgElement);
-                    }
-                }
-            }
-        }
-    }
-
-    showCustomAlert(`Extraídas ${regions.length} regiões da imagem.`);
-});
-
-function findRegion(imageData, startX, startY, width, height, visited) {
-    const pixels = [];
-    const queue = [[startX, startY]];
-    let minX = startX, minY = startY, maxX = startX, maxY = startY;
-
-    while (queue.length > 0) {
-        const [x, y] = queue.shift();
-        const key = `${x},${y}`;
-        
-        if (visited.has(key)) continue;
-        visited.add(key);
-
-        const pos = (y * width + x) * 4;
-        if (imageData.data[pos + 3] > 0) {
-            pixels.push([x, y]);
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-
-            const neighbors = [
-                [x+1, y], [x-1, y],
-                [x, y+1], [x, y-1]
-            ];
-
-            for (const [nx, ny] of neighbors) {
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                    const npos = (ny * width + nx) * 4;
-                    if (imageData.data[npos + 3] > 0) {
-                        queue.push([nx, ny]);
-                    }
-                }
-            }
-        }
-    }
-
-    return {
-        pixels,
-        bounds: {minX, minY, maxX, maxY}
-    };
-}
-
-function addRegionToCanvas(region, imgElement) {
-    const canvasTemp = document.createElement('canvas');
-    const ctxTemp = canvasTemp.getContext('2d');
-    const width = region.bounds.maxX - region.bounds.minX + 1;
-    const height = region.bounds.maxY - region.bounds.minY + 1;
-    
-    canvasTemp.width = width;
-    canvasTemp.height = height;
-
-    ctxTemp.drawImage(imgElement, 
-        region.bounds.minX, region.bounds.minY, width, height,
-        0, 0, width, height);
-
-    const imageData = ctxTemp.getImageData(0, 0, width, height);
-    const pixels = new Set(region.pixels.map(([x, y]) => `${x-region.bounds.minX},${y-region.bounds.minY}`));
-
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            if (!pixels.has(`${x},${y}`)) {
-                const pos = (y * width + x) * 4;
-                imageData.data[pos + 3] = 0;
-            }
-        }
-    }
-
-    ctxTemp.putImageData(imageData, 0, 0);
-
-    fabric.Image.fromURL(canvasTemp.toDataURL(), function(img) {
-        img.set({
-            left: region.bounds.minX,
-            top: region.bounds.minY,
-            originX: 'left',
-            originY: 'top',
-            selectable: true,
-            evented: true
-        });
-        canvas.add(img);
-        canvas.renderAll();
-    });
-}
-
-// ----------------------------------------- Seção Final Extrair Regiões da imagem ----------------------------------------------------
-
-// ----------------------------------------- Seção Inicio Remover Cor ----------------------------------------------------
-
-document.getElementById('removeColorBtn').addEventListener('click', function() {
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para remover a cor');
-        return;
-    }
-
-    originalImagePosition = {
-        left: activeObject.left,
-        top: activeObject.top
-    };
-
-    const removeColorModal = document.getElementById('removeColorModal');
-    const removeColorCanvas = document.getElementById('removeColorCanvas');
-
-    const originalImage = activeObject._element;
-    removeColorCanvas.width = originalImage.width;
-    removeColorCanvas.height = originalImage.height;
-
-    const ctx = removeColorCanvas.getContext('2d');
-    ctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
-
-    removeColorHistory = [];
-    currentRemoveColorIndex = -1;
-    saveRemoveColorHistory(ctx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
-
-    removeColorModal.style.display = 'flex';
-});
-
-function saveRemoveColorHistory(imageData) {
-    removeColorHistory = removeColorHistory.slice(0, currentRemoveColorIndex + 1);
-
-    removeColorHistory.push(imageData);
-    currentRemoveColorIndex++;
-
-    if (removeColorHistory.length > 10) {
-        removeColorHistory.shift();
-        currentRemoveColorIndex--;
-    }
-}
-
-document.getElementById('closeRemoveColorModal').addEventListener('click', function() {
-    document.getElementById('removeColorModal').style.display = 'none';
-});
-
-document.getElementById('undoRemoveColor').addEventListener('click', function() {
-    if (currentRemoveColorIndex > 0) {
-        currentRemoveColorIndex--;
-        const previousState = removeColorHistory[currentRemoveColorIndex];
-        const ctx = removeColorCanvas.getContext('2d');
-        ctx.putImageData(previousState, 0, 0);
-    }
-});
-
-const saveRemoveColor = document.getElementById('saveRemoveColor');
-const oldSaveElement = saveRemoveColor.cloneNode(true);
-saveRemoveColor.parentNode.replaceChild(oldSaveElement, saveRemoveColor);
-
-document.getElementById('saveRemoveColor').addEventListener('click', function () {
-    const removeColorCanvas = document.getElementById('removeColorCanvas');
-    const activeObject = canvas.getActiveObject();
-    const removeColorModal = document.getElementById('removeColorModal');
-
-    if (!activeObject || activeObject.type !== 'image') {
-        removeColorModal.style.display = 'none';
-        return;
-    }
-
-    const dataURL = removeColorCanvas.toDataURL('image/png', 1.0);
-
-    const originalProps = {
-        left: originalImagePosition.left,
-        top: originalImagePosition.top,
-        scaleX: activeObject.scaleX,
-        scaleY: activeObject.scaleY,
-        angle: activeObject.angle,
-        flipX: activeObject.flipX,
-        flipY: activeObject.flipY,
-        width: activeObject.width,
-        height: activeObject.height,
-        originX: activeObject.originX,
-        originY: activeObject.originY,
-        centeredScaling: activeObject.centeredScaling,
-        centeredRotation: activeObject.centeredRotation
-    };
-
-    canvas.remove(activeObject);
-
-    fabric.Image.fromURL(dataURL, function (newImage) {
-        newImage.set(originalProps);
-        
-        newImage.setCoords();
-        
-        canvas.add(newImage);
-        canvas.setActiveObject(newImage);
-        canvas.renderAll();
-        saveState();
-
-        removeColorModal.style.display = 'none';
-    });
-});
-
-removeColorBtn.addEventListener('click', () => {
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para remover a cor');
-        return;
-    }
-    activeImage = activeObject;
-    prepareRemoveColorCanvas(activeImage);
-});
-
-removeRegionBtn.addEventListener('click', () => {
-    currentRemoveMode = 'region';
-    removeRegionBtn.classList.add('active');
-    removeTotalBtn.classList.remove('active');
-});
-
-removeTotalBtn.addEventListener('click', () => {
-    currentRemoveMode = 'total';
-    removeTotalBtn.classList.add('active');
-    removeRegionBtn.classList.remove('active');
-});
-
-removeColorCanvas.addEventListener('click', (e) => {
-    if (currentRemoveMode === 'region') {
-        handleRemoveColorRegion(e);
-    } else {
-        handleRemoveColorTotal(e);
-    }
-});
-
-closeRemoveColorModal.addEventListener('click', () => {
-    removeColorModal.style.display = 'none';
-});
-
-undoRemoveColor.addEventListener('click', () => {
-    if (removeColorHistoryIndex > 0) {
-        removeColorHistoryIndex--;
-        const previousState = removeColorHistory[removeColorHistoryIndex];
-        const ctx = removeColorCanvas.getContext('2d');
-        ctx.putImageData(previousState, 0, 0);
-    }
-});
-
-function handleRemoveColorRegion(e) {
-    if (!removeColorCtx) return;
-
-    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    saveRemoveColorHistory(currentState);
-
-    const rect = removeColorCanvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
-    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
-
-    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    const tolerance = parseInt(sensitivityRange.value);
-
-    const processedImageData = floodFillAtPoint(
-        imageData,
-        x,
-        y,
-        { r: 0, g: 0, b: 0, a: 0 },
-        tolerance
-    );
-
-    removeColorCtx.putImageData(processedImageData, 0, 0);
-}
-
-function handleRemoveColorTotal(e) {
-    if (!removeColorCtx) return;
-
-    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    saveRemoveColorHistory(currentState);
-
-    const rect = removeColorCanvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
-    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
-
-    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    const tolerance = parseInt(sensitivityRange.value);
-    const targetColor = getPixel(imageData, x, y);
-
-    const processedImageData = floodFillEntireImage(
-        imageData,
-        targetColor,
-        { r: 0, g: 0, b: 0, a: 0 },
-        tolerance
-    );
-
-    removeColorCtx.putImageData(processedImageData, 0, 0);
-}
-
-function prepareRemoveColorCanvas(activeImage) {
-    const removeColorCanvas = document.getElementById('removeColorCanvas');
-    const removeColorModal = document.getElementById('removeColorModal');
-    
-    removeColorCtx = removeColorCanvas.getContext('2d');
-    
-    const originalWidth = activeImage.getElement().naturalWidth;
-    const originalHeight = activeImage.getElement().naturalHeight;
-    
-    removeColorCanvas.width = originalWidth;
-    removeColorCanvas.height = originalHeight;
-    
-    removeColorCtx.drawImage(activeImage.getElement(), 0, 0, originalWidth, originalHeight);
-    
-    const modalWidth = removeColorModal.clientWidth;
-    const modalHeight = removeColorModal.clientHeight;
-    const imageRatio = originalWidth / originalHeight;
-    const modalRatio = modalWidth / modalHeight;
-    
-    if (imageRatio > modalRatio) {
-        removeColorCanvas.style.width = '90%';
-        removeColorCanvas.style.height = 'auto';
-    } else {
-        removeColorCanvas.style.width = 'auto';
-        removeColorCanvas.style.height = '90%';
-    }
-    
-    removeColorHistory = [];
-    removeColorHistoryIndex = -1;
-    saveRemoveColorHistory();
-    
-    removeColorModal.style.display = 'flex';
-}
-
-function saveRemoveColorHistory() {
-    if (!removeColorCtx) return;
-    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    removeColorHistory = removeColorHistory.slice(0, removeColorHistoryIndex + 1);
-    removeColorHistory.push(imageData);
-    removeColorHistoryIndex = removeColorHistory.length - 1;
-}
-
-function floodFillAtPoint(imageData, startX, startY, fillColor, tolerance) {
-    const width = imageData.width;
-    const height = imageData.height;
-    const visited = new Uint8Array(width * height);
-    const queue = [];
-
-    const targetColor = getPixel(imageData, startX, startY);
-    if (!targetColor) return imageData;
-
-    queue.push([startX, startY]);
-    visited[startY * width + startX] = 1;
-
-    while (queue.length > 0) {
-        const [x, y] = queue.shift();
-        const currentPixel = getPixel(imageData, x, y);
-
-        if (colorMatch(currentPixel, targetColor, tolerance)) {
-            setPixel(imageData, x, y, fillColor);
-
-            [[x-1,y], [x+1,y], [x,y-1], [x,y+1]].forEach(([nx,ny]) => {
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                    const index = ny * width + nx;
-                    if (!visited[index]) {
-                        visited[index] = 1;
-                        queue.push([nx,ny]);
-                    }
-                }
-            });
-        }
-    }
-
-    return imageData;
-}
-
-function handleRemoveColorTotal(e) {
-    if (!removeColorCtx) return;
-
-    const currentState = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    saveRemoveColorHistory(currentState);
-
-    const rect = removeColorCanvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) * (removeColorCanvas.width / rect.width));
-    const y = Math.floor((e.clientY - rect.top) * (removeColorCanvas.height / rect.height));
-
-    const imageData = removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height);
-    const tolerance = parseInt(sensitivityRange.value);
-    const targetColor = getPixel(imageData, x, y);
-
-    const processedImageData = floodFillEntireImage(
-        imageData,
-        targetColor,
-        { r: 0, g: 0, b: 0, a: 0 },
-        tolerance
-    );
-
-    removeColorCtx.putImageData(processedImageData, 0, 0);
-}
-
-function floodFillEntireImage(imageData, targetColor, fillColor, tolerance) {
-    const width = imageData.width;
-    const height = imageData.height;
-
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const currentPixel = getPixel(imageData, x, y);
-            if (colorMatch(currentPixel, targetColor, tolerance)) {
-                setPixel(imageData, x, y, fillColor);
-            }
-        }
-    }
-
-    return imageData;
-}
-
-function getPixel(imageData, x, y) {
-    const index = (y * imageData.width + x) * 4;
-    if (index >= imageData.data.length) return null;
-    return {
-        r: imageData.data[index],
-        g: imageData.data[index + 1],
-        b: imageData.data[index + 2],
-        a: imageData.data[index + 3]
-    };
-}
-
-function setPixel(imageData, x, y, color) {
-    const index = (y * imageData.width + x) * 4;
-    if (index >= imageData.data.length) return;
-    imageData.data[index] = color.r;
-    imageData.data[index + 1] = color.g;
-    imageData.data[index + 2] = color.b;
-    imageData.data[index + 3] = color.a;
-}
-
-function colorMatch(c1, c2, tolerance) {
-    if (!c1 || !c2) return false;
-    return Math.abs(c1.r - c2.r) <= tolerance &&
-           Math.abs(c1.g - c2.g) <= tolerance &&
-           Math.abs(c1.b - c2.b) <= tolerance;
-}
-document.getElementById('removeRegionBtn').addEventListener('click', () => {
-    currentRemoveMode = 'region';
-    removeRegionBtn.classList.add('active');
-    removeTotalBtn.classList.remove('active');
-    updateButtonStyles();
-});
-
-function updateButtonStyles() {
-    const removeRegionBtn = document.getElementById('removeRegionBtn');
-    const removeTotalBtn = document.getElementById('removeTotalBtn');
-
-    if (currentRemoveMode === 'region') {
-        removeRegionBtn.classList.add('active');
-        removeTotalBtn.classList.remove('active');
-    } else {
-        removeTotalBtn.classList.add('active');
-        removeRegionBtn.classList.remove('active');
-    }
-}
-
-document.getElementById('removeTotalBtn').addEventListener('click', () => {
-    currentRemoveMode = 'total';
-    removeTotalBtn.classList.add('active');
-    removeRegionBtn.classList.remove('active');
-    updateButtonStyles();
-});
-document.getElementById('removeColorModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        this.style.display = 'none';
-    }
-});
-// ----------------------------------------- Seção Final Remover Cor ----------------------------------------------------
-
-// ----------------------------------------- Seção Inicio Pincel Balde e Borracha ----------------------------------------------------
-
-function openModal(tool) {
-    const activeObject = canvas.getActiveObject();
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem primeiro');
-        return;
-    }
-
-    let paintingHistory = [];
-    let currentPaintingIndex = -1;
-    const maxHistoryStates = 10;
-	let originalImagePosition = { left: 0, top: 0 };
-
-    function savePaintingHistory(ctx) {
-        const imageData = ctx.getImageData(0, 0, paintingCanvas.width, paintingCanvas.height);
-        paintingHistory = paintingHistory.slice(0, currentPaintingIndex + 1);
-        paintingHistory.push(imageData);
-        currentPaintingIndex++;
-
-        if (paintingHistory.length > maxHistoryStates) {
-            paintingHistory.shift();
-            currentPaintingIndex--;
-        }
-
-        undoButton.disabled = currentPaintingIndex <= 0;
-    }
-
-    function undoPainting() {
-        if (currentPaintingIndex > 0) {
-            currentPaintingIndex--;
-            const previousState = paintingHistory[currentPaintingIndex];
-            paintingCtx.putImageData(previousState, 0, 0);
-            undoButton.disabled = currentPaintingIndex <= 0;
-        }
-    }
-
-    const modal = document.createElement('div');
-    modal.classList.add('modal-overlay');
-
-    const modalContent = document.createElement('div');
-    modalContent.classList.add('modal-content');
-
-    const modalBody = document.createElement('div');
-    modalBody.classList.add('modal-body');
-
-    const paintingCanvas = document.createElement('canvas');
-    paintingCanvas.style.maxWidth = '100%';
-    paintingCanvas.style.maxHeight = '100%';
-    paintingCanvas.style.border = '1px solid #ccc';
-    modalBody.appendChild(paintingCanvas);
-
-    const modalFooter = document.createElement('div');
-    modalFooter.classList.add('modal-footer');
-
-    const brushButton = document.createElement('button');
-    brushButton.id = 'brushButton';
-    brushButton.classList.add('modal-btn');
-    brushButton.textContent = 'Pincel';
-    brushButton.addEventListener('click', () => {
-        setTool('brush');
-        hideButtonsExcept('brushButton');
-    });
-
-    const eraserButton = document.createElement('button');
-    eraserButton.id = 'eraserButton';
-    eraserButton.classList.add('modal-btn');
-    eraserButton.textContent = 'Borracha';
-    eraserButton.addEventListener('click', () => {
-        setTool('eraser');
-        hideButtonsExcept('eraserButton');
-    });
-
-    const bucketButton = document.createElement('button');
-    bucketButton.id = 'bucketButton';
-    bucketButton.classList.add('modal-btn');
-    bucketButton.textContent = 'Balde';
-    bucketButton.addEventListener('click', () => {
-        setTool('bucket');
-        hideButtonsExcept('bucketButton');
-    });
-
-    const closeButton = document.createElement('button');
-    closeButton.classList.add('modal-btn');
-    closeButton.textContent = 'Fechar';
-    closeButton.addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
-
-const saveButton = document.createElement('button');
-saveButton.classList.add('modal-btn');
-saveButton.textContent = 'Salvar';
-saveButton.addEventListener('click', () => {
-    const imageURL = paintingCanvas.toDataURL('image/png', 1.0);
-    fabric.Image.fromURL(imageURL, (img) => {
-        const originalLeft = activeObject.left;
-        const originalTop = activeObject.top;
-
-        img.set({
-            left: originalLeft,
-            top: originalTop,
-            scaleX: activeObject.scaleX,
-            scaleY: activeObject.scaleY,
-            angle: activeObject.angle
-        });
-
-        canvas.remove(activeObject);
-        canvas.add(img);
-        canvas.renderAll();
-        document.body.removeChild(modal);
-    });
-});
-
-    const undoButton = document.createElement('button');
-    undoButton.classList.add('modal-btn');
-    undoButton.textContent = 'Voltar';
-    undoButton.disabled = true;
-    undoButton.addEventListener('click', undoPainting);
-
-    const sizeSlider = document.createElement('input');
-    sizeSlider.type = 'range';
-    sizeSlider.min = '1';
-    sizeSlider.max = '500';
-    sizeSlider.value = '10';
-    sizeSlider.style.width = '100px';
-    sizeSlider.classList.add('modal-slider');
-
-    const colorPicker = document.createElement('input');
-    colorPicker.type = 'color';
-    colorPicker.value = '#000000';
-
-    modalFooter.appendChild(brushButton);
-    modalFooter.appendChild(eraserButton);
-    modalFooter.appendChild(bucketButton);
-    modalFooter.appendChild(sizeSlider);
-    modalFooter.appendChild(colorPicker);
-    modalFooter.appendChild(undoButton);
-    modalFooter.appendChild(closeButton);
-    modalFooter.appendChild(saveButton);
-
-    modalContent.appendChild(modalBody);
-    modalContent.appendChild(modalFooter);
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-
-    const paintingCtx = paintingCanvas.getContext('2d');
-    const imageElement = activeObject.getElement();
-    const originalWidth = imageElement.naturalWidth;
-    const originalHeight = imageElement.naturalHeight;
-
-    const imageRatio = originalWidth / originalHeight;
-    const modalWidth = modalContent.clientWidth;
-    const modalHeight = modalContent.clientHeight;
-    let canvasWidth, canvasHeight;
-
-    if (imageRatio > 1) {
-        canvasWidth = modalWidth * 0.9;
-        canvasHeight = canvasWidth / imageRatio;
-    } else {
-        canvasHeight = modalHeight * 0.9;
-        canvasWidth = canvasHeight * imageRatio;
-    }
-
-    paintingCanvas.width = canvasWidth;
-    paintingCanvas.height = canvasHeight;
-
-    paintingCtx.drawImage(imageElement, 0, 0, originalWidth, originalHeight, 0, 0, canvasWidth, canvasHeight);
-
-    savePaintingHistory(paintingCtx);
-
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
-    let currentTool = tool;
-
-    const hideButtonsExcept = (buttonId) => {
-        const buttons = [brushButton, eraserButton, bucketButton];
-        buttons.forEach(button => {
-            if (button.id !== buttonId) {
-                button.style.display = 'none';
-            } else {
-                button.style.display = 'inline-block';
-            }
-        });
-    };
-
-    if (tool === 'brush') {
-        hideButtonsExcept('brushButton');
-    } else if (tool === 'eraser') {
-        hideButtonsExcept('eraserButton');
-    } else if (tool === 'bucket') {
-        hideButtonsExcept('bucketButton');
-    }
-
-    const getMousePos = (canvas, e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
-        };
-    };
-
-    const draw = (e) => {
-        if (!isDrawing) return;
-
-        const pos = getMousePos(paintingCanvas, e);
-        paintingCtx.lineWidth = parseInt(sizeSlider.value);
-        paintingCtx.lineCap = 'round';
-        paintingCtx.lineJoin = 'round';
-
-        if (currentTool === 'eraser') {
-            paintingCtx.globalCompositeOperation = 'destination-out';
-            paintingCtx.strokeStyle = 'rgba(0,0,0,1)';
-        } else {
-            paintingCtx.globalCompositeOperation = 'source-over';
-            paintingCtx.strokeStyle = colorPicker.value;
-        }
-
-        paintingCtx.beginPath();
-        paintingCtx.moveTo(lastX, lastY);
-        paintingCtx.lineTo(pos.x, pos.y);
-        paintingCtx.stroke();
-
-        [lastX, lastY] = [pos.x, pos.y];
-    };
-
-    const floodFill = (x, y, fillColor) => {
-        savePaintingHistory(paintingCtx);
-
-        const imageData = paintingCtx.getImageData(0, 0, paintingCanvas.width, paintingCanvas.height);
-        const targetColor = getPixel(imageData, x, y);
-        const fillColorRGB = hexToRgb(fillColor);
-
-        if (colorMatch(targetColor, fillColorRGB, 0)) return;
-
-        const queue = [[x, y]];
-        while (queue.length > 0) {
-            const [cx, cy] = queue.shift();
-            if (cx < 0 || cx >= paintingCanvas.width || cy < 0 || cy >= paintingCanvas.height) continue;
-
-            const currentPixel = getPixel(imageData, cx, cy);
-            if (colorMatch(currentPixel, targetColor, 10)) {
-                setPixel(imageData, cx, cy, fillColorRGB);
-                queue.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
-            }
-        }
-        paintingCtx.putImageData(imageData, 0, 0);
-    };
-
-    const getPixel = (imageData, x, y) => {
-        const index = (y * imageData.width + x) * 4;
-        return {
-            r: imageData.data[index],
-            g: imageData.data[index + 1],
-            b: imageData.data[index + 2],
-            a: imageData.data[index + 3]
-        };
-    };
-
-    const setPixel = (imageData, x, y, color) => {
-        const index = (y * imageData.width + x) * 4;
-        imageData.data[index] = color.r;
-        imageData.data[index + 1] = color.g;
-        imageData.data[index + 2] = color.b;
-        imageData.data[index + 3] = color.a;
-    };
-
-    const colorMatch = (c1, c2, tolerance) => {
-        return Math.abs(c1.r - c2.r) <= tolerance &&
-               Math.abs(c1.g - c2.g) <= tolerance &&
-               Math.abs(c1.b - c2.b) <= tolerance;
-    };
-
-    const hexToRgb = (hex) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return { r, g, b, a: 255 };
-    };
-
-    const setTool = (tool) => {
-        currentTool = tool;
-    };
-
-    paintingCanvas.addEventListener('mousedown', (e) => {
-        savePaintingHistory(paintingCtx);
-        isDrawing = true;
-        const pos = getMousePos(paintingCanvas, e);
-        [lastX, lastY] = [pos.x, pos.y];
-
-        if (currentTool === 'bucket') {
-            floodFill(Math.floor(pos.x), Math.floor(pos.y), colorPicker.value);
-        }
-    });
-
-    paintingCanvas.addEventListener('mousemove', draw);
-
-    paintingCanvas.addEventListener('mouseup', () => {
-        isDrawing = false;
-    });
-
-    paintingCanvas.addEventListener('mouseout', () => {
-        isDrawing = false;
-    });
-}
-
-document.getElementById('btnPincel').addEventListener('click', () => openModal('brush'));
-document.getElementById('btnBorracha').addEventListener('click', () => openModal('eraser'));
-document.getElementById('btnBalde').addEventListener('click', () => openModal('bucket'));
-// ----------------------------------------- Seção Final Pincel Balde e Borracha ----------------------------------------------------
 
 // ----------------------------------------- Seção Inicio Menu Imagem ----------------------------------------------------
 
@@ -4210,21 +3156,17 @@ document.getElementById('applyOutlineBtn').addEventListener('click', function() 
     if (activeObject) {
         const imgElement = activeObject.getElement();
 
-        // Calcular o tamanho necessário para o contorno
         const maxOutlineWidth = Math.max(width1, width2);
-        const padding = maxOutlineWidth * 2; // Aumentar o padding para acomodar o contorno
+        const padding = maxOutlineWidth;
 
-        // Criar um canvas temporário para aplicar o contorno
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d');
-        tempCanvas.width = imgElement.width + (padding * 2); // Padding em ambos os lados
-        tempCanvas.height = imgElement.height + (padding * 2); // Padding em ambos os lados
+        tempCanvas.width = imgElement.width + (padding * 2); 
+        tempCanvas.height = imgElement.height + (padding * 2);
 
-        // Centralizar a imagem no canvas temporário
         const offsetX = padding;
         const offsetY = padding;
 
-        // Aplicar os contornos em uma única operação
         const shadows = [];
         if (width1 > 0) {
             shadows.push(
@@ -4243,20 +3185,17 @@ document.getElementById('applyOutlineBtn').addEventListener('click', function() 
             );
         }
 
-        // Aplicar o filtro de contorno
         tempCtx.filter = shadows.join(' ');
         tempCtx.drawImage(imgElement, offsetX, offsetY);
 
-        // Desenhar a imagem original no centro (sem contorno)
         tempCtx.globalCompositeOperation = 'source-over';
         tempCtx.drawImage(imgElement, offsetX, offsetY);
 
-        // Converter o canvas temporário para uma imagem e substituir a original
         const dataUrl = tempCanvas.toDataURL('image/png', 1.0);
         fabric.Image.fromURL(dataUrl, function(img) {
             img.set({
-                left: activeObject.left - (offsetX * activeObject.scaleX), // Ajustar a posição
-                top: activeObject.top - (offsetY * activeObject.scaleY),  // Ajustar a posição
+                left: activeObject.left - (offsetX * activeObject.scaleX),
+                top: activeObject.top - (offsetY * activeObject.scaleY),
                 scaleX: activeObject.scaleX,
                 scaleY: activeObject.scaleY,
                 angle: activeObject.angle,
@@ -4270,7 +3209,6 @@ document.getElementById('applyOutlineBtn').addEventListener('click', function() 
             canvas.renderAll();
         });
 
-        // Fechar o modal
         document.getElementById('outlineModal').style.display = 'none';
     }
 });
@@ -4309,530 +3247,27 @@ function applyOutlines() {
 }
 
 updateSliderValues();
+
 // ----------------------------------------- Seção Final Contorno ----------------------------------------------------
 
-// Event Listeners para exportação
 document.getElementById('exportPNGBtn').addEventListener('click', function() {
-    exportCanvas('png'); // Exportar como PNG
+    exportCanvas('png');
 });
 
 document.getElementById('exportJPGBtn').addEventListener('click', function() {
-    exportCanvas('jpg'); // Exportar como JPG
+    exportCanvas('jpg');
 });
 
 document.getElementById('exportPDFBtn').addEventListener('click', function() {
-    exportPdf(); // Exportar como PDF
+    exportPdf(); 
 });
 
-// Função para exportar o canvas em PNG ou JPG
-async function exportCanvas(format) {
-    const dpi = parseInt(document.getElementById('resolutionInput').value) || 150; // Usar o valor do input ou 150 como padrão
-    const scale = dpi / 96;
-
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (!cloudFolha) return;
-
-    // Criar um canvas temporário com dimensões otimizadas
-    const tempContainer = document.createElement('div');
-    document.body.appendChild(tempContainer);
-
-    const exportCanvas = document.createElement('canvas');
-    const targetWidth = cloudFolha.width * scale;
-    const targetHeight = cloudFolha.height * scale;
-
-    exportCanvas.width = targetWidth;
-    exportCanvas.height = targetHeight;
-    tempContainer.appendChild(exportCanvas);
-
-    const exportFabricCanvas = new fabric.Canvas(exportCanvas, {
-        enableRetinaScaling: true,
-        imageSmoothingQuality: 'high'
-    });
-
-    // Configurar canvas de exportação
-    exportFabricCanvas.setWidth(targetWidth);
-    exportFabricCanvas.setHeight(targetHeight);
-
-    // Adicionar o fundo branco (CloudFolha) apenas para JPG
-    if (format === 'jpg') {
-        const whiteBackground = new fabric.Rect({
-            width: cloudFolha.width,
-            height: cloudFolha.height,
-            fill: 'white',
-            originX: 'left',
-            originY: 'top',
-            scaleX: scale,
-            scaleY: scale
-        });
-        exportFabricCanvas.add(whiteBackground);
-    }
-
-    // Clonar e ajustar objetos
-    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-    const promises = objects.map(async (obj) => {
-        const clonedObj = await cloneObjectWithQuality(obj);
-        
-        const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
-        const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
-
-        const scaleFactor = targetWidth / cloudFolha.width;
-        
-        clonedObj.set({
-            left: relativeLeft * scaleFactor,
-            top: relativeTop * scaleFactor,
-            scaleX: (obj.scaleX / cloudFolha.scaleX) * scaleFactor,
-            scaleY: (obj.scaleY / cloudFolha.scaleY) * scaleFactor
-        });
-
-        return clonedObj;
-    });
-
-    // Aguardar todos os objetos serem processados
-    const clonedObjects = await Promise.all(promises);
-    clonedObjects.forEach(obj => exportFabricCanvas.add(obj));
-
-    exportFabricCanvas.renderAll();
-
-    // Configurações específicas por formato
-    const exportOptions = {
-        format: format,
-        quality: 1.0,
-        enableRetinaScaling: true,
-        multiplier: 1,
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high'
-    };
-
-    if (format === 'jpg') {
-        exportOptions.backgroundColor = '#ffffff'; // Fundo branco para JPG
-    }
-
-    // Exportar com qualidade otimizada
-    const dataUrl = exportFabricCanvas.toDataURL(exportOptions);
-    
-    const link = document.createElement('a');
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
-    link.href = dataUrl;
-    link.download = `CloudApp_${timestamp}.${format}`;
-    link.click();
-
-    // Limpar recursos
-    tempContainer.remove();
-    exportFabricCanvas.dispose();
-}
-
-async function exportPdf() {
-    const dpi = parseInt(document.getElementById('resolutionInput').value) || 150; // Usar o valor do input ou 150 como padrão
-    const scale = dpi / 96;
-
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (!cloudFolha) return;
-
-    const pageWidth = cmToPoints(cloudFolha.width / CM_TO_PX);
-    const pageHeight = cmToPoints(cloudFolha.height / CM_TO_PX);
-
-    // Criar canvas temporário com dimensões otimizadas
-    const tempCanvas = document.createElement('canvas');
-    const targetWidth = Math.min(cloudFolha.width * scale, 4096);
-    const targetHeight = Math.min(cloudFolha.height * scale, 4096);
-    
-    tempCanvas.width = targetWidth;
-    tempCanvas.height = targetHeight;
-    
-    const tempFabricCanvas = new fabric.StaticCanvas(tempCanvas, {
-        enableRetinaScaling: true,
-        imageSmoothingQuality: 'high'
-    });
-
-    // Clonar e processar objetos com alta qualidade
-    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-    const clonedObjects = await Promise.all(
-        objects.map(obj => cloneObjectWithQuality(obj))
-    );
-
-    clonedObjects.forEach(obj => {
-        const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
-        const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
-        
-        const scaleFactor = targetWidth / cloudFolha.width;
-        
-        obj.set({
-            left: relativeLeft * scaleFactor,
-            top: relativeTop * scaleFactor,
-            scaleX: (obj.scaleX / cloudFolha.scaleX) * scaleFactor,
-            scaleY: (obj.scaleY / cloudFolha.scaleY) * scaleFactor
-        });
-        
-        tempFabricCanvas.add(obj);
-    });
-
-    tempFabricCanvas.renderAll();
-
-    const pdfDoc = await PDFLib.PDFDocument.create();
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    
-    const pngImage = await pdfDoc.embedPng(
-        tempCanvas.toDataURL('image/png', 1.0)
-    );
-    
-    page.drawImage(pngImage, {
-        x: 0,
-        y: 0,
-        width: pageWidth,
-        height: pageHeight
-    });
-
-    const pdfBytes = await pdfDoc.save({
-        useObjectStreams: true,
-        addDefaultPage: false,
-        compress: true
-    });
-
-    // Download do PDF
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
-    link.download = `CloudApp_${timestamp}.pdf`;
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    tempFabricCanvas.dispose();
-}
-
-async function cloneObjectWithQuality(obj) {
-    return new Promise(async (resolve) => {
-        const clonedObj = fabric.util.object.clone(obj);
-
-        // Remover bordas e contornos
-        clonedObj.set({
-            stroke: null, 
-            strokeWidth: 0,
-            shadow: null 
-        });
-
-        if (obj.type === 'image' && obj.getSrc) {
-            const imgSrc = obj.getSrc();
-            fabric.Image.fromURL(imgSrc, function(img) {
-                img.set(clonedObj);
-                resolve(img);
-            }, {
-                crossOrigin: 'anonymous',
-                quality: 1.0
-            });
-        } else {
-            resolve(clonedObj);
-        }
-    });
-}
 
 function cmToPoints(cm) {
     return cm * 28.3465;
 }
 
-// ----------------------------------------- Seção Inicio Drag and Drop ---------------------------------
 
-function loadDocumentFile(file) {
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const canvasState = JSON.parse(event.target.result);
-        const cloudFolhaState = canvasState.cloudFolha;
-
-        canvas.clear();
-
-        canvas.loadFromJSON(canvasState, function () {
-            let cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-
-            if (!cloudFolha) {
-                createCloudFolha();
-                cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-            }
-
-            if (cloudFolha && cloudFolhaState) {
-                cloudFolha.set({
-                    width: Number(cloudFolhaState.width) || 21 * CM_TO_PX, 
-                    height: Number(cloudFolhaState.height) || 29.7 * CM_TO_PX,
-                    left: Number(cloudFolhaState.left) || (canvas.width - cloudFolha.width) / 2,
-                    top: Number(cloudFolhaState.top) || (canvas.height - cloudFolha.height) / 2
-                });
-                canvas.sendToBack(cloudFolha);
-            }
-
-            if (cloudFolha) {
-                const widthCm = convertDimensions(cloudFolha.width, 'px', 'cm');
-                const heightCm = convertDimensions(cloudFolha.height, 'px', 'cm');
-                widthInput.value = widthCm.toFixed(1);
-                heightInput.value = heightCm.toFixed(1);
-            }
-
-            canvas.renderAll();
-            updateLayersList();
-            saveState();
-        });
-    };
-    reader.readAsText(file);
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Verificar se o drop ocorreu dentro do canvas
-    const canvasElement = document.getElementById('canvas');
-    const rect = canvasElement.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    if (mouseX < 0 || mouseX > rect.width || mouseY < 0 || mouseY > rect.height) {
-        return; // Ignorar o drop fora do canvas
-    }
-
-    const files = e.dataTransfer.files;
-    if (!files || files.length === 0) {
-        showCustomAlert('Nenhum arquivo foi detectado. Por favor, tente novamente.');
-        return;
-    }
-
-    handleFiles(files);
-}
-
-function handleFiles(files) {
-    Array.from(files).forEach(file => {
-        if (file.type.startsWith('image/')) {
-            handleImageFile(file);
-        } else if (file.type === 'application/pdf') {
-            handlePdfFile(file);
-        } else if (file.name.endsWith('.cloudapp')) {
-            loadDocumentFile(file); // Aqui a função é chamada
-        } else {
-            showCustomAlert('Arquivo não suportado. Por favor, insira imagens, PDFs ou arquivos .cloudapp.');
-        }
-    });
-}
-
-function handleImageFile(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        if (!canvas || !canvas.add) {
-            showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app..');
-            return;
-        }
-
-        // Criar uma imagem temporária para obter dimensões originais
-        const tempImg = new Image();
-        tempImg.onload = function() {
-            const originalWidth = this.width;
-            const originalHeight = this.height;
-
-            fabric.Image.fromURL(e.target.result, function(img) {
-                if (!img) {
-                    showCustomAlert('Falha ao carregar a imagem.');
-                    return;
-                }
-
-                const canvasCenter = getCanvasCenter();
-                
-                // Configurar a imagem com alta qualidade
-                img.set({
-                    left: canvasCenter.left,
-                    top: canvasCenter.top,
-                    originX: 'center',
-                    originY: 'center',
-                    perPixelTargetFind: true,
-                    lockMovementX: false,
-                    lockMovementY: false,
-                    scaleX: 1,
-                    scaleY: 1,
-                    width: originalWidth,
-                    height: originalHeight
-                });
-
-                // Definir DPI para 300
-                img.set('dpi', 300);
-
-                try {
-                    canvas.add(img);
-                    canvas.setActiveObject(img);
-                    canvas.renderAll();
-                    saveState();
-                } catch (error) {
-                    showCustomAlert('Erro ao adicionar a imagem ao canvas.');
-                }
-            }, { crossOrigin: 'Anonymous' });
-        };
-        tempImg.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-function handlePdfFile(file) {
-    const modalHtml = `
-        <div id="pdfModal" class="modal-overlay" style="display: flex;">
-            <div class="modal-content" style="width: 600px; height: auto; padding: 20px; min-width: 300px; max-height: 80%; overflow-y: auto; display: flex;">
-                <div id="pdfImageContainer" style="flex: 1; display: flex; justify-content: center; align-items: center; margin-right: 20px;">
-                    <img id="pdfPageImage" src="" alt="PDF Page" style="max-width: 100%; max-height: 400px; border: 1px solid #ccc;">
-                </div>
-                <div style="flex: 1;">
-                    <h3 style="color: white; margin-bottom: 20px;">Selecionar Página do PDF</h3>
-                    <div style="margin-bottom: 20px;">
-                        <input type="number" id="pdfPageInput" value="1" min="1"
-                               style="width: 100%; padding: 8px; background: #1a4b8c; color: white; border: 1px solid #235ab4;">
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                        <button id="pdfCancelBtn" class="menu-item" style="width: auto;">Cancelar</button>
-                        <button id="pdfConfirmBtn" class="menu-item" style="width: auto; background: #ffd700; color: black;">Importar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    const modal = document.getElementById('pdfModal');
-    const cancelBtn = document.getElementById('pdfCancelBtn');
-    const confirmBtn = document.getElementById('pdfConfirmBtn');
-    const pageInput = document.getElementById('pdfPageInput');
-    const pdfPageImage = document.getElementById('pdfPageImage');
-
-    // Evento para mudar a página
-    pageInput.addEventListener('input', () => {
-        const pageNumber = parseInt(pageInput.value) || 1;
-        loadPdfPageImage(file, pageNumber - 1);
-    });
-
-    // Função para carregar a imagem da página do PDF
-    async function loadPdfPageImage(file, pageNumber) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-        
-        // Atualizar o máximo de páginas no input
-        pageInput.max = pdf.numPages;
-
-        if (pageNumber >= pdf.numPages) {
-            showCustomAlert('Página não existente no PDF.');
-            return;
-        }
-
-        const page = await pdf.getPage(pageNumber + 1);
-        // Escala para preview
-        const scale = 2;
-        const viewport = page.getViewport({ scale });
-
-        const tempCanvas = document.createElement('canvas');
-        const context = tempCanvas.getContext('2d');
-        tempCanvas.height = viewport.height;
-        tempCanvas.width = viewport.width;
-
-        // Configurar contexto para melhor qualidade mesmo no preview
-        context.imageSmoothingEnabled = true;
-        context.imageSmoothingQuality = 'high';
-
-        await page.render({
-            canvasContext: context,
-            viewport: viewport
-        }).promise;
-
-        pdfPageImage.src = tempCanvas.toDataURL('image/png', 1.0);
-    }
-
-    // Carrega a primeira página ao abrir o modal
-    loadPdfPageImage(file, 0);
-
-    cancelBtn.addEventListener('click', () => {
-        modal.remove();
-    });
-
-    confirmBtn.addEventListener('click', () => {
-        const selectedPage = parseInt(pageInput.value) || 1;
-        convertPdfToImage(file, selectedPage - 1).then(() => {
-            modal.remove();
-        });
-    });
-}
-
-async function convertPdfToImage(file, pageNumber) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-
-    if (pageNumber >= pdf.numPages) {
-        showCustomAlert('Página não existente no PDF.');
-        return;
-    }
-
-    const page = await pdf.getPage(pageNumber + 1);
-    // Aumentar a escala para 300 DPI (300/72 = 4.17)
-    const scale = 4.17;
-    const viewport = page.getViewport({ scale });
-
-    const tempCanvas = document.createElement('canvas');
-    const context = tempCanvas.getContext('2d');
-    
-    // Configurar o canvas com dimensões maiores para maior qualidade
-    tempCanvas.height = viewport.height;
-    tempCanvas.width = viewport.width;
-    
-    // Configurar contexto para melhor qualidade
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = 'high';
-
-    await page.render({
-        canvasContext: context,
-        viewport: viewport
-    }).promise;
-
-    if (!canvas || !canvas.add) {
-        showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app..');
-        return;
-    }
-
-    fabric.Image.fromURL(tempCanvas.toDataURL('image/png', 1.0), function(img) {
-        if (!img) {
-            showCustomAlert('Erro ao carregar páginas do PDF.');
-            return;
-        }
-
-        const canvasCenter = getCanvasCenter();
-        img.set({
-            left: canvasCenter.left,
-            top: canvasCenter.top,
-            originX: 'center',
-            originY: 'center',
-            perPixelTargetFind: true,
-            lockMovementX: false,
-            lockMovementY: false,
-            scaleX: 1,
-            scaleY: 1
-        });
-
-        img.set('dpi', 300);
-
-        try {
-            canvas.add(img);
-            canvas.setActiveObject(img);
-            canvas.renderAll();
-            saveState();
-        } catch (error) {
-            showCustomAlert('Erro ao adicionar a página do PDF na área de trabalho.');
-        }
-    });
-}
-
-function getCanvasCenter() {
-    return {
-        left: canvas.getWidth() / 2,
-        top: canvas.getHeight() / 2
-    };
-}
-
-document.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-});
-
-document.addEventListener('drop', handleDrop);
-// ---------- Fim Seção Drag and Drop -------------------------------------------
 
 // ---------- Inicio Seção Modal Ferramenta links -------------------------------------------
 function openDynamicModal(url) {
@@ -4855,40 +3290,42 @@ document.getElementById('calendarBtn').addEventListener('click', function () {
 
 // ---------- Inicio Seção Formas -------------------------------------------
 function updateFloatingShapeMenu() {
-  const activeObject = canvas.getActiveObject();
-  const menu = document.getElementById('floating-shape-menu');
+    const activeObject = canvas.getActiveObject();
+    const menu = document.getElementById('floating-shape-menu');
 
-  if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'path' || activeObject.type === 'circle')) {
-    const zoom = canvas.getZoom();
-    const objRect = activeObject.getBoundingRect();
-    const canvasRect = canvas.getElement().getBoundingClientRect();
+    if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'path' || activeObject.type === 'circle')) {
+        const zoom = canvas.getZoom();
+        const objRect = activeObject.getBoundingRect();
+        const canvasRect = canvas.getElement().getBoundingClientRect();
 
-    let left = canvasRect.left + objRect.left + objRect.width + 10;
-    let top = canvasRect.top + objRect.top;
+        let left = canvasRect.left + objRect.left + objRect.width + 10;
+        let top = canvasRect.top + objRect.top;
 
-    const menuWidth = 200;
-    const menuHeight = 150;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+        const menuWidth = 200;
+        const menuHeight = 150;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
 
-    if (left + menuWidth > windowWidth) {
-      left = canvasRect.left + objRect.left - menuWidth - 10;
+        if (left + menuWidth > windowWidth) {
+            left = canvasRect.left + objRect.left - menuWidth - 10;
+        }
+        if (top + menuHeight > windowHeight) {
+            top = windowHeight - menuHeight - 10;
+        }
+
+        menu.style.left = `${left}px`;
+        menu.style.top = `${top}px`;
+        menu.style.display = 'block';
+
+        document.getElementById('shape-color').value = activeObject.fill || '#000000';
+        document.getElementById('stroke-width').value = activeObject.strokeWidth || 0;
+        document.getElementById('stroke-color').value = activeObject.stroke || '#000000';
+
+        const strokeColorInput = document.getElementById('stroke-color');
+        strokeColorInput.disabled = activeObject.strokeWidth <= 0;
+    } else {
+        menu.style.display = 'none';
     }
-    if (top + menuHeight > windowHeight) {
-      top = windowHeight - menuHeight - 10;
-    }
-
-    menu.style.left = `${left}px`;
-    menu.style.top = `${top}px`;
-    menu.style.display = 'block';
-
-    // Preencher os valores atuais da forma
-    document.getElementById('shape-color').value = activeObject.fill || '#000000';
-    document.getElementById('stroke-width').value = activeObject.strokeWidth || 0;
-    document.getElementById('stroke-color').value = activeObject.stroke || '#000000';
-  } else {
-    menu.style.display = 'none';
-  }
 }
 
 document.getElementById('shape-color').addEventListener('input', function (e) {
@@ -4900,19 +3337,27 @@ document.getElementById('shape-color').addEventListener('input', function (e) {
 });
 
 document.getElementById('stroke-width').addEventListener('input', function (e) {
-  const activeObject = canvas.getActiveObject();
-  if (activeObject) {
-    activeObject.set('strokeWidth', parseInt(e.target.value));
-    canvas.renderAll();
-  }
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+        const strokeWidth = parseInt(e.target.value);
+        activeObject.set({
+            strokeWidth: strokeWidth,
+            stroke: strokeWidth > 0 ? activeObject.stroke || '#000000' : null
+        });
+
+        const strokeColorInput = document.getElementById('stroke-color');
+        strokeColorInput.disabled = strokeWidth <= 0;
+
+        canvas.renderAll();
+    }
 });
 
 document.getElementById('stroke-color').addEventListener('input', function (e) {
-  const activeObject = canvas.getActiveObject();
-  if (activeObject) {
-    activeObject.set('stroke', e.target.value);
-    canvas.renderAll();
-  }
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.strokeWidth > 0) {
+        activeObject.set('stroke', e.target.value);
+        canvas.renderAll();
+    }
 });
 
 
@@ -4971,17 +3416,18 @@ document.getElementById('formaquadradoBtn').addEventListener('click', () => {
         top: canvas.height / 2,
         width: 100,
         height: 100,
-        fill: '#000000',
+        fill: '#ffffff',
+        stroke: '#000000',
+        strokeWidth: 1,
         originX: 'center',
         originY: 'center'
     });
-	saveState();
+    saveState();
     canvas.add(rect);
     canvas.setActiveObject(rect);
 });
 
 // ---------- Fim Seção Formas -------------------------------------------
-
 </script>
 </body>
 </html>
