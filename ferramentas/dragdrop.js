@@ -95,28 +95,14 @@ function handleImageFile(file) {
                     return;
                 }
 
-                const canvasCenter = getCanvasCenter();
-
-                // Configurar a imagem com alta qualidade
-                img.set({
-                    left: canvasCenter.left,
-                    top: canvasCenter.top,
-                    originX: 'center',
-                    originY: 'center',
-                    perPixelTargetFind: true,
-                    lockMovementX: false,
-                    lockMovementY: false,
-                    scaleX: 1,
-                    scaleY: 1,
-                    width: originalWidth,
-                    height: originalHeight
-                });
+                // Redimensionar e centralizar a imagem no CloudFolha
+                resizeAndCenterImage(img);
 
                 // Definir DPI para 300
                 img.set('dpi', 300);
 
-                // Normalizar a imagem (igual ao processo do modal de pintar/contorno)
-                normalizeImage(img);
+                // Substituir a imagem no canvas (igual ao processo do modal de pintar/contorno)
+                replaceImageOnCanvas(img);
 
                 try {
                     canvas.add(img);
@@ -134,43 +120,66 @@ function handleImageFile(file) {
     reader.readAsDataURL(file);
 }
 
-function normalizeImage(img) {
-    // Criar um canvas temporário para redesenhar a imagem com alta qualidade
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
+function resizeAndCenterImage(img) {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Folha CloudFolha não encontrada.');
+        return;
+    }
 
-    // Definir as dimensões do canvas temporário com base na imagem original
-    tempCanvas.width = img.width;
-    tempCanvas.height = img.height;
+    // Obter as dimensões da folha CloudFolha
+    const folhaWidth = cloudFolha.width * cloudFolha.scaleX;
+    const folhaHeight = cloudFolha.height * cloudFolha.scaleY;
 
-    // Configurar o contexto para alta qualidade
-    tempCtx.imageSmoothingEnabled = true;
-    tempCtx.imageSmoothingQuality = 'high';
+    // Obter as dimensões da imagem
+    const imgWidth = img.width;
+    const imgHeight = img.height;
 
-    // Redesenhar a imagem no canvas temporário
-    tempCtx.drawImage(img.getElement(), 0, 0, tempCanvas.width, tempCanvas.height);
+    // Determinar o lado maior da imagem e da folha
+    const imgLadoMaior = Math.max(imgWidth, imgHeight);
+    const folhaLadoMaior = Math.max(folhaWidth, folhaHeight);
 
-    // Substituir a imagem original pela imagem normalizada
-    fabric.Image.fromURL(tempCanvas.toDataURL('image/png', 1.0), function(normalizedImg) {
-        normalizedImg.set({
-            left: img.left,
-            top: img.top,
-            originX: img.originX,
-            originY: img.originY,
-            scaleX: 1,
-            scaleY: 1,
-            width: img.width,
-            height: img.height,
-            dpi: 300
+    // Calcular a escala para que o lado maior da imagem seja igual ao lado maior da folha
+    const scale = folhaLadoMaior / imgLadoMaior;
+
+    // Aplicar a escala à imagem
+    img.set({
+        scaleX: scale,
+        scaleY: scale
+    });
+
+    // Centralizar a imagem no CloudFolha
+    img.set({
+        left: cloudFolha.left + (folhaWidth - imgWidth * scale) / 2,
+        top: cloudFolha.top + (folhaHeight - imgHeight * scale) / 2
+    });
+}
+
+function replaceImageOnCanvas(newImage) {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+        // Salvar as propriedades da imagem original
+        const originalLeft = activeObject.left;
+        const originalTop = activeObject.top;
+        const originalScaleX = activeObject.scaleX;
+        const originalScaleY = activeObject.scaleY;
+        const originalAngle = activeObject.angle;
+
+        // Aplicar as propriedades da imagem original à nova imagem
+        newImage.set({
+            left: originalLeft,
+            top: originalTop,
+            scaleX: originalScaleX,
+            scaleY: originalScaleY,
+            angle: originalAngle
         });
 
-        // Remover a imagem original e adicionar a normalizada
-        canvas.remove(img);
-        canvas.add(normalizedImg);
-        canvas.setActiveObject(normalizedImg);
+        // Remover a imagem original e adicionar a nova
+        canvas.remove(activeObject);
+        canvas.add(newImage);
+        canvas.setActiveObject(newImage);
         canvas.renderAll();
-        saveState();
-    });
+    }
 }
 
 function handlePdfFile(file) {
@@ -300,25 +309,14 @@ async function convertPdfToImage(file, pageNumber) {
             return;
         }
 
-        const canvasCenter = getCanvasCenter();
-        img.set({
-            left: canvasCenter.left,
-            top: canvasCenter.top,
-            originX: 'center',
-            originY: 'center',
-            perPixelTargetFind: true,
-            lockMovementX: false,
-            lockMovementY: false,
-            scaleX: 1,
-            scaleY: 1,
-            width: img.width, // Manter a largura original
-            height: img.height // Manter a altura original
-        });
+        // Redimensionar e centralizar a imagem no CloudFolha
+        resizeAndCenterImage(img);
 
+        // Definir DPI para 300
         img.set('dpi', 300);
 
-        // Normalizar a imagem (igual ao processo do modal de pintar/contorno)
-        normalizeImage(img);
+        // Substituir a imagem no canvas (igual ao processo do modal de pintar/contorno)
+        replaceImageOnCanvas(img);
 
         try {
             canvas.add(img);
