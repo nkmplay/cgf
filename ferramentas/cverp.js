@@ -50,36 +50,43 @@ function openVectorizeModal(canvas, activeObject) {
             });
 
             fabric.loadSVGFromString(svgContent, function (objects, options) {
-                // Converte o grupo em um único caminho (fabric.Path)
-                const pathData = objects
-                    .filter(obj => obj.type === 'path') // Filtra apenas os caminhos
-                    .map(obj => obj.path.map(point => point.join(' ')).join(' ')) // Converte os pontos em strings
-                    .join(' '); // Combina todos os caminhos em um único caminho
+                try {
+                    // Converte objetos em um único caminho
+                    const pathData = objects
+                        .filter(obj => obj.type === 'path') // Filtra apenas objetos do tipo 'path'
+                        .map(obj => obj.path.map(point => point.join(' ')).join(' ')) // Converte os pontos em strings
+                        .join(' '); // Combina todos os caminhos
 
-                const path = new fabric.Path(pathData, {
-                    left: centerX,
-                    top: centerY,
-                    fill: 'black', // Define a cor de preenchimento
-                    stroke: 'black', // Define a cor do traço
-                    strokeWidth: 1, // Define a espessura do traço
-                    selectable: true,
-                    evented: true
-                });
+                    if (!pathData) {
+                        showCustomAlert('Nenhum caminho foi gerado pelo Potrace.');
+                        return;
+                    }
 
-                // Centraliza o caminho no canvas
-                path.set({
-                    left: centerX - (path.width * path.scaleX) / 2,
-                    top: centerY - (path.height * path.scaleY) / 2
-                });
+                    // Cria o caminho final
+                    const path = new fabric.Path(pathData, {
+                        left: centerX,
+                        top: centerY,
+                        fill: 'black', // Define a cor de preenchimento
+                        stroke: 'black', // Define a cor do traço
+                        strokeWidth: 1, // Define a espessura do traço
+                        selectable: true,
+                        evented: true
+                    });
 
-                // Adiciona o caminho ao canvas
-                canvas.add(path);
-                canvas.renderAll();
-                saveState();
+                    // Centraliza o caminho no canvas
+                    path.center();
+                    canvas.add(path);
+                    canvas.renderAll();
+                    saveState(); // Salva o estado do canvas
+                } catch (error) {
+                    console.error('Erro ao processar o SVG:', error);
+                    showCustomAlert('Ocorreu um erro ao vetorizar a imagem.');
+                }
             });
         });
     }, 'image/png');
 }
+
 
 
 // Remover cor parametros
