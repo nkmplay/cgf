@@ -699,8 +699,8 @@
 .modal-content {
     background: #0f3460;
     border-radius: 8px;
-    width: 90%;
-    max-width: 800px;
+    width: 400px;
+    height: 600px;
     display: flex;
     flex-direction: column;
     border: 2px solid #4a90e2;
@@ -845,22 +845,6 @@ resolution-controls {
   font-size: 12px;
 }
 
-#export-text-svg-btn {
-  background: #4a90e2;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  width: 100%;
-  margin-top: 10px; /* Espaçamento acima do botão */
-}
-
-#export-text-svg-btn:hover {
-  background: #3a70b2;
-}
-
 .menu-row input[type="color"] {
   width: 30px;
   padding: 0;
@@ -882,6 +866,115 @@ resolution-controls {
 #export-svg-btn:hover {
   background: #3a70b2;
 }
+.save-as-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.save-as-modal-content {
+    background: #0f3460;
+    border-radius: 8px;
+    width: 200px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #4a90e2;
+    color: white;
+}
+
+.save-as-modal-header {
+    padding: 10px;
+    border-bottom: 1px solid #4a90e2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.save-as-modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.save-as-modal-header button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.save-as-modal-body {
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+}
+#vectorPreviewModal .modal-content {
+    width: 100%; /* Ocupa toda a largura */
+    height: 100%; /* Ocupa toda a altura */
+    display: flex;
+    flex-direction: column;
+    background: #0f3460;
+    border: 2px solid #4a90e2;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#vectorPreviewModal .modal-body {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+#vectorPreviewModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8); /* Fundo escuro semi-transparente */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+#vectorPreviewContainer {
+    flex: 1; /* Ocupa 85% da altura */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto; /* Habilita rolagem se necessário */
+    background-color: #0f3460;
+    padding: 20px; /* Espaçamento interno */
+}
+
+#vectorPreviewContainer svg {
+    transform: scale(1.5); /* Aplica o zoom manual */
+    transform-origin: center center; /* Centraliza o zoom */
+}
+.modal-footer button {
+    background: #4a90e2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+.modal-footer button:hover {
+    background: #3a70b2;
+}
 </style>
 </head>
 <body>
@@ -900,15 +993,10 @@ resolution-controls {
             Tamanho do Documento
         </a>
         <div class="separator"></div>
-		<div class="resolution-controls">
-			<label for="resolutionInput">Resolução (DPI):</label>
-			<input type="number" id="resolutionInput" value="150" min="72" max="600" step="1">
-		</div>
-        <a href="javascript:void(0)" id="exportPNGBtn">Exportar como PNG</a>
-        <a href="javascript:void(0)" id="exportJPGBtn">Exportar como JPG</a>
-        <a href="javascript:void(0)" id="exportPDFBtn">Exportar como PDF</a>
+        <a href="javascript:void(0)" id="saveAsBtn">Exportar</a>
     </div>
 </div>
+
   <div class="menu-item">
     Editar
     <div class="dropdown">
@@ -1001,7 +1089,7 @@ resolution-controls {
   </div>
   <div class="menu-item" style="margin-left: auto;">
         <button id="infoButton" style="background-color: yellow; color: black; border: none; padding: 8px 16px; border-radius: 4px; cursor: default;">
-            CloudPhoto - Alfa - 04/Jan/23
+            CloudPhoto - Alfa - 07/Jan/25
         </button>
     </div>
 </div>
@@ -1131,9 +1219,6 @@ resolution-controls {
       <input type="number" class="outline-size" value="0" min="0" max="20" step="0.1">
       <input type="color" class="outline-color" value="#000000">
     </div>
-    <div class="menu-row">
-      <button id="export-text-svg-btn">Exportar SVG</button>
-    </div>
   </div>
 </div>
 
@@ -1260,12 +1345,40 @@ resolution-controls {
       <input type="number" id="stroke-width" min="0" value="0">
       <input type="color" id="stroke-color" value="#000000">
     </div>
-    <div class="menu-row">
-      <button id="export-svg-btn">Exportar SVG</button>
-    </div>
   </div>
 </div>
-	
+
+<div id="saveAsModalOverlay" class="save-as-modal-overlay" style="display: none;">
+    <div class="save-as-modal-content">
+        <div class="save-as-modal-header">
+            <h2>Salvar Como</h2>
+            <button id="closeSaveAsModal">&times;</button>
+        </div>
+        <div class="save-as-modal-body">
+            <div class="resolution-controls">
+                <label for="resolutionInput">Resolução (DPI):</label>
+                <input type="number" id="resolutionInput" value="150" min="72" max="600" step="1">
+            </div>
+            <button class="tool-button" id="exportPNGBtn" style="font-size: 15px;">Exportar como PNG</button>
+            <button class="tool-button" id="exportJPGBtn" style="font-size: 15px;">Exportar como JPG</button>
+            <button class="tool-button" id="exportPDFBtn" style="font-size: 15px;">Exportar como PDF</button>
+			<button class="tool-button" id="exportsoSVGBtn" style="font-size: 15px;">Exportar como Vetor</button>
+        </div>
+    </div>
+</div>
+
+<div id="vectorPreviewModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div id="vectorPreviewContainer">
+            <!-- O conteúdo vetorial será renderizado aqui -->
+        </div>
+        <div class="modal-footer">
+            <button id="downloadVectorBtn" class="modal-btn">Baixar</button>
+            <button id="closeVectorPreviewModalBtn" class="modal-btn">Fechar</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://nkmplay.github.io/cgf/ferramentas/modalselect.js"></script>
 <script src="https://nkmplay.github.io/cgf/ferramentas/dragdrop.js"></script>
 <script src="https://nkmplay.github.io/cgf/ferramentas/exportar.js"></script>
@@ -2161,68 +2274,6 @@ document.addEventListener('keydown', function (e) {
       canvas.requestRenderAll();
     }
   }
-document.addEventListener('keydown', function (e) {
-  if (e.ctrlKey && e.key === 'p') {
-    e.preventDefault();
-
-    const a4Page = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (!a4Page) return;
-
-    const tempCanvas = document.createElement('canvas');
-    const ctx = tempCanvas.getContext('2d');
-    tempCanvas.width = a4Page.width;
-    tempCanvas.height = a4Page.height;
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-    ctx.save(); 
-    ctx.beginPath();
-    ctx.rect(0, 0, a4Page.width, a4Page.height);
-    ctx.clip(); 
-    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-    objects.forEach(obj => {
-      const clone = fabric.util.object.clone(obj);
-
-      const objLeft = clone.left - a4Page.left;
-      const objTop = clone.top - a4Page.top;
-
-      if (
-        objLeft + clone.width * clone.scaleX > 0 &&
-        objTop + clone.height * clone.scaleY > 0 &&
-        objLeft < a4Page.width &&
-        objTop < a4Page.height
-      ) {
-        clone.set({
-          left: objLeft,
-          top: objTop
-        });
-
-        clone.render(ctx);
-      }
-    });
-
-    ctx.restore(); 
-
-    const printWindow = window.open('');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Imprimir</title>
-          <style>
-            @media print {
-              img { max-width: 100%; height: auto; }
-            }
-          </style>
-        </head>
-        <body>
-          <img src="${tempCanvas.toDataURL()}" onload="window.print();window.close()">
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  }
-});
 
   if (e.ctrlKey && e.key === 'c') {
     e.preventDefault();
@@ -2259,6 +2310,145 @@ document.addEventListener('keydown', function (e) {
     }
   }
 });
+
+// ----------------------------------------- Seção Inicio Impressão ---------------------------------
+
+async function printCanvas() {
+    const dpi = parseInt(document.getElementById('resolutionInput').value) || 150;
+    const scale = dpi / 96;
+
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Nenhuma folha encontrada.');
+        return;
+    }
+
+    const tempContainer = document.createElement('div');
+    document.body.appendChild(tempContainer);
+
+    const exportCanvas = document.createElement('canvas');
+    const targetWidth = cloudFolha.width * scale;
+    const targetHeight = cloudFolha.height * scale;
+
+    exportCanvas.width = targetWidth;
+    exportCanvas.height = targetHeight;
+    tempContainer.appendChild(exportCanvas);
+
+    const exportFabricCanvas = new fabric.Canvas(exportCanvas, {
+        enableRetinaScaling: true,
+        imageSmoothingQuality: 'high'
+    });
+
+    exportFabricCanvas.setWidth(targetWidth);
+    exportFabricCanvas.setHeight(targetHeight);
+
+    const whiteBackground = new fabric.Rect({
+        width: cloudFolha.width,
+        height: cloudFolha.height,
+        fill: 'white',
+        originX: 'left',
+        originY: 'top',
+        scaleX: scale,
+        scaleY: scale
+    });
+    exportFabricCanvas.add(whiteBackground);
+
+    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+    const promises = objects.map(async (obj) => {
+        const clonedObj = await cloneObjectWithQuality(obj);
+
+        const relativeLeft = (obj.left - cloudFolha.left) / cloudFolha.scaleX;
+        const relativeTop = (obj.top - cloudFolha.top) / cloudFolha.scaleY;
+
+        const scaleFactor = targetWidth / cloudFolha.width;
+
+        clonedObj.set({
+            left: relativeLeft * scaleFactor,
+            top: relativeTop * scaleFactor,
+            scaleX: (obj.scaleX / cloudFolha.scaleX) * scaleFactor,
+            scaleY: (obj.scaleY / cloudFolha.scaleY) * scaleFactor
+        });
+
+        return clonedObj;
+    });
+
+    const clonedObjects = await Promise.all(promises);
+    clonedObjects.forEach(obj => exportFabricCanvas.add(obj));
+
+    exportFabricCanvas.renderAll();
+
+    const dataUrl = exportFabricCanvas.toDataURL({
+        format: 'png',
+        quality: 1.0,
+        enableRetinaScaling: true,
+        multiplier: 1,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
+    });
+
+    const printWindow = window.open('');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Imprimir</title>
+                <style>
+                    @media print {
+                        @page {
+                            size: auto; /* Tamanho automático baseado no conteúdo */
+                            margin: 0; /* Remover margens */
+                        }
+                        body {
+                            margin: 0; /* Remover margens do corpo */
+                            padding: 0; /* Remover padding */
+                        }
+                        img {
+                            width: 100%; /* Ocupar 100% da largura da página */
+                            height: auto; /* Manter a proporção */
+                            display: block; /* Remover espaços extras */
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <img src="${dataUrl}" onload="window.print();window.close()">
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+
+    tempContainer.remove();
+    exportFabricCanvas.dispose();
+}
+
+async function cloneObjectWithQuality(obj) {
+    return new Promise((resolve) => {
+        if (obj.type === 'image') {
+            const imgElement = obj.getElement();
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = imgElement.width;
+            tempCanvas.height = imgElement.height;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(imgElement, 0, 0);
+            const dataUrl = tempCanvas.toDataURL('image/png', 1.0);
+
+            fabric.Image.fromURL(dataUrl, (img) => {
+                resolve(img);
+            });
+        } else {
+            resolve(fabric.util.object.clone(obj));
+        }
+    });
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        printCanvas();
+    }
+});
+
+// ----------------------------------------- Seção Fim Impressão ---------------------------------
+
 
 // ----------------------------------------- Seção Inicio Texto ---------------------------------
 
@@ -2413,7 +2603,6 @@ function handleDropLayer(e) {
     const fromIndex = originalIndex;
     const toIndex = parseInt(e.currentTarget.getAttribute('data-index')); 
 
-    // Filtra o CloudFolha
     const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
     const reversedObjects = objects.reverse();
 
@@ -2878,40 +3067,7 @@ document.getElementById('gradient-color').addEventListener('input', function (e)
   }
 });
 
-document.getElementById('export-text-svg-btn').addEventListener('click', function () {
-    const activeObject = canvas.getActiveObject();
 
-    if (activeObject && activeObject.type === 'i-text') {
-        const padding = 20;
-        const width = activeObject.width * activeObject.scaleX + padding * 2;
-        const height = activeObject.height * activeObject.scaleY + padding * 2;
-
-        const draw = SVG().size(width, height);
-
-        const text = draw.text(activeObject.text)
-            .font({
-                family: activeObject.fontFamily,
-                size: activeObject.fontSize,
-                anchor: activeObject.textAlign,
-                fill: activeObject.fill
-            })
-            .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) 
-            .move(padding, padding); 
-
-        const svg = draw.svg();
-        const blob = new Blob([svg], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'text.svg';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    } else {
-        
-    }
-});
 
 //--------------------------------- Seção Final Texto ---------------------------------
 
@@ -2922,7 +3078,7 @@ document.getElementById('rotateBtn').addEventListener('click', () => {
     const rotateInput = document.getElementById('rotateInput');
     if (activeObject) {
         const rotationValue = parseInt(rotateInput.value);
-        activeObject.rotate((activeObject.angle + rotationValue) % 360); // Gira somando o valor do input
+        activeObject.rotate((activeObject.angle + rotationValue) % 360);
         canvas.renderAll();
         saveState();
     } else {
@@ -2938,8 +3094,8 @@ document.getElementById('duplicateBtn').addEventListener('click', () => {
         for (let i = 0; i < duplicateCount; i++) {
             const clone = fabric.util.object.clone(activeObject);
             clone.set({
-                left: activeObject.left + (i + 1) * 10, // Adiciona um pequeno deslocamento
-                top: activeObject.top + (i % 2) * 10 // Alterna a linha
+                left: activeObject.left + (i + 1) * 10,
+                top: activeObject.top + (i % 2) * 10 
             });
             canvas.add(clone);
         }
@@ -2969,12 +3125,11 @@ document.getElementById('organizeBtn').addEventListener('click', () => {
                 top: currentY
             });
 
-            currentX += obj.width * obj.scaleX + spacing; // Move para a direita
+            currentX += obj.width * obj.scaleX + spacing;
 
-            // Se ultrapassar a largura da CloudFolha, desce para a próxima linha
             if (currentX > cloudFolha.left + cloudFolhaWidth) {
-                currentX = cloudFolha.left; // Reseta para a esquerda
-                currentY += obj.height * obj.scaleY + spacing; // Move para baixo
+                currentX = cloudFolha.left;
+                currentY += obj.height * obj.scaleY + spacing; 
             }
         });
 
@@ -2993,7 +3148,7 @@ document.getElementById('alignVerticalBtn').addEventListener('click', () => {
 
         selectedObjects.forEach(obj => {
             obj.set({
-                top: centerY - (obj.height * obj.scaleY) / 2 // Alinha verticalmente
+                top: centerY - (obj.height * obj.scaleY) / 2
             });
         });
 
@@ -3012,7 +3167,7 @@ document.getElementById('alignHorizontalBtn').addEventListener('click', () => {
 
         selectedObjects.forEach(obj => {
             obj.set({
-                left: centerX - (obj.width * obj.scaleX) / 2 // Alinha horizontalmente
+                left: centerX - (obj.width * obj.scaleX) / 2
             });
         });
 
@@ -3361,45 +3516,6 @@ document.getElementById('stroke-color').addEventListener('input', function (e) {
 });
 
 
-document.getElementById('export-svg-btn').addEventListener('click', function () {
-    const activeObject = canvas.getActiveObject();
-
-    if (activeObject) {
-        const padding = 20; 
-        const width = activeObject.width * activeObject.scaleX + padding * 2;
-        const height = activeObject.height * activeObject.scaleY + padding * 2;
-
-        const draw = SVG().size(width, height);
-
-        if (activeObject.type === 'rect') {
-            const rect = draw.rect(activeObject.width * activeObject.scaleX, activeObject.height * activeObject.scaleY)
-                .fill(activeObject.fill)
-                .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) // Traço
-                .move(padding, padding); 
-        } else if (activeObject.type === 'path') {
-            const pathData = activeObject.path.map(point => point.join(' ')).join(' ');
-            const path = draw.path(pathData)
-                .fill(activeObject.fill) 
-                .stroke({ color: activeObject.stroke, width: activeObject.strokeWidth }) 
-                .move(padding, padding); 
-        }
-
-        const svg = draw.svg();
-        const blob = new Blob([svg], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'shape.svg';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    } else {
-        alert('Selecione um objeto válido para exportar como SVG.');
-    }
-});
-
-
 canvas.on('selection:created', updateFloatingShapeMenu);
 canvas.on('selection:updated', updateFloatingShapeMenu);
 canvas.on('selection:cleared', function () {
@@ -3428,6 +3544,253 @@ document.getElementById('formaquadradoBtn').addEventListener('click', () => {
 });
 
 // ---------- Fim Seção Formas -------------------------------------------
+
+// ---------- Inicio Seção Exportar Vetor com ClipPath -------------------------------------------
+
+const ZOOM_MANUAL = 0.5;
+
+document.getElementById('saveAsBtn').addEventListener('click', () => {
+    const modal = document.getElementById('saveAsModalOverlay');
+    modal.style.display = 'flex';
+});
+
+document.getElementById('closeSaveAsModal').addEventListener('click', () => {
+    const modal = document.getElementById('saveAsModalOverlay');
+    modal.style.display = 'none';
+});
+
+document.getElementById('saveAsModalOverlay').addEventListener('click', function (e) {
+    if (e.target === this) {
+        this.style.display = 'none';
+    }
+});
+
+document.getElementById('exportsoSVGBtn').addEventListener('click', function () {
+    const modal = document.getElementById('saveAsModalOverlay');
+    modal.style.display = 'none';
+
+    const vectorPreviewModal = document.getElementById('vectorPreviewModal');
+    vectorPreviewModal.style.display = 'flex';
+
+    renderVectorPreviewWithClipPath();
+});
+
+async function generateSVGContentWithClipPath(cloudFolha, objects) {
+    const extraMargin = 0.5 * CM_TO_PX;
+
+    const svgWidth = cloudFolha.width + 2 * extraMargin;
+    const svgHeight = cloudFolha.height + 2 * extraMargin; 
+
+    let svgContent = `
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             width="${svgWidth}" 
+             height="${svgHeight}" 
+             viewBox="0 0 ${svgWidth} ${svgHeight}"
+             preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <style>
+                    @font-face {
+                        font-family: 'ArialMT';
+                        src: local('Arial');
+                    }
+                </style>
+                <clipPath id="cloudFolhaClip">
+                    <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" />
+                </clipPath>
+            </defs>
+            <rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" fill="white" />
+            <g clip-path="url(#cloudFolhaClip)">
+    `;
+
+    for (const obj of objects) {
+        const relativeLeft = obj.left - cloudFolha.left + extraMargin;
+        const relativeTop = obj.top - cloudFolha.top + extraMargin;
+
+        if (obj.type === 'i-text' || obj.type === 'text') {
+            const fontSize = obj.fontSize * (obj.scaleX || 1);
+            const transform = `
+                translate(${relativeLeft} ${relativeTop}) 
+                rotate(${obj.angle || 0})
+            `;
+            
+            const escapedText = obj.text.replace(/[<>&"']/g, char => ({
+                '<': '&lt;',
+                '>': '&gt;',
+                '&': '&amp;',
+                '"': '&quot;',
+                "'": '&apos;'
+            }[char]));
+
+            svgContent += `
+                <text 
+                    transform="${transform}"
+                    font-family="${obj.fontFamily || 'ArialMT'}"
+                    font-size="${fontSize}"
+                    fill="${obj.fill}"
+                    text-anchor="${obj.textAlign === 'center' ? 'middle' : 
+                                obj.textAlign === 'right' ? 'end' : 'start'}"
+                    dominant-baseline="hanging"
+                    style="white-space: pre"
+                >${escapedText}</text>
+            `;
+        } else if (obj.type === 'rect') {
+            const transform = `translate(${relativeLeft} ${relativeTop}) scale(${obj.scaleX || 1} ${obj.scaleY || 1}) rotate(${obj.angle || 0})`;
+            svgContent += `
+                <rect 
+                    x="0" y="0"
+                    width="${obj.width}"
+                    height="${obj.height}"
+                    fill="${obj.fill}"
+                    stroke="${obj.stroke || 'none'}"
+                    stroke-width="${obj.strokeWidth || 0}"
+                    transform="${transform}"
+                />
+            `;
+        } else if (obj.type === 'circle') {
+            const transform = `translate(${relativeLeft} ${relativeTop}) scale(${obj.scaleX || 1} ${obj.scaleY || 1}) rotate(${obj.angle || 0})`;
+            svgContent += `
+                <circle 
+                    cx="${obj.radius}"
+                    cy="${obj.radius}"
+                    r="${obj.radius}"
+                    fill="${obj.fill}"
+                    stroke="${obj.stroke || 'none'}"
+                    stroke-width="${obj.strokeWidth || 0}"
+                    transform="${transform}"
+                />
+            `;
+        } else if (obj.type === 'path') {
+            const transform = `translate(${relativeLeft} ${relativeTop}) scale(${obj.scaleX || 1} ${obj.scaleY || 1}) rotate(${obj.angle || 0})`;
+            const pathData = obj.path.map(point => point.join(' ')).join(' ');
+            svgContent += `
+                <path 
+                    d="${pathData}"
+                    fill="${obj.fill}"
+                    stroke="${obj.stroke || 'none'}"
+                    stroke-width="${obj.strokeWidth || 0}"
+                    transform="${transform}"
+                />
+            `;
+        } else if (obj.type === 'image') {
+            const transform = `translate(${relativeLeft} ${relativeTop}) scale(${obj.scaleX || 1} ${obj.scaleY || 1}) rotate(${obj.angle || 0})`;
+            const imgSrc = await getImageDataURL(obj);
+            svgContent += `
+                <image 
+                    x="0" y="0"
+                    width="${obj.width}"
+                    height="${obj.height}"
+                    href="${imgSrc}"
+                    transform="${transform}"
+                />
+            `;
+        }
+    }
+
+    svgContent += `
+            </g>
+        </svg>
+    `;
+
+    return svgContent;
+}
+
+async function renderVectorPreviewWithClipPath() {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Nenhuma folha encontrada.');
+        return;
+    }
+
+    const objects = canvas.getObjects().filter(obj => {
+        return (
+            obj.id !== 'CloudFolha' &&
+            (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'rect' || obj.type === 'circle' || obj.type === 'path' || obj.type === 'image')
+        );
+    });
+
+    const svgContent = await generateSVGContentWithClipPath(cloudFolha, objects);
+
+    const vectorPreviewContainer = document.getElementById('vectorPreviewContainer');
+    vectorPreviewContainer.innerHTML = '';
+
+    const svgElement = document.createElement('div');
+    svgElement.innerHTML = svgContent;
+    vectorPreviewContainer.appendChild(svgElement);
+
+    const svg = svgElement.querySelector('svg');
+    svg.style.display = 'block';
+    svg.style.margin = 'auto';
+    svg.style.transform = `scale(${ZOOM_MANUAL})`;
+    svg.style.transformOrigin = 'center center';
+}
+
+async function exportGroupWithClipPath() {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Nenhuma folha encontrada.');
+        return;
+    }
+
+    const objects = canvas.getObjects().filter(obj => {
+        return (
+            obj.id !== 'CloudFolha' &&
+            (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'rect' || obj.type === 'circle' || obj.type === 'path' || obj.type === 'image')
+        );
+    });
+
+    try {
+        const svgContent = await generateSVGContentWithClipPath(cloudFolha, objects);
+
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+        link.download = `CloudApp_${timestamp}.svg`;
+
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Erro ao exportar SVG:', error);
+        showCustomAlert('Erro ao exportar SVG. Verifique o console para mais detalhes.');
+    }
+}
+
+document.getElementById('downloadVectorBtn').addEventListener('click', function () {
+    exportGroupWithClipPath(); 
+    const vectorPreviewModal = document.getElementById('vectorPreviewModal');
+    vectorPreviewModal.style.display = 'none'; 
+});
+
+async function getImageDataURL(imageObject) {
+    return new Promise((resolve) => {
+        const imgElement = imageObject.getElement();
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElement, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+    });
+}
+
+document.getElementById('closeVectorPreviewModalBtn').addEventListener('click', function () {
+    const vectorPreviewModal = document.getElementById('vectorPreviewModal');
+    vectorPreviewModal.style.display = 'none';
+});
+
+document.getElementById('vectorPreviewModal').addEventListener('click', function (e) {
+    if (e.target === this) {
+        this.style.display = 'none';
+    }
+});
+
+// ---------- Fim Seção Exportar Vetor com ClipPath -------------------------------------------
+
 </script>
 </body>
 </html>
