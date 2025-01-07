@@ -1,5 +1,3 @@
-// dragdrop.js
-
 function loadDocumentFile(file) {
     const reader = new FileReader();
     reader.onload = function(event) {
@@ -70,7 +68,7 @@ function handleFiles(files) {
         } else if (file.type === 'application/pdf') {
             handlePdfFile(file);
         } else if (file.name.endsWith('.cloudapp')) {
-            loadDocumentFile(file); // Aqui a função é chamada
+            loadDocumentFile(file);
         } else {
             showCustomAlert('Arquivo não suportado. Por favor, insira imagens, PDFs ou arquivos .cloudapp.');
         }
@@ -81,7 +79,7 @@ function handleImageFile(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
         if (!canvas || !canvas.add) {
-            showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app..');
+            showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app.');
             return;
         }
 
@@ -119,6 +117,7 @@ function handleImageFile(file) {
 
                 try {
                     canvas.add(img);
+                    img.setCoords(); // Força o recálculo da caixa de delimitação
                     canvas.setActiveObject(img);
                     canvas.renderAll();
                     saveState();
@@ -249,7 +248,7 @@ async function convertPdfToImage(file, pageNumber) {
     }).promise;
 
     if (!canvas || !canvas.add) {
-        showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app..');
+        showCustomAlert('Erro ao carregar a área de trabalho. Por favor, feche e abra o app.');
         return;
     }
 
@@ -269,13 +268,16 @@ async function convertPdfToImage(file, pageNumber) {
             lockMovementX: false,
             lockMovementY: false,
             scaleX: 1,
-            scaleY: 1
+            scaleY: 1,
+            width: img.width, // Manter a largura original
+            height: img.height // Manter a altura original
         });
 
         img.set('dpi', 300);
 
         try {
             canvas.add(img);
+            img.setCoords(); // Força o recálculo da caixa de delimitação
             canvas.setActiveObject(img);
             canvas.renderAll();
             saveState();
