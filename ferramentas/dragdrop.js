@@ -115,6 +115,9 @@ function handleImageFile(file) {
                 // Definir DPI para 300
                 img.set('dpi', 300);
 
+                // Normalizar a imagem (igual ao processo do modal de pintar/contorno)
+                normalizeImage(img);
+
                 try {
                     canvas.add(img);
                     img.setCoords(); // Força o recálculo da caixa de delimitação
@@ -129,6 +132,45 @@ function handleImageFile(file) {
         tempImg.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+function normalizeImage(img) {
+    // Criar um canvas temporário para redesenhar a imagem com alta qualidade
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Definir as dimensões do canvas temporário com base na imagem original
+    tempCanvas.width = img.width;
+    tempCanvas.height = img.height;
+
+    // Configurar o contexto para alta qualidade
+    tempCtx.imageSmoothingEnabled = true;
+    tempCtx.imageSmoothingQuality = 'high';
+
+    // Redesenhar a imagem no canvas temporário
+    tempCtx.drawImage(img.getElement(), 0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Substituir a imagem original pela imagem normalizada
+    fabric.Image.fromURL(tempCanvas.toDataURL('image/png', 1.0), function(normalizedImg) {
+        normalizedImg.set({
+            left: img.left,
+            top: img.top,
+            originX: img.originX,
+            originY: img.originY,
+            scaleX: 1,
+            scaleY: 1,
+            width: img.width,
+            height: img.height,
+            dpi: 300
+        });
+
+        // Remover a imagem original e adicionar a normalizada
+        canvas.remove(img);
+        canvas.add(normalizedImg);
+        canvas.setActiveObject(normalizedImg);
+        canvas.renderAll();
+        saveState();
+    });
 }
 
 function handlePdfFile(file) {
@@ -274,6 +316,9 @@ async function convertPdfToImage(file, pageNumber) {
         });
 
         img.set('dpi', 300);
+
+        // Normalizar a imagem (igual ao processo do modal de pintar/contorno)
+        normalizeImage(img);
 
         try {
             canvas.add(img);
