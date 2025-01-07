@@ -1,4 +1,72 @@
-// cverp.js
+// potrace vetoriza
+
+function openVectorizeModal(canvas, activeObject) {
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para vetorizar.');
+        return;
+    }
+
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Folha "CloudFolha" não encontrada.');
+        return;
+    }
+
+    const centerX = cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2;
+    const centerY = cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2;
+
+    const imgElement = activeObject.getElement();
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = imgElement.width;
+    tempCanvas.height = imgElement.height;
+    const ctx = tempCanvas.getContext('2d');
+
+    ctx.drawImage(imgElement, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const brightness = (r + g + b) / 3;
+        const threshold = 128;
+
+        data[i] = data[i + 1] = data[i + 2] = brightness > threshold ? 255 : 0;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    tempCanvas.toBlob(function (blob) {
+        Potrace.loadImageFromFile(new File([blob], "image.png", { type: "image/png" }));
+        Potrace.process(function () {
+            const svgContent = Potrace.getSVG(1, {
+                turdsize: 2,
+                alphamax: 1,
+                optcurve: true,
+                detail: 5
+            });
+
+            fabric.loadSVGFromString(svgContent, function (objects, options) {
+                const svgGroup = fabric.util.groupSVGElements(objects, options);
+
+                svgGroup.set({
+                    left: centerX - (svgGroup.width * svgGroup.scaleX) / 2,
+                    top: centerY - (svgGroup.height * svgGroup.scaleY) / 2,
+                    selectable: true,
+                    evented: true
+                });
+
+                canvas.add(svgGroup);
+                canvas.renderAll();
+                saveState();
+            });
+        });
+    }, 'image/png');
+}
+
 
 // Remover cor parametros
 let cropper;
@@ -95,73 +163,6 @@ function openCropModal(canvas, activeObject) {
             cropper.destroy();
         }
     });
-}
-
-function openVectorizeModal(canvas, activeObject) {
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para vetorizar.');
-        return;
-    }
-
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (!cloudFolha) {
-        showCustomAlert('Folha "CloudFolha" não encontrada.');
-        return;
-    }
-
-    const centerX = cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2;
-    const centerY = cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2;
-
-    const imgElement = activeObject.getElement();
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = imgElement.width;
-    tempCanvas.height = imgElement.height;
-    const ctx = tempCanvas.getContext('2d');
-
-    ctx.drawImage(imgElement, 0, 0);
-
-    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const brightness = (r + g + b) / 3;
-        const threshold = 128;
-
-        data[i] = data[i + 1] = data[i + 2] = brightness > threshold ? 255 : 0;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-
-    tempCanvas.toBlob(function (blob) {
-        Potrace.loadImageFromFile(new File([blob], "image.png", { type: "image/png" }));
-        Potrace.process(function () {
-            const svgContent = Potrace.getSVG(1, {
-                turdsize: 2,
-                alphamax: 1,
-                optcurve: true,
-                detail: 5
-            });
-
-            fabric.loadSVGFromString(svgContent, function (objects, options) {
-                const svgGroup = fabric.util.groupSVGElements(objects, options);
-
-                svgGroup.set({
-                    left: centerX - (svgGroup.width * svgGroup.scaleX) / 2,
-                    top: centerY - (svgGroup.height * svgGroup.scaleY) / 2,
-                    selectable: true,
-                    evented: true
-                });
-
-                canvas.add(svgGroup);
-                canvas.renderAll();
-                saveState();
-            });
-        });
-    }, 'image/png');
 }
 
 function openExtractRegionsModal(canvas, activeObject) {
