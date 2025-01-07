@@ -70,11 +70,46 @@ function handleFiles(files) {
         } else if (file.type === 'application/pdf') {
             handlePdfFile(file);
         } else if (file.name.endsWith('.cloudapp')) {
-            loadDocumentFile(file); // Aqui a função é chamada
+            loadDocumentFile(file);
+        } else if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+            handleSvgFile(file); // Função para processar SVG
         } else {
-            showCustomAlert('Arquivo não suportado. Por favor, insira imagens, PDFs ou arquivos .cloudapp.');
+            showCustomAlert('Arquivo não suportado. Por favor, insira imagens, PDFs, arquivos .cloudapp ou SVGs.');
         }
     });
+}
+
+function handleSvgFile(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const svgContent = e.target.result;
+
+        try {
+            fabric.loadSVGFromString(svgContent, function (objects, options) {
+                if (objects.length === 0) {
+                    showCustomAlert('Erro ao carregar o SVG. O arquivo pode estar vazio ou inválido.');
+                    return;
+                }
+
+                const svgGroup = new fabric.Group(objects, {
+                    left: canvas.getWidth() / 2,
+                    top: canvas.getHeight() / 2,
+                    originX: 'center',
+                    originY: 'center',
+                    scaleX: 1,
+                    scaleY: 1
+                });
+
+                canvas.add(svgGroup);
+                canvas.setActiveObject(svgGroup);
+                canvas.renderAll();
+                saveState();
+            });
+        } catch (error) {
+            showCustomAlert('Erro ao processar o SVG. Verifique se o arquivo é válido.');
+        }
+    };
+    reader.readAsText(file);
 }
 
 function handleImageFile(file) {
