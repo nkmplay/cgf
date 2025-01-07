@@ -1,5 +1,6 @@
-// potrace vetoriza
+//cverp.js
 
+// potrace vetoriza
 function openVectorizeModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem para vetorizar.');
