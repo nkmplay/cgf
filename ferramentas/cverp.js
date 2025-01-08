@@ -309,6 +309,7 @@ function addRegionToCanvas(region, imgElement) {
     });
 }
 
+// pincel, balde e borracha
 function openPaintingModal(canvas, activeObject, tool) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem primeiro');
@@ -319,6 +320,8 @@ function openPaintingModal(canvas, activeObject, tool) {
     let currentPaintingIndex = -1;
     const maxHistoryStates = 10;
     let originalImagePosition = { left: 0, top: 0 };
+
+    // Função para salvar o histórico de pintura
     function savePaintingHistory(ctx) {
         const imageData = ctx.getImageData(0, 0, paintingCanvas.width, paintingCanvas.height);
         paintingHistory = paintingHistory.slice(0, currentPaintingIndex + 1);
@@ -333,6 +336,7 @@ function openPaintingModal(canvas, activeObject, tool) {
         undoButton.disabled = currentPaintingIndex <= 0;
     }
 
+    // Função para desfazer a última ação
     function undoPainting() {
         if (currentPaintingIndex > 0) {
             currentPaintingIndex--;
@@ -342,6 +346,7 @@ function openPaintingModal(canvas, activeObject, tool) {
         }
     }
 
+    // Criação do modal
     const modal = document.createElement('div');
     modal.classList.add('modal-overlay');
 
@@ -399,6 +404,8 @@ function openPaintingModal(canvas, activeObject, tool) {
     saveButton.textContent = 'Salvar';
     saveButton.addEventListener('click', () => {
         const imageURL = paintingCanvas.toDataURL('image/png', 1.0);
+        console.log('Resolução da imagem salva:', paintingCanvas.width, 'x', paintingCanvas.height);
+
         fabric.Image.fromURL(imageURL, (img) => {
             const originalLeft = activeObject.left;
             const originalTop = activeObject.top;
@@ -455,23 +462,14 @@ function openPaintingModal(canvas, activeObject, tool) {
     const originalWidth = imageElement.naturalWidth;
     const originalHeight = imageElement.naturalHeight;
 
-    const imageRatio = originalWidth / originalHeight;
-    const modalWidth = modalContent.clientWidth;
-    const modalHeight = modalContent.clientHeight;
-    let canvasWidth, canvasHeight;
+    // Define o tamanho do canvas de pintura com a mesma resolução da imagem original
+    paintingCanvas.width = originalWidth;
+    paintingCanvas.height = originalHeight;
 
-    if (imageRatio > 1) {
-        canvasWidth = modalWidth * 0.9;
-        canvasHeight = canvasWidth / imageRatio;
-    } else {
-        canvasHeight = modalHeight * 0.9;
-        canvasWidth = canvasHeight * imageRatio;
-    }
+    console.log('Resolução da imagem original:', originalWidth, 'x', originalHeight);
 
-    paintingCanvas.width = canvasWidth;
-    paintingCanvas.height = canvasHeight;
-
-    paintingCtx.drawImage(imageElement, 0, 0, originalWidth, originalHeight, 0, 0, canvasWidth, canvasHeight);
+    // Desenha a imagem no canvas de pintura com a resolução original
+    paintingCtx.drawImage(imageElement, 0, 0, originalWidth, originalHeight);
 
     savePaintingHistory(paintingCtx);
 
