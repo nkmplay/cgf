@@ -1,5 +1,93 @@
 //cverp.js
 
+// potrace vetoriza
+function openVectorizeModal(canvas, activeObject) {
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para vetorizar.');
+        return;
+    }
+
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Folha "CloudFolha" não encontrada.');
+        return;
+    }
+
+    const centerX = cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2;
+    const centerY = cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2;
+
+    const imgElement = activeObject.getElement();
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = imgElement.width;
+    tempCanvas.height = imgElement.height;
+    const ctx = tempCanvas.getContext('2d');
+
+    ctx.drawImage(imgElement, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const brightness = (r + g + b) / 3;
+        const threshold = 128;
+
+        data[i] = data[i + 1] = data[i + 2] = brightness > threshold ? 255 : 0;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    tempCanvas.toBlob(function (blob) {
+        Potrace.loadImageFromFile(new File([blob], "image.png", { type: "image/png" }));
+        Potrace.process(function () {
+            const svgContent = Potrace.getSVG(1, {
+                turdsize: 2,
+                alphamax: 1,
+                optcurve: true,
+                detail: 5
+            });
+
+            fabric.loadSVGFromString(svgContent, function (objects, options) {
+                try {
+                    // Converte objetos em um único caminho
+                    const pathData = objects
+                        .filter(obj => obj.type === 'path') // Filtra apenas objetos do tipo 'path'
+                        .map(obj => obj.path.map(point => point.join(' ')).join(' ')) // Converte os pontos em strings
+                        .join(' '); // Combina todos os caminhos
+
+                    if (!pathData) {
+                        showCustomAlert('Nenhum caminho foi gerado pelo Potrace.');
+                        return;
+                    }
+
+                    // Cria o caminho final
+                    const path = new fabric.Path(pathData, {
+                        left: centerX,
+                        top: centerY,
+                        fill: 'black', // Define a cor de preenchimento
+                        stroke: 'black', // Define a cor do traço
+                        strokeWidth: 1, // Define a espessura do traço
+                        selectable: true,
+                        evented: true
+                    });
+
+                    // Centraliza o caminho no canvas
+                    path.center();
+                    canvas.add(path);
+                    canvas.renderAll();
+                    saveState(); // Salva o estado do canvas
+                } catch (error) {
+                    console.error('Erro ao processar o SVG:', error);
+                    showCustomAlert('Ocorreu um erro ao vetorizar a imagem.');
+                }
+            });
+        });
+    }, 'image/png');
+}
+
 
 
 // Remover cor parametros
