@@ -641,20 +641,32 @@ function openRemoveColorModal(canvas, activeObject) {
     // Obtém o modal e o canvas de remoção de cor
     const removeColorModal = document.getElementById('removeColorModal');
     const removeColorCanvas = document.getElementById('removeColorCanvas');
+    const modalBody = removeColorModal.querySelector('.modal-body');
 
-    // Define o tamanho do canvas de remoção de cor
+    // Define o tamanho do canvas de remoção de cor com base na imagem original
     const originalImage = activeObject._element;
-    removeColorCanvas.width = originalImage.width;
-    removeColorCanvas.height = originalImage.height;
+    const imageWidth = originalImage.width;
+    const imageHeight = originalImage.height;
+
+    // Calcula o zoom necessário para que a imagem caiba no modal
+    const modalWidth = modalBody.clientWidth;
+    const modalHeight = modalBody.clientHeight;
+    const zoom = Math.min(modalWidth / imageWidth, modalHeight / imageHeight);
+
+    // Define o tamanho do canvas de remoção de cor com base no zoom
+    removeColorCanvas.width = imageWidth;
+    removeColorCanvas.height = imageHeight;
+    removeColorCanvas.style.width = `${imageWidth * zoom}px`;
+    removeColorCanvas.style.height = `${imageHeight * zoom}px`;
 
     // Desenha a imagem no canvas de remoção de cor
     removeColorCtx = removeColorCanvas.getContext('2d');
-    removeColorCtx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
+    removeColorCtx.drawImage(originalImage, 0, 0, imageWidth, imageHeight);
 
     // Inicializa o histórico de remoção de cor
     removeColorHistory = [];
     currentRemoveColorIndex = -1;
-    saveRemoveColorHistory(removeColorCtx.getImageData(0, 0, removeColorCanvas.width, removeColorCanvas.height));
+    saveRemoveColorHistory(removeColorCtx.getImageData(0, 0, imageWidth, imageHeight));
 
     // Exibe o modal
     removeColorModal.style.display = 'flex';
@@ -663,14 +675,21 @@ function openRemoveColorModal(canvas, activeObject) {
     setupRemoveColorEvents(canvas, activeObject);
 }
 
-// Função para configurar os eventos do modal
 function setupRemoveColorEvents(canvas, activeObject) {
+    const removeColorCanvas = document.getElementById('removeColorCanvas');
+
     // Evento de clique no canvas de remoção de cor
     removeColorCanvas.addEventListener('click', (e) => {
+        const rect = removeColorCanvas.getBoundingClientRect();
+        const scaleX = removeColorCanvas.width / rect.width;
+        const scaleY = removeColorCanvas.height / rect.height;
+        const x = Math.floor((e.clientX - rect.left) * scaleX);
+        const y = Math.floor((e.clientY - rect.top) * scaleY);
+
         if (currentRemoveMode === 'region') {
-            handleRemoveColorRegion(e);
+            handleRemoveColorRegion(x, y);
         } else {
-            handleRemoveColorTotal(e);
+            handleRemoveColorTotal(x, y);
         }
     });
 
