@@ -1,93 +1,5 @@
 //cverp.js
 
-// potrace vetoriza
-function openVectorizeModal(canvas, activeObject) {
-    if (!activeObject || activeObject.type !== 'image') {
-        showCustomAlert('Selecione uma imagem para vetorizar.');
-        return;
-    }
-
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-    if (!cloudFolha) {
-        showCustomAlert('Folha "CloudFolha" não encontrada.');
-        return;
-    }
-
-    const centerX = cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2;
-    const centerY = cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2;
-
-    const imgElement = activeObject.getElement();
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = imgElement.width;
-    tempCanvas.height = imgElement.height;
-    const ctx = tempCanvas.getContext('2d');
-
-    ctx.drawImage(imgElement, 0, 0);
-
-    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const brightness = (r + g + b) / 3;
-        const threshold = 128;
-
-        data[i] = data[i + 1] = data[i + 2] = brightness > threshold ? 255 : 0;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-
-    tempCanvas.toBlob(function (blob) {
-        Potrace.loadImageFromFile(new File([blob], "image.png", { type: "image/png" }));
-        Potrace.process(function () {
-            const svgContent = Potrace.getSVG(1, {
-                turdsize: 2,
-                alphamax: 1,
-                optcurve: true,
-                detail: 5
-            });
-
-            fabric.loadSVGFromString(svgContent, function (objects, options) {
-                try {
-                    // Converte objetos em um único caminho
-                    const pathData = objects
-                        .filter(obj => obj.type === 'path') // Filtra apenas objetos do tipo 'path'
-                        .map(obj => obj.path.map(point => point.join(' ')).join(' ')) // Converte os pontos em strings
-                        .join(' '); // Combina todos os caminhos
-
-                    if (!pathData) {
-                        showCustomAlert('Nenhum caminho foi gerado pelo Potrace.');
-                        return;
-                    }
-
-                    // Cria o caminho final
-                    const path = new fabric.Path(pathData, {
-                        left: centerX,
-                        top: centerY,
-                        fill: 'black', // Define a cor de preenchimento
-                        stroke: 'black', // Define a cor do traço
-                        strokeWidth: 1, // Define a espessura do traço
-                        selectable: true,
-                        evented: true
-                    });
-
-                    // Centraliza o caminho no canvas
-                    path.center();
-                    canvas.add(path);
-                    canvas.renderAll();
-                    saveState(); // Salva o estado do canvas
-                } catch (error) {
-                    console.error('Erro ao processar o SVG:', error);
-                    showCustomAlert('Ocorreu um erro ao vetorizar a imagem.');
-                }
-            });
-        });
-    }, 'image/png');
-}
-
 
 
 // Remover cor parametros
@@ -625,7 +537,7 @@ let currentRemoveMode = 'region';
 let removeColorHistoryIndex = -1;
 let activeImage = null;
 
-// Função para abrir o modal de remover cor
+/// Função para abrir o modal de remover cor
 function openRemoveColorModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
         alert('Selecione uma imagem para remover a cor.');
@@ -641,11 +553,49 @@ function openRemoveColorModal(canvas, activeObject) {
     // Obtém o modal e o canvas de remoção de cor
     const removeColorModal = document.getElementById('removeColorModal');
     const removeColorCanvas = document.getElementById('removeColorCanvas');
+    const modalContent = removeColorModal.querySelector('.modal-content');
+    const modalBody = removeColorModal.querySelector('.modal-body');
 
-    // Define o tamanho do canvas de remoção de cor
+    // Configura estilos responsivos para o modal e canvas
+    modalContent.style.maxWidth = '90vw';
+    modalContent.style.maxHeight = '90vh';
+    modalBody.style.display = 'flex';
+    modalBody.style.justifyContent = 'center';
+    modalBody.style.alignItems = 'center';
+    modalBody.style.overflow = 'hidden';
+    
+    // Configura estilos responsivos para o canvas
+    removeColorCanvas.style.maxWidth = '100%';
+    removeColorCanvas.style.maxHeight = '100%';
+    removeColorCanvas.style.objectFit = 'contain';
+
+    // Define o tamanho do canvas mantendo a proporção da imagem original
     const originalImage = activeObject._element;
+    const maxWidth = modalBody.clientWidth;
+    const maxHeight = modalBody.clientHeight;
+    
+    // Calcula as dimensões mantendo a proporção
+    const aspectRatio = originalImage.width / originalImage.height;
+    let canvasWidth = originalImage.width;
+    let canvasHeight = originalImage.height;
+
+    if (canvasWidth > maxWidth) {
+        canvasWidth = maxWidth;
+        canvasHeight = canvasWidth / aspectRatio;
+    }
+
+    if (canvasHeight > maxHeight) {
+        canvasHeight = maxHeight;
+        canvasWidth = canvasHeight * aspectRatio;
+    }
+
+    // Define o tamanho do canvas mantendo a resolução original
     removeColorCanvas.width = originalImage.width;
     removeColorCanvas.height = originalImage.height;
+    
+    // Aplica o tamanho visual responsivo via CSS
+    removeColorCanvas.style.width = canvasWidth + 'px';
+    removeColorCanvas.style.height = canvasHeight + 'px';
 
     // Desenha a imagem no canvas de remoção de cor
     removeColorCtx = removeColorCanvas.getContext('2d');
@@ -661,6 +611,29 @@ function openRemoveColorModal(canvas, activeObject) {
 
     // Configura os eventos
     setupRemoveColorEvents(canvas, activeObject);
+
+    // Adiciona listener para redimensionamento da janela
+    window.addEventListener('resize', function() {
+        const maxWidth = modalBody.clientWidth;
+        const maxHeight = modalBody.clientHeight;
+        
+        let canvasWidth = originalImage.width;
+        let canvasHeight = originalImage.height;
+        const aspectRatio = originalImage.width / originalImage.height;
+
+        if (canvasWidth > maxWidth) {
+            canvasWidth = maxWidth;
+            canvasHeight = canvasWidth / aspectRatio;
+        }
+
+        if (canvasHeight > maxHeight) {
+            canvasHeight = maxHeight;
+            canvasWidth = canvasHeight * aspectRatio;
+        }
+
+        removeColorCanvas.style.width = canvasWidth + 'px';
+        removeColorCanvas.style.height = canvasHeight + 'px';
+    });
 }
 
 // Função para configurar os eventos do modal
