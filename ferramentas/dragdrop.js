@@ -1,3 +1,4 @@
+// Função para carregar um arquivo de documento (.cloudapp)
 function loadDocumentFile(file) {
     const reader = new FileReader();
     reader.onload = function(event) {
@@ -38,6 +39,7 @@ function loadDocumentFile(file) {
     reader.readAsText(file);
 }
 
+// Função para lidar com o evento de soltar arquivos (drag and drop)
 function handleDrop(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -61,6 +63,7 @@ function handleDrop(e) {
     handleFiles(files);
 }
 
+// Função para lidar com arquivos (imagens, PDFs, .cloudapp)
 function handleFiles(files) {
     Array.from(files).forEach(file => {
         if (file.type.startsWith('image/')) {
@@ -75,6 +78,7 @@ function handleFiles(files) {
     });
 }
 
+// Função para lidar com arquivos de imagem
 function handleImageFile(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -120,6 +124,7 @@ function handleImageFile(file) {
     reader.readAsDataURL(file);
 }
 
+// Função para redimensionar e centralizar a imagem no CloudFolha
 function resizeAndCenterImage(img) {
     const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
     if (!cloudFolha) {
@@ -127,20 +132,23 @@ function resizeAndCenterImage(img) {
         return;
     }
 
+    // Obter as dimensões físicas da imagem (em polegadas)
+    const imgWidthInches = img.width / 300; // 300 DPI
+    const imgHeightInches = img.height / 300;
+
+    // Converter polegadas para pixels (1 polegada = 96 pixels)
+    const imgWidthPixels = imgWidthInches * 96;
+    const imgHeightPixels = imgHeightInches * 96;
+
     // Obter as dimensões da folha CloudFolha
     const folhaWidth = cloudFolha.width * cloudFolha.scaleX;
     const folhaHeight = cloudFolha.height * cloudFolha.scaleY;
 
-    // Obter as dimensões da imagem
-    const imgWidth = img.width;
-    const imgHeight = img.height;
-
-    // Determinar o lado maior da imagem e da folha
-    const imgLadoMaior = Math.max(imgWidth, imgHeight);
-    const folhaLadoMaior = Math.max(folhaWidth, folhaHeight);
-
-    // Calcular a escala para que o lado maior da imagem seja igual ao lado maior da folha
-    const scale = folhaLadoMaior / imgLadoMaior;
+    // Calcular a escala para que a imagem caiba na folha
+    const scale = Math.min(
+        folhaWidth / imgWidthPixels,
+        folhaHeight / imgHeightPixels
+    );
 
     // Aplicar a escala à imagem
     img.set({
@@ -150,11 +158,12 @@ function resizeAndCenterImage(img) {
 
     // Centralizar a imagem no CloudFolha
     img.set({
-        left: cloudFolha.left + (folhaWidth - imgWidth * scale) / 2,
-        top: cloudFolha.top + (folhaHeight - imgHeight * scale) / 2
+        left: cloudFolha.left + (folhaWidth - imgWidthPixels * scale) / 2,
+        top: cloudFolha.top + (folhaHeight - imgHeightPixels * scale) / 2
     });
 }
 
+// Função para substituir a imagem no canvas
 function replaceImageOnCanvas(newImage) {
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
@@ -182,6 +191,7 @@ function replaceImageOnCanvas(newImage) {
     }
 }
 
+// Função para lidar com arquivos PDF
 function handlePdfFile(file) {
     const modalHtml = `
         <div id="pdfModal" class="modal-overlay" style="display: flex;">
@@ -268,6 +278,7 @@ function handlePdfFile(file) {
     });
 }
 
+// Função para converter uma página do PDF em uma imagem
 async function convertPdfToImage(file, pageNumber) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
@@ -330,6 +341,50 @@ async function convertPdfToImage(file, pageNumber) {
     });
 }
 
+// Função para exportar o canvas como imagem
+function exportCanvasToImage() {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Folha CloudFolha não encontrada.');
+        return;
+    }
+
+    // Definir DPI para 300
+    const dpi = 300;
+    const scale = dpi / 96; // 96 é o DPI padrão do canvas
+
+    // Criar um canvas temporário para exportação
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Definir as dimensões do canvas temporário com base no DPI
+    tempCanvas.width = cloudFolha.width * scale;
+    tempCanvas.height = cloudFolha.height * scale;
+
+    // Desenhar o conteúdo do canvas no canvas temporário
+    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+    objects.forEach(obj => {
+        const clone = fabric.util.object.clone(obj);
+        clone.set({
+            left: clone.left * scale,
+            top: clone.top * scale,
+            scaleX: clone.scaleX * scale,
+            scaleY: clone.scaleY * scale
+        });
+        tempCtx.drawImage(clone.toCanvasElement(), 0, 0);
+    });
+
+    // Converter o canvas temporário em uma imagem
+    const imageDataUrl = tempCanvas.toDataURL('image/png', 1.0);
+
+    // Criar um link para download da imagem
+    const link = document.createElement('a');
+    link.download = 'exported-image.png';
+    link.href = imageDataUrl;
+    link.click();
+}
+
+// Função para obter o centro do canvas
 function getCanvasCenter() {
     return {
         left: canvas.getWidth() / 2,
@@ -337,6 +392,7 @@ function getCanvasCenter() {
     };
 }
 
+// Eventos de drag and drop
 document.addEventListener('dragover', (e) => {
     e.preventDefault();
     e.stopPropagation();
