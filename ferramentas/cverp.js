@@ -537,7 +537,7 @@ let currentRemoveMode = 'region';
 let removeColorHistoryIndex = -1;
 let activeImage = null;
 
-/// Função para abrir o modal de remover cor
+// Função para abrir o modal de remover cor
 function openRemoveColorModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
         alert('Selecione uma imagem para remover a cor.');
@@ -553,49 +553,11 @@ function openRemoveColorModal(canvas, activeObject) {
     // Obtém o modal e o canvas de remoção de cor
     const removeColorModal = document.getElementById('removeColorModal');
     const removeColorCanvas = document.getElementById('removeColorCanvas');
-    const modalContent = removeColorModal.querySelector('.modal-content');
-    const modalBody = removeColorModal.querySelector('.modal-body');
 
-    // Configura estilos responsivos para o modal e canvas
-    modalContent.style.maxWidth = '90vw';
-    modalContent.style.maxHeight = '90vh';
-    modalBody.style.display = 'flex';
-    modalBody.style.justifyContent = 'center';
-    modalBody.style.alignItems = 'center';
-    modalBody.style.overflow = 'hidden';
-    
-    // Configura estilos responsivos para o canvas
-    removeColorCanvas.style.maxWidth = '100%';
-    removeColorCanvas.style.maxHeight = '100%';
-    removeColorCanvas.style.objectFit = 'contain';
-
-    // Define o tamanho do canvas mantendo a proporção da imagem original
+    // Define o tamanho do canvas de remoção de cor
     const originalImage = activeObject._element;
-    const maxWidth = modalBody.clientWidth;
-    const maxHeight = modalBody.clientHeight;
-    
-    // Calcula as dimensões mantendo a proporção
-    const aspectRatio = originalImage.width / originalImage.height;
-    let canvasWidth = originalImage.width;
-    let canvasHeight = originalImage.height;
-
-    if (canvasWidth > maxWidth) {
-        canvasWidth = maxWidth;
-        canvasHeight = canvasWidth / aspectRatio;
-    }
-
-    if (canvasHeight > maxHeight) {
-        canvasHeight = maxHeight;
-        canvasWidth = canvasHeight * aspectRatio;
-    }
-
-    // Define o tamanho do canvas mantendo a resolução original
     removeColorCanvas.width = originalImage.width;
     removeColorCanvas.height = originalImage.height;
-    
-    // Aplica o tamanho visual responsivo via CSS
-    removeColorCanvas.style.width = canvasWidth + 'px';
-    removeColorCanvas.style.height = canvasHeight + 'px';
 
     // Desenha a imagem no canvas de remoção de cor
     removeColorCtx = removeColorCanvas.getContext('2d');
@@ -611,29 +573,6 @@ function openRemoveColorModal(canvas, activeObject) {
 
     // Configura os eventos
     setupRemoveColorEvents(canvas, activeObject);
-
-    // Adiciona listener para redimensionamento da janela
-    window.addEventListener('resize', function() {
-        const maxWidth = modalBody.clientWidth;
-        const maxHeight = modalBody.clientHeight;
-        
-        let canvasWidth = originalImage.width;
-        let canvasHeight = originalImage.height;
-        const aspectRatio = originalImage.width / originalImage.height;
-
-        if (canvasWidth > maxWidth) {
-            canvasWidth = maxWidth;
-            canvasHeight = canvasWidth / aspectRatio;
-        }
-
-        if (canvasHeight > maxHeight) {
-            canvasHeight = maxHeight;
-            canvasWidth = canvasHeight * aspectRatio;
-        }
-
-        removeColorCanvas.style.width = canvasWidth + 'px';
-        removeColorCanvas.style.height = canvasHeight + 'px';
-    });
 }
 
 // Função para configurar os eventos do modal
