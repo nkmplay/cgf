@@ -45,36 +45,38 @@ function initializeGuides(canvas) {
     });
 
     function addHorizontalGuide(position) {
-        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-        if (cloudFolha) {
-            const guide = new fabric.Line([cloudFolha.left, cloudFolha.top + position, cloudFolha.left + cloudFolha.width * cloudFolha.scaleX, cloudFolha.top + position], {
-                stroke: 'red',
-                strokeDashArray: [5, 5],
-                selectable: false,
-                evented: false,
-                id: 'guide'
-            });
-            guides.push(guide);
-            canvas.add(guide);
-            canvas.renderAll();
-        }
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+        const guide = new fabric.Line([cloudFolha.left, cloudFolha.top + position, cloudFolha.left + cloudFolha.width * cloudFolha.scaleX, cloudFolha.top + position], {
+            stroke: 'red',
+            strokeDashArray: [5, 5],
+            selectable: false,
+            evented: false,
+            id: 'guide',
+            excludeFromLayers: true // Adiciona a propriedade personalizada
+        });
+        guides.push(guide);
+        canvas.add(guide);
+        canvas.renderAll();
     }
+}
 
-    function addVerticalGuide(position) {
-        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-        if (cloudFolha) {
-            const guide = new fabric.Line([cloudFolha.left + position, cloudFolha.top, cloudFolha.left + position, cloudFolha.top + cloudFolha.height * cloudFolha.scaleY], {
-                stroke: 'red',
-                strokeDashArray: [5, 5],
-                selectable: false,
-                evented: false,
-                id: 'guide'
-            });
-            guides.push(guide);
-            canvas.add(guide);
-            canvas.renderAll();
-        }
+function addVerticalGuide(position) {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+        const guide = new fabric.Line([cloudFolha.left + position, cloudFolha.top, cloudFolha.left + position, cloudFolha.top + cloudFolha.height * cloudFolha.scaleY], {
+            stroke: 'red',
+            strokeDashArray: [5, 5],
+            selectable: false,
+            evented: false,
+            id: 'guide',
+            excludeFromLayers: true // Adiciona a propriedade personalizada
+        });
+        guides.push(guide);
+        canvas.add(guide);
+        canvas.renderAll();
     }
+}
 
     function addMultipleHorizontalGuides(position) {
         const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
