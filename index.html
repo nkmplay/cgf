@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   body,html{margin:0;padding:0;height:100%;overflow:hidden;font-family:Arial,sans-serif}
-  #left-menu{position:fixed;top:40px;left:0;width:60px;bottom:0;background-color:#0f3460;padding:10px;color:#fff}
+  #left-menu{position:fixed;top:40px;left:0;width:70px;bottom:0;background-color:#0f3460;padding:10px;color:#fff}
   #canvas-container{position:fixed;top:40px;left:80px;right:200px;bottom:0;background-color:transparent;overflow:hidden}
   .tool-button {
     background-color:#0f3460;
@@ -27,9 +27,9 @@
     border-radius:4px;
     width:100%;
     cursor:pointer;
-    font-size:10px;
+    font-size:9px;
     font-weight:700;
-    height:60px;
+    height:50px;
     margin:5px 0;
     display:flex;
     flex-direction:column;
@@ -44,8 +44,8 @@
     background-color: #4a90e2;
   }
   .separator {
-    border-bottom: 1px solid #4a90e2;
-    margin: 5px 0;
+    border-bottom: 0px solid #4a90e2;
+    margin: 10px 0;
   }
   #fileInput{display:none}
   #top-menu{position:fixed;top:0;left:0;right:0;height:40px;background-color:#0f3460;display:flex;align-items:center;padding:0 5px;z-index:1000}
@@ -914,8 +914,8 @@ resolution-controls {
     overflow-y: auto;
 }
 #vectorPreviewModal .modal-content {
-    width: 100%; /* Ocupa toda a largura */
-    height: 100%; /* Ocupa toda a altura */
+    width: 100%;
+    height: 100%; 
     display: flex;
     flex-direction: column;
     background: #0f3460;
@@ -937,7 +937,7 @@ resolution-controls {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8); /* Fundo escuro semi-transparente */
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -946,18 +946,18 @@ resolution-controls {
 }
 
 #vectorPreviewContainer {
-    flex: 1; /* Ocupa 85% da altura */
+    flex: 1; 
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: auto; /* Habilita rolagem se necessário */
+    overflow: auto; 
     background-color: #0f3460;
-    padding: 20px; /* Espaçamento interno */
+    padding: 20px; 
 }
 
 #vectorPreviewContainer svg {
-    transform: scale(1.5); /* Aplica o zoom manual */
-    transform-origin: center center; /* Centraliza o zoom */
+    transform: scale(1.5); 
+    transform-origin: center center; 
 }
 .modal-footer button {
     background: #4a90e2;
@@ -971,6 +971,96 @@ resolution-controls {
 }
 .modal-footer button:hover {
     background: #3a70b2;
+}
+
+#detectionLevelModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; 
+    z-index: 1000;
+    pointer-events: none; 
+}
+
+#detectionLevelModal .modal-content {
+    background: #0f3460;
+    border-radius: 8px;
+    width: 400px;
+    height: auto; 
+    padding: 20px;
+    border: 2px solid #4a90e2;
+    color: white;
+    pointer-events: auto; 
+    margin-bottom: 20px;
+}
+
+#detectionLevelModal .modal-body {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#detectionLevelModal .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+#detectionLevelModal .slider-label {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+#detectionLevelModal input[type="range"] {
+    flex: 1; 
+}
+
+#detectionLevelModal .slider-value {
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 30px; 
+    text-align: center;
+}
+
+/* Estilos do Modal de Ajustes de Imagem */
+#imageAdjustModal {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #0f3460;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #4a90e2;
+    z-index: 1000;
+    color: white;
+    font-size: 14px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.modal-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-row label {
+    min-width: 80px;
+}
+
+.modal-row input[type="range"] {
+    flex: 1;
+}
+
+.modal-row span {
+    min-width: 40px;
+    text-align: right;
 }
 </style>
 </head>
@@ -1034,25 +1124,26 @@ resolution-controls {
   <div class="menu-item">
     Guias
     <div class="dropdown">
-      <a href="javascript:void(0)">Adicionar Guias Padr&#xe3;o</a>
-      <a href="javascript:void(0)" class="guides-item">
+      <a href="javascript:void(0)" id="addDefaultGuidesBtn">Adicionar Guias Padr&#xe3;o</a>
+      <a href="javascript:void(0)" class="guides-item" id="addGuidesBtn">
         Adicionar Guia
         <div class="guides-controls">
           <div class="guide-options">
-            <button class="guide-btn selected">Horizontal</button>
-            <button class="guide-btn">Vertical</button>
+            <button id="horizontalGuideBtn"  class="guide-btn selected">Horizontal</button>
+            <button id="verticalGuideBtn" class="guide-btn">Vertical</button>
           </div>
           <div class="guide-options">
-            <button class="guide-btn selected">Uma Guia</button>
-            <button class="guide-btn">V&#xe1;rias Guias</button>
+            <button id="singleGuideBtn" class="guide-btn selected">Uma Guia</button>
+            <button id="multipleGuidesBtn" class="guide-btn">V&#xe1;rias Guias</button>
           </div>
           <div class="guide-position">
-            <span>Posi&#xe7;&#xe3;o (cm)</span>
-            <input type="number" value="1" step="0.1" min="0">
+            <span>a cada (cm)</span>
+            <input type="number" id="guidePositionInput" value="1" step="0.1" min="0" style="display: flex; margin: 0 auto; text-align: center;">
           </div>
+			<button id="addGuideBtn" class="guide-btn selected">Adicionar</button>
         </div>
       </a>
-      <a href="javascript:void(0)">Apagar Guias</a>
+      <a href="javascript:void(0)" id="removeGuidesBtn">Apagar Guias</a>
     </div>
   </div>
   <div class="menu-item">
@@ -1121,10 +1212,16 @@ resolution-controls {
     <i class="fa-solid fa-eraser"></i>
     Borracha
   </button>
-  <button id="removeColorBtn"  class="tool-button">
+  <div class="separator"></div>
+  <button id="removeCorCliqueBtn"  class="tool-button">
     <i class="fa-solid fa-wand-magic-sparkles"></i>
-    Remover
+    Remover Cor Clique
   </button>
+  <button id="removeCorTotalBtn"  class="tool-button">
+    <i class="fa-solid fa-wand-magic-sparkles"></i>
+    Remover Cor Total
+  </button>
+  <div class="separator"></div>
   <button id="cropImageBtn"  class="tool-button">
     <i class="fa-solid fa-scissors"></i>
     Recortar
@@ -1245,22 +1342,6 @@ resolution-controls {
     </div>
   </div>
 </div>
-<div id="removeColorModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-body">
-            <canvas id="removeColorCanvas"></canvas>
-        </div>
-       <div class="modal-footer">
-			<button id="removeRegionBtn" class="remove-color-btn">Remover Região Clicada</button>
-			<button id="removeTotalBtn" class="remove-color-btn">Remover Cor Total</button>
-			<input type="range" id="sensitivityRange" min="0" max="100" value="30">
-			<button id="undoRemoveColor" class="remove-color-btn">Voltar</button>
-			<div style="flex: 1;"></div>
-			<button id="closeRemoveColorModal" class="remove-color-btn">Fechar</button>
-			<button id="saveRemoveColor" class="remove-color-btn">Salvar</button>
-		</div>
-    </div>
-</div>
 <div id="cropperModal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <div class="modal-body">
@@ -1376,6 +1457,44 @@ resolution-controls {
     </div>
 </div>
 
+<!-- Modal do Slider de Detecção -->
+<div id="detectionLevelModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-body">
+            <div class="slider-container">
+                <label for="detection-level" class="slider-label">Sensibilidade:</label>
+                <input type="range" id="detection-level" min="1" max="200" value="30">
+                <span class="slider-value" id="sliderValue">30</span>
+                <button id="undoColorRemovalBtn" class="modal-btn">Desfazer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="imageAdjustModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-row">
+            <label for="brightnessSlider">Brilho:</label>
+            <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
+            <span id="brightnessValue">0%</span>
+        </div>
+        <div class="modal-row">
+            <label for="contrastSlider">Contraste:</label>
+            <input type="range" id="contrastSlider" min="-100" max="100" value="0">
+            <span id="contrastValue">0%</span>
+        </div>
+        <div class="modal-row">
+            <label for="saturationSlider">Saturação:</label>
+            <input type="range" id="saturationSlider" min="-100" max="100" value="0">
+            <span id="saturationValue">0%</span>
+        </div>
+        <div class="modal-row">
+            <label for="sharpnessCheckbox">Nitidez:</label>
+            <input type="checkbox" id="sharpnessCheckbox">
+        </div>
+    </div>
+</div>
+
 <script src="https://nkmplay.github.io/cgf/ferramentas/modalselect.js"></script>
 <script src="https://nkmplay.github.io/cgf/ferramentas/dragdrop.js"></script>
 <script src="https://nkmplay.github.io/cgf/ferramentas/exportar.js"></script>
@@ -1413,11 +1532,6 @@ document.getElementById('cropImageBtn').addEventListener('click', () => {
             openPaintingModal(canvas, activeObject, 'bucket');
         });
 		
-		document.getElementById('removeColorBtn').addEventListener('click', function() {
-			const activeObject = canvas.getActiveObject();
-			openRemoveColorModal(canvas, activeObject);
-		});
-
 		document.getElementById('selectBtn').addEventListener('click', function () {
 			initSelectModal(canvas);
 		});
@@ -1426,20 +1540,15 @@ document.getElementById('cropImageBtn').addEventListener('click', () => {
 
 const DPI = 96;
 const CM_TO_PX = DPI / 2.54;
+
 const container = document.getElementById('canvas-container');
 const canvas = new fabric.Canvas('canvas', {
   preserveObjectStacking: true,
   selection: true
 });
-let canvasState = {
-  undoStack: [],
-  redoStack: [],
-  maxStates: 20,
-  isUndoOrRedoing: false,
-  isInitialized: false,
-  background: null,
-  hasFirstObject: false
-};
+
+initializeGuides(canvas);
+
 let isRatioLocked = false;
 let aspectRatio = 1;
 const widthInput = document.getElementById('width-input');
@@ -1737,7 +1846,8 @@ canvas.on('object:modified', function (e) {
 canvas.on('text:changed', updateLayersList);
 
 canvas.on('object:added', updateLayersList);
-canvas.on('object:removed', updateLayersList);
+
+canvas.on('object:removed', function (e) { if (e.target && e.target.id === 'CloudFolha') { canvas.add(e.target); canvas.sendToBack(e.target); } updateLayersList(); });
 
 canvas.on('object:scaling', function(e) {
   const object = e.target;
@@ -1798,148 +1908,214 @@ document.getElementById('customAlertModal').addEventListener('click', function (
 //--------------------------------- Seção dimensões da imagem ---------------------------------
 
 function updateSizeInputs() {
-  const activeObject = canvas.getActiveObject();
+  const activeObjects = canvas.getActiveObjects(); // Verifica múltiplos objetos
   const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
 
-  if (!activeObject && cloudFolha) {
+  if (activeObjects.length === 0 && cloudFolha) {
+    // Exibe dimensões da folha
     const widthCm = convertDimensions(cloudFolha.width, 'px', 'cm');
     const heightCm = convertDimensions(cloudFolha.height, 'px', 'cm');
     widthInput.value = widthCm.toFixed(1);
     heightInput.value = heightCm.toFixed(1);
-  } else if (activeObject && activeObject.id !== 'CloudFolha') {
-    if (activeObject.type === 'i-text') {
+  } else if (activeObjects.length === 1) {
+    // Exibe dimensões do único objeto selecionado
+    const activeObject = activeObjects[0];
+    if (activeObject.id !== 'CloudFolha') {
       const scaledWidth = activeObject.width * activeObject.scaleX;
       const scaledHeight = activeObject.height * activeObject.scaleY;
-      const widthCm = convertDimensions(scaledWidth, 'px', 'cm');
-      const heightCm = convertDimensions(scaledHeight, 'px', 'cm');
-
-      widthInput.value = widthCm.toFixed(1);
-      heightInput.value = heightCm.toFixed(1);
-
-      const fontSizeInput = document.getElementById('font-size');
-      if (fontSizeInput) {
-        fontSizeInput.value = Math.round(activeObject.fontSize);
-      }
+      widthInput.value = convertDimensions(scaledWidth, 'px', 'cm').toFixed(1);
+      heightInput.value = convertDimensions(scaledHeight, 'px', 'cm').toFixed(1);
     } else {
-      const widthCm = convertDimensions(activeObject.width * activeObject.scaleX, 'px', 'cm');
-      const heightCm = convertDimensions(activeObject.height * activeObject.scaleY, 'px', 'cm');
+      widthInput.value = '';
+      heightInput.value = '';
+    }
+  } else if (activeObjects.length > 1) {
+    // Verifica se todos os objetos têm o mesmo tamanho
+    const allSameSize = allSelectedObjectsHaveSameSize();
+    if (allSameSize) {
+      const firstObject = activeObjects[0];
+      const widthCm = convertDimensions(firstObject.width * firstObject.scaleX, 'px', 'cm');
+      const heightCm = convertDimensions(firstObject.height * firstObject.scaleY, 'px', 'cm');
       widthInput.value = widthCm.toFixed(1);
       heightInput.value = heightCm.toFixed(1);
+    } else {
+      // Objetos com tamanhos diferentes
+      widthInput.value = '';
+      heightInput.value = '';
     }
-  } else {
-    widthInput.value = '';
-    heightInput.value = '';
   }
+}
+function allSelectedObjectsHaveSameSize() {
+  const activeObjects = canvas.getActiveObjects();
+  if (activeObjects.length === 0) return false;
+
+  const firstObject = activeObjects[0];
+  const firstWidth = firstObject.width * firstObject.scaleX;
+  const firstHeight = firstObject.height * firstObject.scaleY;
+
+  return activeObjects.every(obj => {
+    const objWidth = obj.width * obj.scaleX;
+    const objHeight = obj.height * obj.scaleY;
+    return objWidth === firstWidth && objHeight === firstHeight;
+  });
 }
 
 widthInput.addEventListener('change', () => {
-  const activeObject = canvas.getActiveObject();
-  const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  const activeObjects = canvas.getActiveObjects();
+  const newWidthCm = parseFloat(widthInput.value);
+  const newWidthPx = convertDimensions(newWidthCm, 'cm', 'px');
 
-  if (!activeObject && cloudFolha) {
-    const newWidthCm = parseFloat(widthInput.value);
-    const newWidthPx = convertDimensions(newWidthCm, 'cm', 'px');
-    cloudFolha.set('width', newWidthPx);
-    canvas.renderAll();
-  } else if (activeObject && activeObject.id !== 'CloudFolha') {
-    updateObjectSize(widthInput, 'width');
+  if (activeObjects.length > 1) {
+    activeObjects.forEach(obj => {
+      if (obj.id !== 'CloudFolha') {
+        obj.set('scaleX', newWidthPx / obj.width);
+      }
+    });
+  } else if (activeObjects.length === 1) {
+    const activeObject = activeObjects[0];
+    if (activeObject.id !== 'CloudFolha') {
+      activeObject.set('scaleX', newWidthPx / activeObject.width);
+    }
   }
+
+  canvas.renderAll();
 });
+heightInput.addEventListener('change', () => {
+  const activeObjects = canvas.getActiveObjects();
+  const newHeightCm = parseFloat(heightInput.value);
+  const newHeightPx = convertDimensions(newHeightCm, 'cm', 'px');
+
+  if (activeObjects.length > 1) {
+    activeObjects.forEach(obj => {
+      if (obj.id !== 'CloudFolha') {
+        obj.set('scaleY', newHeightPx / obj.height);
+      }
+    });
+  } else if (activeObjects.length === 1) {
+    const activeObject = activeObjects[0];
+    if (activeObject.id !== 'CloudFolha') {
+      activeObject.set('scaleY', newHeightPx / activeObject.height);
+    }
+  }
+
+  canvas.renderAll();
+});
+
 
 heightInput.addEventListener('change', () => {
-  const activeObject = canvas.getActiveObject();
+  const activeObjects = canvas.getActiveObjects();
   const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+  const newHeightCm = parseFloat(heightInput.value);
+  const newHeightPx = convertDimensions(newHeightCm, 'cm', 'px');
 
-  if (!activeObject && cloudFolha) {
-    const newHeightCm = parseFloat(heightInput.value);
-    const newHeightPx = convertDimensions(newHeightCm, 'cm', 'px');
+  if (activeObjects.length > 0) {
+    activeObjects.forEach(obj => {
+      if (obj.id !== 'CloudFolha') {
+        const scale = newHeightPx / obj.height;
+        obj.set('scaleY', scale);
+        if (isRatioLocked) {
+          obj.set('scaleX', scale);
+        }
+      }
+    });
+  } else if (cloudFolha) {
     cloudFolha.set('height', newHeightPx);
-    canvas.renderAll();
-  } else if (activeObject && activeObject.id !== 'CloudFolha') {
-    updateObjectSize(heightInput, 'height');
+  } else {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.id !== 'CloudFolha') {
+      updateObjectSize(heightInput, 'height');
+    }
   }
+
+  canvas.renderAll();
 });
 
+
 function updateObjectSize(input, dimension) {
-  const activeObject = canvas.getActiveObject();
-  if (!activeObject || activeObject.id === 'CloudFolha') return;
+  const activeObjects = canvas.getActiveObjects();
+  if (activeObjects.length === 0) return;
 
-  const newValueCm = parseFloat(input.value);
-  const newValuePx = convertDimensions(newValueCm, 'cm', 'px');
+  activeObjects.forEach(activeObject => {
+    if (activeObject.id === 'CloudFolha') return;
 
-  if (activeObject.type === 'i-text') {
-    const currentWidth = activeObject.width * activeObject.scaleX;
-    const currentHeight = activeObject.height * activeObject.scaleY;
+    const newValueCm = parseFloat(input.value);
+    const newValuePx = convertDimensions(newValueCm, 'cm', 'px');
 
-    if (dimension === 'width') {
-      const scale = newValuePx / currentWidth;
-      const newFontSize = Math.round(activeObject.fontSize * scale);
+    if (activeObject.type === 'i-text') {
+      const currentWidth = activeObject.width * activeObject.scaleX;
+      const currentHeight = activeObject.height * activeObject.scaleY;
 
-      activeObject.set({
-        fontSize: newFontSize,
-        scaleX: 1,
-        scaleY: 1
-      });
+      if (dimension === 'width') {
+        const scale = newValuePx / currentWidth;
+        const newFontSize = Math.round(activeObject.fontSize * scale);
 
-      if (isRatioLocked) {
-        const heightScale = scale;
-        const newHeightFontSize = Math.round(activeObject.fontSize * heightScale);
         activeObject.set({
-          fontSize: newHeightFontSize,
+          fontSize: newFontSize,
+          scaleX: 1,
           scaleY: 1
         });
-        const newHeight = convertDimensions(activeObject.height, 'px', 'cm');
-        heightInput.value = newHeight.toFixed(1);
-      }
 
-      document.getElementById('font-size').value = newFontSize;
-    } else {
-      const scale = newValuePx / currentHeight;
-      const newFontSize = Math.round(activeObject.fontSize * scale);
+        if (isRatioLocked) {
+          const heightScale = scale;
+          const newHeightFontSize = Math.round(activeObject.fontSize * heightScale);
+          activeObject.set({
+            fontSize: newHeightFontSize,
+            scaleY: 1
+          });
+          const newHeight = convertDimensions(activeObject.height, 'px', 'cm');
+          heightInput.value = newHeight.toFixed(1);
+        }
 
-      activeObject.set({
-        fontSize: newFontSize,
-        scaleX: 1,
-        scaleY: 1
-      });
+        document.getElementById('font-size').value = newFontSize;
+      } else {
+        const scale = newValuePx / currentHeight;
+        const newFontSize = Math.round(activeObject.fontSize * scale);
 
-      if (isRatioLocked) {
-        const widthScale = scale;
-        const newWidthFontSize = Math.round(activeObject.fontSize * widthScale);
         activeObject.set({
-          fontSize: newWidthFontSize,
-          scaleX: 1
+          fontSize: newFontSize,
+          scaleX: 1,
+          scaleY: 1
         });
-        const newWidth = convertDimensions(activeObject.width, 'px', 'cm');
-        widthInput.value = newWidth.toFixed(1);
-      }
 
-      document.getElementById('font-size').value = newFontSize;
-    }
-  } else {
-    let scale;
-    if (dimension === 'width') {
-      scale = newValuePx / activeObject.width;
-      activeObject.set('scaleX', scale);
+        if (isRatioLocked) {
+          const widthScale = scale;
+          const newWidthFontSize = Math.round(activeObject.fontSize * widthScale);
+          activeObject.set({
+            fontSize: newWidthFontSize,
+            scaleX: 1
+          });
+          const newWidth = convertDimensions(activeObject.width, 'px', 'cm');
+          widthInput.value = newWidth.toFixed(1);
+        }
 
-      if (isRatioLocked) {
-        activeObject.set('scaleY', scale);
-        const newHeight = convertDimensions(activeObject.height * scale, 'px', 'cm');
-        heightInput.value = newHeight.toFixed(1);
+        document.getElementById('font-size').value = newFontSize;
       }
     } else {
-      scale = newValuePx / activeObject.height;
-      activeObject.set('scaleY', scale);
-
-      if (isRatioLocked) {
+      let scale;
+      if (dimension === 'width') {
+        scale = newValuePx / activeObject.width;
         activeObject.set('scaleX', scale);
-        const newWidth = convertDimensions(activeObject.width * scale, 'px', 'cm');
-        widthInput.value = newWidth.toFixed(1);
+
+        if (isRatioLocked) {
+          activeObject.set('scaleY', scale);
+          const newHeight = convertDimensions(activeObject.height * scale, 'px', 'cm');
+          heightInput.value = newHeight.toFixed(1);
+        }
+      } else {
+        scale = newValuePx / activeObject.height;
+        activeObject.set('scaleY', scale);
+
+        if (isRatioLocked) {
+          activeObject.set('scaleX', scale);
+          const newWidth = convertDimensions(activeObject.width * scale, 'px', 'cm');
+          widthInput.value = newWidth.toFixed(1);
+        }
       }
     }
-  }
 
-  constrainToA4(activeObject);
+    constrainToA4(activeObject);
+  });
+
   canvas.renderAll();
 }
 
@@ -2042,113 +2218,145 @@ function getObjectSizeInCm(object) {
 
 //--------------------------------- Seção Histórico ---------------------------------
 
+const canvasState = {
+    undoStack: [],
+    redoStack: [],
+    maxStates: 10,
+    isUndoOrRedoing: false,
+    isInitialized: false,
+    background: null,
+    hasFirstObject: false
+};
+
+// Função para inicializar o histórico
 function initializeHistory() {
-  if (canvasState.isInitialized) return;
-  const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-  if (objects.length > 0) {
-    const currentState = canvas.toJSON(['id']);
-    canvasState.undoStack = [JSON.stringify(currentState)];
-    canvasState.isInitialized = true;
-    canvasState.hasFirstObject = true;
-  }
-}
-
-function saveState() {
-  if (canvasState.isUndoOrRedoing || !canvasState.hasFirstObject) return;
-  if (!canvasState.background) {
-    canvasState.background = canvas.backgroundImage;
-  }
-  const currentState = canvas.toJSON(['id']);
-  const state = JSON.stringify(currentState);
-  if (canvasState.undoStack.length === 0 || state !== canvasState.undoStack[canvasState.undoStack.length - 1]) {
-    canvasState.undoStack.push(state);
-    if (canvasState.undoStack.length > canvasState.maxStates) {
-      canvasState.undoStack.shift();
+    if (canvasState.isInitialized) return;
+    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+    if (objects.length > 0) {
+        const currentState = canvas.toJSON(['id']);
+        canvasState.undoStack = [JSON.stringify(currentState)];
+        canvasState.isInitialized = true;
+        canvasState.hasFirstObject = true;
     }
-    canvasState.redoStack = [];
-  }
 }
 
+// Função para salvar o estado atual do canvas
+function saveState() {
+    if (canvasState.isUndoOrRedoing || !canvasState.hasFirstObject) return;
+    if (!canvasState.background) {
+        canvasState.background = canvas.backgroundImage;
+    }
+    const currentState = canvas.toJSON(['id']);
+    const state = JSON.stringify(currentState);
+    if (canvasState.undoStack.length === 0 || state !== canvasState.undoStack[canvasState.undoStack.length - 1]) {
+        canvasState.undoStack.push(state);
+        if (canvasState.undoStack.length > canvasState.maxStates) {
+            canvasState.undoStack.shift();
+        }
+        ensureCloudFolhaAtBottom();
+        canvasState.redoStack = [];
+    }
+}
+
+// Função para desfazer a última ação
 function undo() {
-  if (canvasState.undoStack.length > 1) {
-    canvasState.isUndoOrRedoing = true;
-    const currentState = JSON.stringify(canvas.toJSON(['id']));
-    canvasState.redoStack.push(currentState);
-    canvasState.undoStack.pop();
-    const prevState = JSON.parse(canvasState.undoStack[canvasState.undoStack.length - 1]);
-    const pattern = canvas.backgroundImage || canvas.backgroundColor;
-    canvas.clear();
-    canvas.loadFromJSON(prevState, () => {
-      canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
-      canvas.renderAll();
-      updateSelectionState();
-      let cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-      if (!cloudFolha) {
-        const width = 21 * CM_TO_PX;
-        const height = 29.7 * CM_TO_PX;
-        cloudFolha = new fabric.Rect({
-          id: 'CloudFolha',
-          left: (canvas.width - width) / 2,
-          top: (canvas.height - height) / 2,
-          width: width,
-          height: height,
-          fill: 'white',
-          selectable: false,
-          evented: false,
-          excludeFromExport: true
+    if (canvasState.undoStack.length > 1) {
+        canvasState.isUndoOrRedoing = true;
+        const currentState = JSON.stringify(canvas.toJSON(['id']));
+        canvasState.redoStack.push(currentState);
+        canvasState.undoStack.pop();
+        const prevState = JSON.parse(canvasState.undoStack[canvasState.undoStack.length - 1]);
+        const pattern = canvas.backgroundImage || canvas.backgroundColor;
+        canvas.clear();
+        canvas.loadFromJSON(prevState, () => {
+            canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
+            canvas.renderAll();
+            updateSelectionState();
+            let cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+            if (!cloudFolha) {
+                const width = 21 * CM_TO_PX;
+                const height = 29.7 * CM_TO_PX;
+                cloudFolha = new fabric.Rect({
+                    id: 'CloudFolha',
+                    left: (canvas.width - width) / 2,
+                    top: (canvas.height - height) / 2,
+                    width: width,
+                    height: height,
+                    fill: 'white',
+                    selectable: false,
+                    evented: false,
+                    excludeFromExport: true
+                });
+                canvas.add(cloudFolha);
+            }
+            cloudFolha.set({
+                selectable: false,
+                evented: false,
+                excludeFromExport: true
+            });
+            canvas.sendToBack(cloudFolha);
+            canvasState.isUndoOrRedoing = false;
         });
-        canvas.add(cloudFolha);
-      }
-      cloudFolha.set({
-        selectable: false,
-        evented: false,
-        excludeFromExport: true
-      });
-      canvas.sendToBack(cloudFolha);
-      canvasState.isUndoOrRedoing = false;
-    });
-  }
+        ensureCloudFolhaAtBottom();
+    }
 }
 
+// Função para refazer a última ação desfeita
 function redo() {
-  if (canvasState.redoStack.length > 0) {
-    canvasState.isUndoOrRedoing = true;
-    const currentState = JSON.stringify(canvas.toJSON(['id']));
-    canvasState.undoStack.push(currentState);
-    const nextState = JSON.parse(canvasState.redoStack.pop());
-    const pattern = canvas.backgroundImage || canvas.backgroundColor;
-    canvas.clear();
-    canvas.loadFromJSON(nextState, () => {
-      canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
-      canvas.renderAll();
-      updateSelectionState();
-      let cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-      if (!cloudFolha) {
-        const width = 21 * CM_TO_PX;
-        const height = 29.7 * CM_TO_PX;
-        cloudFolha = new fabric.Rect({
-          id: 'CloudFolha',
-          left: (canvas.width - width) / 2,
-          top: (canvas.height - height) / 2,
-          width: width,
-          height: height,
-          fill: 'white',
-          selectable: false,
-          evented: false,
-          excludeFromExport: true
+    if (canvasState.redoStack.length > 0) {
+        canvasState.isUndoOrRedoing = true;
+        const currentState = JSON.stringify(canvas.toJSON(['id']));
+        canvasState.undoStack.push(currentState);
+        const nextState = JSON.parse(canvasState.redoStack.pop());
+        const pattern = canvas.backgroundImage || canvas.backgroundColor;
+        canvas.clear();
+        canvas.loadFromJSON(nextState, () => {
+            canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
+            canvas.renderAll();
+            updateSelectionState();
+            let cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+            if (!cloudFolha) {
+                const width = 21 * CM_TO_PX;
+                const height = 29.7 * CM_TO_PX;
+                cloudFolha = new fabric.Rect({
+                    id: 'CloudFolha',
+                    left: (canvas.width - width) / 2,
+                    top: (canvas.height - height) / 2,
+                    width: width,
+                    height: height,
+                    fill: 'white',
+                    selectable: false,
+                    evented: false,
+                    excludeFromExport: true
+                });
+                canvas.add(cloudFolha);
+            }
+            cloudFolha.set({
+                selectable: false,
+                evented: false,
+                excludeFromExport: true
+            });
+            canvas.sendToBack(cloudFolha);
+            canvasState.isUndoOrRedoing = false;
         });
-        canvas.add(cloudFolha);
-      }
-      cloudFolha.set({
-        selectable: false,
-        evented: false,
-        excludeFromExport: true
-      });
-      canvas.sendToBack(cloudFolha);
-      canvasState.isUndoOrRedoing = false;
-    });
-  }
+    }
 }
+
+function ensureCloudFolhaAtBottom() {
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+        canvas.sendToBack(cloudFolha);
+        canvas.requestRenderAll();
+    }
+}
+
+function updateSelectionState() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+        activeObject.setCoords();
+    }
+}
+
 
 //--------------------------------- Seção Inicio Tamanho do Documento ---------------------------------
 
@@ -2181,138 +2389,140 @@ document.getElementById('setA4Horizontal').addEventListener('click', () => {
 
 //--------------------------------- Seção Atalhos ---------------------------------
 
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Delete') {
-    const activeObjects = canvas.getActiveObjects();
-    if (activeObjects && activeObjects.length) {
-      activeObjects.forEach(obj => {
-        if (obj.id !== 'CloudFolha') {
-          canvas.remove(obj);
-        }
-      });
-      canvas.discardActiveObject();
-      canvas.requestRenderAll();
-    }
-  }
-  if (e.ctrlKey && e.key === 'z') {
-    e.preventDefault();
-    undo();
-  }
-  if (e.ctrlKey && e.shiftKey && e.key === 'Z' || e.ctrlKey && e.key === 'y') {
-    e.preventDefault();
-    redo();
-  }
-  if (e.ctrlKey && e.key === 'v') {
-    e.preventDefault();
-    navigator.clipboard.read().then(data => {
-      data.forEach(item => {
-        if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
-          item.getType('image/png').then(blob => {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-              fabric.Image.fromURL(e.target.result, function (img) {
-                const pageWidth = 21 * CM_TO_PX;
-                const pageHeight = 29.7 * CM_TO_PX;
-                const scale = Math.min(pageWidth * 0.8 / img.width, pageHeight * 0.8 / img.height);
-                img.scale(scale);
-                const a4Page = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-                if (a4Page) {
-                  img.set({
-                    left: a4Page.left + (a4Page.width - img.width * scale) / 2,
-                    top: a4Page.top + (a4Page.height - img.height * scale) / 2
-                  });
-                }
-                canvas.add(img);
-                canvas.setActiveObject(img);
-                canvas.renderAll();
-              });
-            };
-            reader.readAsDataURL(blob);
-          });
-        }
-        if (item.types.includes('text/plain')) {
-          item.getType('text/plain').then(blob => {
-            blob.text().then(text => {
-              const itext = new fabric.IText(text, {
-                left: 100,
-                top: 100,
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fill: 'black'
-              });
-              canvas.add(itext);
-              canvas.setActiveObject(itext);
-              canvas.renderAll();
-            });
-          });
-        }
-      });
-    });
-  }
-  if (e.ctrlKey && e.key === 'd') {
-    e.preventDefault();
-    const activeObjects = canvas.getActiveObjects();
-    if (activeObjects && activeObjects.length) {
-      const clones = [];
-      activeObjects.forEach(obj => {
-        if (obj.id !== 'CloudFolha') {
-          const clone = fabric.util.object.clone(obj);
-          clone.set({
-            left: obj.left + 20,
-            top: obj.top + 20
-          });
-          canvas.add(clone);
-          clones.push(clone);
-        }
-      });
-      canvas.discardActiveObject();
-      if (clones.length > 1) {
-        const selection = new fabric.ActiveSelection(clones, {
-          canvas
-        });
-        canvas.setActiveObject(selection);
-      } else if (clones.length === 1) {
-        canvas.setActiveObject(clones[0]);
-      }
-      canvas.requestRenderAll();
-    }
-  }
+let lastRemovedState = null;
 
-  if (e.ctrlKey && e.key === 'c') {
-    e.preventDefault();
-    const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'image') {
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = activeObject.width * activeObject.scaleX;
-      tempCanvas.height = activeObject.height * activeObject.scaleY;
-      const tempFabricCanvas = new fabric.Canvas(tempCanvas);
-      const clone = fabric.util.object.clone(activeObject);
-      clone.left = 0;
-      clone.top = 0;
-      tempFabricCanvas.add(clone);
-      tempFabricCanvas.renderAll();
-      tempCanvas.toBlob(blob => {
-        const item = new ClipboardItem({
-          'image/png': blob
-        });
-        navigator.clipboard.write([item]).then(() => {
-          showCustomAlert('Imagem copiada para área de transferência!');
-        });
-      });
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Delete') {
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects && activeObjects.length) {
+            activeObjects.forEach(obj => {
+                if (obj.id !== 'CloudFolha') {
+                    canvas.remove(obj);
+                }
+            });
+            canvas.discardActiveObject();
+            canvas.requestRenderAll();
+        }
     }
-  }
-  if (e.ctrlKey && e.key === 'a') {
-    e.preventDefault();
-    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
-    if (objects.length > 0) {
-      const selection = new fabric.ActiveSelection(objects, {
-        canvas
-      });
-      canvas.setActiveObject(selection);
-      canvas.requestRenderAll();
+
+    // Colar (Ctrl + V)
+    if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        navigator.clipboard.read().then(data => {
+            data.forEach(item => {
+                if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                    item.getType('image/png').then(blob => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            fabric.Image.fromURL(e.target.result, function (img) {
+                                const pageWidth = 21 * CM_TO_PX;
+                                const pageHeight = 29.7 * CM_TO_PX;
+                                const scale = Math.min(pageWidth * 0.8 / img.width, pageHeight * 0.8 / img.height);
+                                img.scale(scale);
+                                const a4Page = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+                                if (a4Page) {
+                                    img.set({
+                                        left: a4Page.left + (a4Page.width - img.width * scale) / 2,
+                                        top: a4Page.top + (a4Page.height - img.height * scale) / 2
+                                    });
+                                }
+                                canvas.add(img);
+                                canvas.setActiveObject(img);
+                                canvas.renderAll();
+                            });
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+                }
+                if (item.types.includes('text/plain')) {
+                    item.getType('text/plain').then(blob => {
+                        blob.text().then(text => {
+                            const itext = new fabric.IText(text, {
+                                left: 100,
+                                top: 100,
+                                fontFamily: 'Arial',
+                                fontSize: 20,
+                                fill: 'black'
+                            });
+                            canvas.add(itext);
+                            canvas.setActiveObject(itext);
+                            canvas.renderAll();
+                        });
+                    });
+                }
+            });
+        });
     }
-  }
+
+    // Duplicar (Ctrl + D)
+    if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects && activeObjects.length) {
+            const clones = [];
+            activeObjects.forEach(obj => {
+                if (obj.id !== 'CloudFolha') {
+                    const clone = fabric.util.object.clone(obj);
+                    clone.set({
+                        left: obj.left + 20,
+                        top: obj.top + 20
+                    });
+                    canvas.add(clone);
+                    clones.push(clone);
+                }
+            });
+            canvas.discardActiveObject();
+            if (clones.length > 1) {
+                const selection = new fabric.ActiveSelection(clones, {
+                    canvas
+                });
+                canvas.setActiveObject(selection);
+            } else if (clones.length === 1) {
+                canvas.setActiveObject(clones[0]);
+            }
+            canvas.requestRenderAll();
+        }
+    }
+
+    // Copiar (Ctrl + C)
+    if (e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        const activeObject = canvas.getActiveObject();
+        if (activeObject && activeObject.type === 'image') {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = activeObject.width * activeObject.scaleX;
+            tempCanvas.height = activeObject.height * activeObject.scaleY;
+            const tempFabricCanvas = new fabric.Canvas(tempCanvas);
+            const clone = fabric.util.object.clone(activeObject);
+            clone.left = 0;
+            clone.top = 0;
+            tempFabricCanvas.add(clone);
+            tempFabricCanvas.renderAll();
+            tempCanvas.toBlob(blob => {
+                const item = new ClipboardItem({
+                    'image/png': blob
+                });
+                navigator.clipboard.write([item]).then(() => {
+                    showCustomAlert('Imagem copiada para área de transferência!');
+                });
+            });
+        }
+    }
+
+    // Selecionar Tudo (Ctrl + A)
+    if (e.ctrlKey && e.key === 'a') {
+        e.preventDefault();
+        const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+        if (objects.length > 0) {
+            const selection = new fabric.ActiveSelection(objects, {
+                canvas
+            });
+            canvas.setActiveObject(selection);
+            canvas.requestRenderAll();
+        }
+    }
 });
+
 
 // ----------------------------------------- Seção Inicio Impressão ---------------------------------
 
@@ -2462,6 +2672,202 @@ document.addEventListener('keydown', function (e) {
 
 // ----------------------------------------- Seção Fim Impressão ---------------------------------
 
+// ----------------------------------------- Seção Inicio Mover com Setas do teclado ---------------------------------
+
+let arrowKeys = {
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false
+};
+
+let moveSpeed = 0.1;
+const fastSpeed = 0.5;
+const maxSpeed = 1;
+const speedIncrement = 0.05;
+
+let keyPressTime = 0;
+let isKeyPressed = false;
+
+function moveSelectedObjects(dx, dy) {
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects && activeObjects.length > 0) {
+        activeObjects.forEach(obj => {
+            if (obj.id !== 'CloudFolha') {
+                obj.set({
+                    left: obj.left + dx,
+                    top: obj.top + dy
+                });
+                obj.setCoords();
+            }
+        });
+        canvas.renderAll();
+    }
+}
+
+function handleArrowKeys() {
+    if (isKeyPressed) {
+        keyPressTime += 0.1;
+        if (keyPressTime > 5) {
+            keyPressTime = 5;
+        }
+        if (keyPressTime > 5) {
+            moveSpeed = fastSpeed;
+        }
+        if (moveSpeed < maxSpeed) {
+            moveSpeed += speedIncrement;
+        }
+    }
+
+    if (arrowKeys.ArrowUp) {
+        moveSelectedObjects(0, -moveSpeed);
+    }
+    if (arrowKeys.ArrowDown) {
+        moveSelectedObjects(0, moveSpeed);
+    }
+    if (arrowKeys.ArrowLeft) {
+        moveSelectedObjects(-moveSpeed, 0);
+    }
+    if (arrowKeys.ArrowRight) {
+        moveSelectedObjects(moveSpeed, 0);
+    }
+
+    requestAnimationFrame(handleArrowKeys); 
+}
+
+handleArrowKeys();
+
+document.addEventListener('keydown', function (e) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (!arrowKeys[e.key]) {
+            arrowKeys[e.key] = true;
+            isKeyPressed = true;  
+            keyPressTime = 0;  
+            e.preventDefault();  
+        }
+    }
+});
+
+document.addEventListener('keyup', function (e) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        arrowKeys[e.key] = false;
+        isKeyPressed = false;  
+        moveSpeed = 0.1;  
+        keyPressTime = 0;  
+    }
+});
+
+// ----------------------------------------- Seção Fim Mover com Setas do teclado --------------------------------- 
+
+// ----------------------------------------- Seção Fim Mover zoom espaço do teclado --------------------------------- 
+
+// Variável para controlar se o espaço está pressionado
+let isSpacePressed = false;
+
+// Variável para controlar se o canvas está sendo arrastado
+let isDraggingCanvas = false;
+let lastPosX = 0;
+let lastPosY = 0;
+
+// Função para ativar o arrasto do canvas
+function startDraggingCanvas(e) {
+    if (isSpacePressed && !isDraggingCanvas) {
+        isDraggingCanvas = true;
+        lastPosX = e.clientX;
+        lastPosY = e.clientY;
+        canvas.defaultCursor = 'grabbing';
+        canvas.renderAll();
+    }
+}
+
+// Função para mover o canvas
+function dragCanvas(e) {
+    if (isDraggingCanvas) {
+        const deltaX = e.clientX - lastPosX;
+        const deltaY = e.clientY - lastPosY;
+
+        // Move o viewport do canvas
+        const vpt = canvas.viewportTransform;
+        vpt[4] += deltaX;
+        vpt[5] += deltaY;
+
+        canvas.requestRenderAll();
+
+        lastPosX = e.clientX;
+        lastPosY = e.clientY;
+    }
+}
+
+// Função para parar o arrasto do canvas
+function stopDraggingCanvas() {
+    if (isDraggingCanvas) {
+        isDraggingCanvas = false;
+        canvas.defaultCursor = isSpacePressed ? 'grab' : 'default';
+        canvas.renderAll();
+    }
+}
+
+// Evento para detectar quando o espaço é pressionado
+document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' && !isSpacePressed) {
+        isSpacePressed = true;
+
+        // Verifica se um objeto de texto não está em modo de edição
+        const activeObject = canvas.getActiveObject();
+        if (!activeObject || (activeObject.type !== 'i-text' && activeObject.type !== 'text')) {
+            canvas.defaultCursor = 'grab';
+            canvas.renderAll();
+        }
+    }
+});
+
+// Evento para detectar quando o espaço é solto
+document.addEventListener('keyup', function (e) {
+    if (e.code === 'Space' && isSpacePressed) {
+        isSpacePressed = false;
+        canvas.defaultCursor = 'default';
+        canvas.renderAll();
+    }
+});
+
+// Evento para iniciar o arrasto do canvas
+canvas.on('mouse:down', function (e) {
+    if (isSpacePressed) {
+        startDraggingCanvas(e.e);
+    }
+});
+
+// Evento para mover o canvas enquanto arrasta
+canvas.on('mouse:move', function (e) {
+    if (isDraggingCanvas) {
+        dragCanvas(e.e);
+    }
+});
+
+// Evento para parar o arrasto do canvas
+canvas.on('mouse:up', function () {
+    stopDraggingCanvas();
+});
+
+// Evento para desativar o arrasto do canvas quando um objeto de texto está em edição
+canvas.on('text:editing:entered', function () {
+    isSpacePressed = false;
+    canvas.defaultCursor = 'text';
+    canvas.renderAll();
+});
+
+// Evento para reativar o arrasto do canvas quando a edição de texto termina
+canvas.on('text:editing:exited', function () {
+    if (isSpacePressed) {
+        canvas.defaultCursor = 'grab';
+    } else {
+        canvas.defaultCursor = 'default';
+    }
+    canvas.renderAll();
+});
+
+// ----------------------------------------- Seção Fim Mover zoom espaço do teclado  --------------------------------- 
+
 
 // ----------------------------------------- Seção Inicio Texto ---------------------------------
 
@@ -2541,7 +2947,7 @@ function updateLayersList() {
     const layersList = document.getElementById('layersList');
     layersList.innerHTML = '';
 
-    const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+    const objects = canvas.getObjects().filter(obj => !obj.excludeFromLayers && obj.id !== 'CloudFolha');
     const reversedObjects = objects.reverse();
 
     reversedObjects.forEach((obj, index) => {
@@ -2875,13 +3281,6 @@ docSizeOkBtn.addEventListener('click', () => {
   canvas.sendToBack(a4Page);
   canvas.renderAll();
 });
-
-function updateSelectionState() {
-  const activeObject = canvas.getActiveObject();
-  if (activeObject) {
-    activeObject.setCoords();
-  }
-}
 
 
 function updateFloatingTextMenu() {
@@ -3529,11 +3928,21 @@ document.getElementById('stroke-color').addEventListener('input', function (e) {
 });
 
 
-canvas.on('selection:created', updateFloatingShapeMenu);
-canvas.on('selection:updated', updateFloatingShapeMenu);
+canvas.on('selection:created', function () {
+  updateFloatingShapeMenu();
+  updateSizeInputs();
+});
+
+canvas.on('selection:updated', function () {
+  updateFloatingShapeMenu();
+  updateSizeInputs();
+});
+
 canvas.on('selection:cleared', function () {
   document.getElementById('floating-shape-menu').style.display = 'none';
+  updateSizeInputs();
 });
+
 
 canvas.on('object:rotating', function (e) {
     const obj = e.target;
@@ -3584,6 +3993,342 @@ document.getElementById('formaquadradoBtn').addEventListener('click', () => {
 // ---------- Fim Seção Formas -------------------------------------------
 
 
+// ---------- Inicio Seção Remover Cor  -------------------------------------------
+
+// Variáveis globais
+let isColorRemovalActive = false;
+let isTotalColorRemovalActive = false;
+let tolerance = 30;
+
+// Abrir modal do slider
+function openDetectionLevelModal() {
+    const modal = document.getElementById('detectionLevelModal');
+    modal.style.display = 'flex';
+}
+
+// Fechar modal do slider
+function closeDetectionLevelModal() {
+    const modal = document.getElementById('detectionLevelModal');
+    modal.style.display = 'none';
+}
+
+// Atualizar valor do slider
+document.getElementById('detection-level').addEventListener('input', function () {
+    tolerance = parseInt(this.value);
+    document.getElementById('sliderValue').textContent = this.value;
+});
+
+// Lógica para o botão "Remover Cor Clique"
+document.getElementById('removeCorCliqueBtn').addEventListener('click', function () {
+    isColorRemovalActive = !isColorRemovalActive;
+    isTotalColorRemovalActive = false;
+
+    if (isColorRemovalActive) {
+        openDetectionLevelModal();
+        canvas.defaultCursor = 'crosshair';
+    } else {
+        closeDetectionLevelModal();
+        canvas.defaultCursor = 'default';
+    }
+});
+
+// Lógica para o botão "Remover Cor Total"
+document.getElementById('removeCorTotalBtn').addEventListener('click', function () {
+    isTotalColorRemovalActive = !isTotalColorRemovalActive;
+    isColorRemovalActive = false;
+
+    if (isTotalColorRemovalActive) {
+        openDetectionLevelModal();
+        canvas.defaultCursor = 'crosshair';
+    } else {
+        closeDetectionLevelModal();
+        canvas.defaultCursor = 'default';
+    }
+});
+
+// Fechar modal e cancelar remoção ao clicar fora do canvas ou do botão
+document.addEventListener('click', function (e) {
+    const canvasContainer = document.getElementById('canvas-container');
+    const removeCorCliqueBtn = document.getElementById('removeCorCliqueBtn');
+    const removeCorTotalBtn = document.getElementById('removeCorTotalBtn');
+    const modal = document.getElementById('detectionLevelModal');
+
+    // Verifica se o clique foi fora do canvas, dos botões ou do modal
+    if (
+        !canvasContainer.contains(e.target) &&
+        !removeCorCliqueBtn.contains(e.target) &&
+        !removeCorTotalBtn.contains(e.target) &&
+        !modal.contains(e.target)
+    ) {
+        closeDetectionLevelModal();
+        isColorRemovalActive = false;
+        isTotalColorRemovalActive = false;
+        canvas.defaultCursor = 'default';
+    }
+});
+
+// Lógica para remover cores
+canvas.on('mouse:down', function (options) {
+    if (isColorRemovalActive || isTotalColorRemovalActive) {
+        handleColorRemoval(options);
+    }
+});
+
+function handleColorRemoval(options) {
+    const pointer = canvas.getPointer(options.e);
+    const clickedObject = canvas.findTarget(options.e);
+
+    if (clickedObject && clickedObject.type === 'image') {
+        // Salva o estado atual antes de remover a cor (excluindo o CloudFolha)
+        const objects = canvas.getObjects().filter(obj => obj.id !== 'CloudFolha');
+        lastRemovedState = canvas.toJSON(['id']); // Salva o estado sem o CloudFolha
+        lastRemovedState.objects = objects.map(obj => obj.toJSON(['id'])); // Filtra os objetos
+
+        const imageElement = clickedObject._element;
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = imageElement.width;
+        tempCanvas.height = imageElement.height;
+        tempCtx.drawImage(imageElement, 0, 0, imageElement.width, imageElement.height);
+
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const targetColor = getColorAtPosition(imageData, pointer, clickedObject);
+
+        if (targetColor) {
+            if (isTotalColorRemovalActive) {
+                removeTotalColor(imageData, targetColor);
+            } else {
+                removeColorArea(imageData, targetColor, pointer, clickedObject);
+            }
+            tempCtx.putImageData(imageData, 0, 0);
+
+            fabric.Image.fromURL(tempCanvas.toDataURL(), function (img) {
+                img.set({
+                    left: clickedObject.left,
+                    top: clickedObject.top,
+                    scaleX: clickedObject.scaleX,
+                    scaleY: clickedObject.scaleY,
+                    angle: clickedObject.angle,
+                    name: clickedObject.name
+                });
+                canvas.remove(clickedObject);
+                canvas.add(img);
+                
+                // Garantir que a folha CloudFolha esteja no fundo
+                const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+                if (cloudFolha) {
+                    canvas.sendToBack(cloudFolha);
+                }
+
+                canvas.renderAll();
+                updateLayersList();
+            });
+        }
+    }
+}
+
+function getColorAtPosition(imageData, pointer, obj) {
+    const x = Math.round((pointer.x - obj.left) / obj.scaleX);
+    const y = Math.round((pointer.y - obj.top) / obj.scaleY);
+    const index = (y * imageData.width + x) * 4;
+    return {
+        r: imageData.data[index],
+        g: imageData.data[index + 1],
+        b: imageData.data[index + 2],
+        a: imageData.data[index + 3]
+    };
+}
+
+function removeTotalColor(imageData, targetColor) {
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i];
+        const g = imageData.data[i + 1];
+        const b = imageData.data[i + 2];
+
+        if (
+            Math.abs(r - targetColor.r) <= tolerance &&
+            Math.abs(g - targetColor.g) <= tolerance &&
+            Math.abs(b - targetColor.b) <= tolerance
+        ) {
+            imageData.data[i + 3] = 0;
+        }
+    }
+}
+
+function removeColorArea(imageData, targetColor, pointer, obj) {
+    const stack = [];
+    const startX = Math.round((pointer.x - obj.left) / obj.scaleX);
+    const startY = Math.round((pointer.y - obj.top) / obj.scaleY);
+    stack.push([startX, startY]);
+
+    while (stack.length > 0) {
+        const [x, y] = stack.pop();
+        const index = (y * imageData.width + x) * 4;
+
+        if (
+            x >= 0 && x < imageData.width &&
+            y >= 0 && y < imageData.height &&
+            imageData.data[index + 3] !== 0 &&
+            Math.abs(imageData.data[index] - targetColor.r) <= tolerance &&
+            Math.abs(imageData.data[index + 1] - targetColor.g) <= tolerance &&
+            Math.abs(imageData.data[index + 2] - targetColor.b) <= tolerance
+        ) {
+            imageData.data[index + 3] = 0;
+            stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
+    }
+}
+document.getElementById('undoColorRemovalBtn').addEventListener('click', function () {
+    if (lastRemovedState) {
+        canvas.loadFromJSON(lastRemovedState, function () {
+            const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+
+            if (cloudFolha) {
+                canvas.sendToBack(cloudFolha);
+            }
+
+            canvas.renderAll();
+            updateLayersList();
+
+            lastRemovedState = null;
+        });
+    }
+});
+
+// ---------- Fim Seção Remover Cor  -------------------------------------------
+
+
+// ---------- Inicio Seção Brilho Contraste Saturação e Nitidez  -------------------------------------------
+
+let selectedImage = null;
+
+function showImageAdjustModal() {
+    const modal = document.getElementById('imageAdjustModal');
+    modal.style.display = 'block';
+}
+
+function hideImageAdjustModal() {
+    const modal = document.getElementById('imageAdjustModal');
+    modal.style.display = 'none';
+}
+
+function updateSliders(image) {
+    const brightnessSlider = document.getElementById('brightnessSlider');
+    const contrastSlider = document.getElementById('contrastSlider');
+    const saturationSlider = document.getElementById('saturationSlider');
+    const sharpnessCheckbox = document.getElementById('sharpnessCheckbox');
+
+    image.brightness = image.brightness || 0;
+    image.contrast = image.contrast || 0; 
+    image.saturation = image.saturation || 0; 
+    image.sharpnessEnabled = image.sharpnessEnabled || false; 
+
+    brightnessSlider.value = image.brightness;
+    contrastSlider.value = image.contrast;
+    saturationSlider.value = image.saturation;
+    sharpnessCheckbox.checked = image.sharpnessEnabled;
+
+    document.getElementById('brightnessValue').textContent = `${brightnessSlider.value}%`;
+    document.getElementById('contrastValue').textContent = `${contrastSlider.value}%`;
+    document.getElementById('saturationValue').textContent = `${saturationSlider.value}%`;
+}
+
+function applyImageFilters(image) {
+    const brightness = parseInt(document.getElementById('brightnessSlider').value) / 100; // -1 a 1
+    const contrast = parseInt(document.getElementById('contrastSlider').value) / 100; // -1 a 1
+    const saturation = parseInt(document.getElementById('saturationSlider').value) / 100; // -1 a 1
+    const sharpnessEnabled = document.getElementById('sharpnessCheckbox').checked;
+
+    image.filters = [];
+
+    if (brightness !== 0) {
+        image.filters.push(new fabric.Image.filters.Brightness({ brightness: brightness }));
+    }
+
+    if (contrast !== 0) {
+        image.filters.push(new fabric.Image.filters.Contrast({ contrast: contrast }));
+    }
+
+    if (saturation !== 0) {
+        image.filters.push(new fabric.Image.filters.Saturation({ saturation: saturation }));
+    }
+
+    if (sharpnessEnabled) {
+        const sharpenMatrix = [
+            0, -1, 0,
+            -1, 5, -1,
+            0, -1, 0
+        ];
+        image.filters.push(new fabric.Image.filters.Convolute({
+            matrix: sharpenMatrix,
+            opacity: 1 
+        }));
+    }
+
+    image.applyFilters();
+    canvas.renderAll();
+}
+
+document.getElementById('filtroscorBtn').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'image') {
+        selectedImage = activeObject;
+        updateSliders(selectedImage);
+        showImageAdjustModal();
+    } else {
+        showCustomAlert('Selecione uma imagem para ajustar Brilho, Contraste e Saturação.');
+    }
+});
+
+document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+    if (selectedImage) {
+        document.getElementById('brightnessValue').textContent = `${e.target.value}%`;
+        applyImageFilters(selectedImage);
+    }
+});
+
+document.getElementById('contrastSlider').addEventListener('input', (e) => {
+    if (selectedImage) {
+        document.getElementById('contrastValue').textContent = `${e.target.value}%`;
+        applyImageFilters(selectedImage);
+    }
+});
+
+document.getElementById('saturationSlider').addEventListener('input', (e) => {
+    if (selectedImage) {
+        document.getElementById('saturationValue').textContent = `${e.target.value}%`;
+        applyImageFilters(selectedImage);
+    }
+});
+
+document.getElementById('sharpnessCheckbox').addEventListener('change', (e) => {
+    if (selectedImage) {
+        selectedImage.sharpnessEnabled = e.target.checked;
+        applyImageFilters(selectedImage);
+    }
+});
+
+canvas.on('selection:cleared', () => {
+    selectedImage = null;
+    hideImageAdjustModal();
+});
+
+canvas.on('selection:created', (e) => {
+    if (e.target && e.target.type === 'image') {
+        selectedImage = e.target;
+        updateSliders(selectedImage);
+        showImageAdjustModal();
+    }
+});
+
+canvas.on('selection:updated', (e) => {
+    if (e.target && e.target.type === 'image') {
+        selectedImage = e.target;
+        updateSliders(selectedImage);
+        showImageAdjustModal();
+    }
+});
+// ---------- Fim Seção Brilho Contraste Saturação e Nitidez  -------------------------------------------
 
 </script>
 </body>
