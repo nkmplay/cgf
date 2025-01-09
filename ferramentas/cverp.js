@@ -186,14 +186,6 @@ function openCropModal(canvas, activeObject) {
     });
 }
 
-    document.getElementById('closeCropModal').addEventListener('click', function () {
-        cropModal.style.display = 'none';
-        if (cropper) {
-            cropper.destroy();
-        }
-    });
-}
-
 function openExtractRegionsModal(canvas, activeObject) {
     if (!activeObject || activeObject.type !== 'image') {
         showCustomAlert('Selecione uma imagem para extrair as regiões');
