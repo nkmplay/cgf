@@ -132,22 +132,18 @@ function resizeAndCenterImage(img) {
         return;
     }
 
-    // Obter as dimensões físicas da imagem (em polegadas)
-    const imgWidthInches = img.width / 300; // 300 DPI
-    const imgHeightInches = img.height / 300;
-
-    // Converter polegadas para pixels (1 polegada = 96 pixels)
-    const imgWidthPixels = imgWidthInches * 96;
-    const imgHeightPixels = imgHeightInches * 96;
-
     // Obter as dimensões da folha CloudFolha
     const folhaWidth = cloudFolha.width * cloudFolha.scaleX;
     const folhaHeight = cloudFolha.height * cloudFolha.scaleY;
 
+    // Obter as dimensões da imagem ou PDF
+    const imgWidth = img.width * img.scaleX;
+    const imgHeight = img.height * img.scaleY;
+
     // Calcular a escala para que a imagem caiba na folha
     const scale = Math.min(
-        folhaWidth / imgWidthPixels,
-        folhaHeight / imgHeightPixels
+        folhaWidth / imgWidth,  // Escala baseada na largura
+        folhaHeight / imgHeight // Escala baseada na altura
     );
 
     // Aplicar a escala à imagem
@@ -156,10 +152,14 @@ function resizeAndCenterImage(img) {
         scaleY: scale
     });
 
+    // Recalcular as dimensões após o redimensionamento
+    const scaledWidth = imgWidth * scale;
+    const scaledHeight = imgHeight * scale;
+
     // Centralizar a imagem no CloudFolha
     img.set({
-        left: cloudFolha.left + (folhaWidth - imgWidthPixels * scale) / 2,
-        top: cloudFolha.top + (folhaHeight - imgHeightPixels * scale) / 2
+        left: cloudFolha.left + (folhaWidth - scaledWidth) / 2,
+        top: cloudFolha.top + (folhaHeight - scaledHeight) / 2
     });
 }
 
