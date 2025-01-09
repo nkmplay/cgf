@@ -186,36 +186,6 @@ function openCropModal(canvas, activeObject) {
     });
 }
 
-    document.getElementById('saveCrop').addEventListener('click', function () {
-        if (!cropper) return;
-
-        const canvasCropped = cropper.getCroppedCanvas({
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        });
-
-        const croppedImageData = canvasCropped.toDataURL();
-
-        fabric.Image.fromURL(croppedImageData, function (newImage) {
-            newImage.set({
-                left: activeObject.left,
-                top: activeObject.top,
-                scaleX: activeObject.scaleX,
-                scaleY: activeObject.scaleY,
-                angle: activeObject.angle
-            });
-
-            canvas.remove(activeObject);
-            canvas.add(newImage);
-            canvas.setActiveObject(newImage);
-            canvas.renderAll();
-            saveState();
-
-            cropModal.style.display = 'none';
-            cropper.destroy();
-        });
-    });
-
     document.getElementById('closeCropModal').addEventListener('click', function () {
         cropModal.style.display = 'none';
         if (cropper) {
