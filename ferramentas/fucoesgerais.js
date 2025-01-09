@@ -1,6 +1,163 @@
 // fucoesgerais.js
 
+// ---------- Inicio Seção Brilho Contraste Saturação e Nitidez  -------------------------------------------
 
+// ---------- Fim Seção Brilho Contraste Saturação e Nitidez  -------------------------------------------
+
+// filtros.js
+
+// Variáveis globais
+let selectedImage = null;
+let canvas = null;
+
+// Função para inicializar o módulo de filtros
+function initFiltros(canvasInstance) {
+    canvas = canvasInstance; // Atribui o canvas passado como argumento
+
+    // Evento para abrir o modal quando o botão "Brilho - Contraste - Saturação" for clicado
+    document.getElementById('filtroscorBtn').addEventListener('click', () => {
+        const activeObject = canvas.getActiveObject();
+        if (activeObject && activeObject.type === 'image') {
+            selectedImage = activeObject;
+            updateSliders(selectedImage);
+            showImageAdjustModal();
+        } else {
+            showCustomAlert('Selecione uma imagem para ajustar Brilho, Contraste e Saturação.');
+        }
+    });
+
+    // Eventos para os sliders
+    document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+        if (selectedImage) {
+            document.getElementById('brightnessValue').textContent = `${e.target.value}%`;
+            applyImageFilters(selectedImage);
+        }
+    });
+
+    document.getElementById('contrastSlider').addEventListener('input', (e) => {
+        if (selectedImage) {
+            document.getElementById('contrastValue').textContent = `${e.target.value}%`;
+            applyImageFilters(selectedImage);
+        }
+    });
+
+    document.getElementById('saturationSlider').addEventListener('input', (e) => {
+        if (selectedImage) {
+            document.getElementById('saturationValue').textContent = `${e.target.value}%`;
+            applyImageFilters(selectedImage);
+        }
+    });
+
+    // Evento para o checkbox de nitidez
+    document.getElementById('sharpnessCheckbox').addEventListener('change', (e) => {
+        if (selectedImage) {
+            selectedImage.sharpnessEnabled = e.target.checked;
+            applyImageFilters(selectedImage);
+        }
+    });
+
+    // Evento para fechar o modal quando a seleção é limpa
+    canvas.on('selection:cleared', () => {
+        selectedImage = null;
+        hideImageAdjustModal();
+    });
+
+    // Evento para atualizar o modal quando outra imagem é selecionada
+    canvas.on('selection:created', (e) => {
+        if (e.target && e.target.type === 'image') {
+            selectedImage = e.target;
+            updateSliders(selectedImage);
+            showImageAdjustModal();
+        }
+    });
+
+    // Evento para atualizar o modal quando a seleção é alterada
+    canvas.on('selection:updated', (e) => {
+        if (e.target && e.target.type === 'image') {
+            selectedImage = e.target;
+            updateSliders(selectedImage);
+            showImageAdjustModal();
+        }
+    });
+}
+
+// Função para mostrar o modal de ajustes
+function showImageAdjustModal() {
+    const modal = document.getElementById('imageAdjustModal');
+    modal.style.display = 'block';
+}
+
+// Função para esconder o modal de ajustes
+function hideImageAdjustModal() {
+    const modal = document.getElementById('imageAdjustModal');
+    modal.style.display = 'none';
+}
+
+// Função para atualizar os valores dos sliders
+function updateSliders(image) {
+    const brightnessSlider = document.getElementById('brightnessSlider');
+    const contrastSlider = document.getElementById('contrastSlider');
+    const saturationSlider = document.getElementById('saturationSlider');
+    const sharpnessCheckbox = document.getElementById('sharpnessCheckbox');
+
+    // Define valores padrão se não existirem
+    image.brightness = image.brightness || 0; // Valor padrão: 0 (sem alteração)
+    image.contrast = image.contrast || 0; // Valor padrão: 0 (sem alteração)
+    image.saturation = image.saturation || 0; // Valor padrão: 0 (sem alteração)
+    image.sharpnessEnabled = image.sharpnessEnabled || false; // Valor padrão: false (nitidez desativada)
+
+    brightnessSlider.value = image.brightness;
+    contrastSlider.value = image.contrast;
+    saturationSlider.value = image.saturation;
+    sharpnessCheckbox.checked = image.sharpnessEnabled;
+
+    document.getElementById('brightnessValue').textContent = `${brightnessSlider.value}%`;
+    document.getElementById('contrastValue').textContent = `${contrastSlider.value}%`;
+    document.getElementById('saturationValue').textContent = `${saturationSlider.value}%`;
+}
+
+// Função para aplicar os filtros de brilho, contraste, saturação e nitidez
+function applyImageFilters(image) {
+    const brightness = parseInt(document.getElementById('brightnessSlider').value) / 100; // -1 a 1
+    const contrast = parseInt(document.getElementById('contrastSlider').value) / 100; // -1 a 1
+    const saturation = parseInt(document.getElementById('saturationSlider').value) / 100; // -1 a 1
+    const sharpnessEnabled = document.getElementById('sharpnessCheckbox').checked;
+
+    // Remove filtros antigos
+    image.filters = [];
+
+    // Adiciona filtro de brilho
+    if (brightness !== 0) {
+        image.filters.push(new fabric.Image.filters.Brightness({ brightness: brightness }));
+    }
+
+    // Adiciona filtro de contraste
+    if (contrast !== 0) {
+        image.filters.push(new fabric.Image.filters.Contrast({ contrast: contrast }));
+    }
+
+    // Adiciona filtro de saturação
+    if (saturation !== 0) {
+        image.filters.push(new fabric.Image.filters.Saturation({ saturation: saturation }));
+    }
+
+    // Adiciona filtro de nitidez (usando Convolute) se o checkbox estiver marcado
+    if (sharpnessEnabled) {
+        const sharpenMatrix = [
+            0, -1, 0,
+            -1, 5, -1,
+            0, -1, 0
+        ];
+        image.filters.push(new fabric.Image.filters.Convolute({
+            matrix: sharpenMatrix,
+            opacity: 1 // Opacidade fixa para nitidez
+        }));
+    }
+
+    // Aplica os filtros
+    image.applyFilters();
+    canvas.renderAll();
+}
 // ---------- Inicio Seção Guias ----------
 function initializeGuides(canvas) {
     const CM_TO_PX = 37.7952755906; // Fator de conversão de cm para px (1 cm = 37.7952755906 px)
