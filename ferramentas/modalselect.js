@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function initSelectModal(canvas) {
         const activeImage = canvas.getActiveObject();
         if (!activeImage || activeImage.type !== 'image') {
-            showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
-            return;
-        }
+                showCustomAlert('Selecione uma imagem antes de usar a ferramenta de seleção.');
+                return; // Encerra a função se não houver imagem selecionada
+            }
 
         // Remover modal anterior se existir
         const existingModal = document.getElementById('imageEditModal');
@@ -117,31 +117,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const editContext = editCanvas.getContext('2d');
         editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
 
-        // Objeto de estado modificado com flags adicionais
+        // Criar um objeto para armazenar os estados
         const editState = {
             isDrawing: false,
             selectionMode: 'square',
             selectionPath: [],
             originalImageData: null,
-            isColorSelection: false,
-            isDragging: false,          // Nova flag para controlar o arrasto
-            lastValidMousePos: null,    // Armazena última posição válida do mouse
-            hasSelection: false         // Indica se existe uma seleção ativa
+            isColorSelection: false
         };
-
-        // Função auxiliar para verificar se o mouse está dentro dos limites
-        function isWithinBounds(x, y, canvas) {
-            return x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height;
-        }
-
-        // Função para salvar o estado original do canvas
-        function saveOriginalState() {
-            if (!editState.originalImageData && activeImage && activeImage.getElement()) {
-                editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
-                editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
-                editState.originalImageData = editContext.getImageData(0, 0, editCanvas.width, editCanvas.height);
-            }
-        }
 
         // Funções de desenho
         function drawSelectionRect(x, y) {
@@ -193,9 +176,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 editState.selectionPath = [];
                 editState.originalImageData = null;
                 editState.isColorSelection = false;
-                editState.hasSelection = false;
-                editState.isDragging = false;
-                editState.isDrawing = false;
             }
         }
 
@@ -276,21 +256,21 @@ document.addEventListener('DOMContentLoaded', function () {
             croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
             fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-                    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-                    if (cloudFolha) {
-                        const centerX = cloudFolha.left + cloudFolha.width / 2;
-                        const centerY = cloudFolha.top + cloudFolha.height / 2;
+                const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+                if (cloudFolha) {
+                    const centerX = cloudFolha.left + cloudFolha.width / 2;
+                    const centerY = cloudFolha.top + cloudFolha.height / 2;
 
-                        img.set({
-                            left: centerX - img.width / 2,
-                            top: centerY - img.height / 2
-                        });
-                    }
-                    canvas.add(img);
-                    canvas.renderAll();
-                    modal.remove();
-                    clearSelection();
-                });
+                    img.set({
+                        left: centerX - img.width / 2,
+                        top: centerY - img.height / 2
+                    });
+                }
+                canvas.add(img);
+                canvas.renderAll();
+                modal.remove();
+                clearSelection();
+            });
         }
 
         // Adicionar eventos para cada ferramenta
@@ -306,20 +286,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Event listeners do canvas
         editCanvas.addEventListener('mousedown', function (e) {
-            const rect = editCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            if (!isWithinBounds(x, y, editCanvas)) {
-                return;
-            }
-
-            editState.isDrawing = true;
-            editState.isDragging = true;
-            editState.lastValidMousePos = [x, y];
-
             if (editState.selectionMode === 'color') {
-                saveOriginalState();
+                const rect = editCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (!editState.originalImageData) {
+                    editState.originalImageData = editContext.getImageData(0, 0, editCanvas.width, editCanvas.height);
+                }
                 const pixel = editContext.getImageData(x, y, 1, 1);
                 const [r, g, b] = pixel.data;
                 const imageData = editContext.createImageData(editCanvas.width, editCanvas.height);
@@ -339,8 +312,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 editState.isColorSelection = true;
                 return;
             }
-
-            clearSelection();
+            editState.isDrawing = true;
+            const rect = editCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
             editState.selectionPath = [[x, y]];
             editContext.save();
             editContext.strokeStyle = '#ffffff';
@@ -350,84 +325,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         editCanvas.addEventListener('mousemove', function (e) {
-            if (!editState.isDrawing || !editState.isDragging) return;
-
+            if (!editState.isDrawing) return;
             const rect = editCanvas.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            let y = e.clientY - rect.top;
-
-            // Limitar as coordenadas aos limites do canvas
-            x = Math.max(0, Math.min(x, editCanvas.width));
-            y = Math.max(0, Math.min(y, editCanvas.height));
-
-            // Atualizar apenas se a posição for válida
-            if (isWithinBounds(x, y, editCanvas)) {
-                editState.lastValidMousePos = [x, y];
-                editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
-                editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
-
-                if (editState.selectionMode === 'square') {
-                    drawSelectionRect(x, y);
-                } else if (editState.selectionMode === 'circle') {
-                    drawSelectionCircle(x, y);
-                } else if (editState.selectionMode === 'lasso') {
-                    drawLassoSelection(x, y);
-                }
-            }
-        });
-
-        // Adicionar listener para quando o mouse sai do canvas
-        editCanvas.addEventListener('mouseleave', function () {
-            if (editState.isDragging) {
-                finishSelection();
-            }
-        });
-
-        // Função para finalizar a seleção
-        function finishSelection() {
-            if (!editState.isDrawing || !editState.isDragging) return;
-            
-            editState.isDrawing = false;
-            editState.isDragging = false;
-            editContext.restore();
-
-            if (editState.selectionPath.length < 2) {
-                clearSelection();
-                return;
-            }
-
-            editState.hasSelection = true;
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = editCanvas.width;
-            tempCanvas.height = editCanvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
             editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
-            editContext.save();
-            editContext.beginPath();
+            editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+
             if (editState.selectionMode === 'square') {
-                const [startX, startY] = editState.selectionPath[0];
-                const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
-                editContext.rect(startX, startY, endX - startX, endY - startY);
+                drawSelectionRect(x, y);
             } else if (editState.selectionMode === 'circle') {
-                const [startX, startY] = editState.selectionPath[0];
-                const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
-                const diameter = Math.max(0, endX - startX, endY - startY);
-                editContext.arc(startX, startY, diameter, 0, Math.PI * 2);
+                drawSelectionCircle(x, y);
             } else if (editState.selectionMode === 'lasso') {
-                editContext.moveTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
-                for (let i = 1; i < editState.selectionPath.length; i++) {
-                    editContext.lineTo(editState.selectionPath[i][0], editState.selectionPath[i][1]);
-                }
-                editContext.lineTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
+                drawLassoSelection(x, y);
             }
-            editContext.clip();
-            editContext.drawImage(tempCanvas, 0, 0);
-            editContext.restore();
-        }
+        });
 
         editCanvas.addEventListener('mouseup', function () {
-            finishSelection();
+            if (!editState.isDrawing) return;
+            editState.isDrawing = false;
+            editContext.restore();
+            if (editState.selectionMode === 'square' || editState.selectionMode === 'circle' || editState.selectionMode === 'lasso') {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = editCanvas.width;
+                tempCanvas.height = editCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+                editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
+                editContext.save();
+                editContext.beginPath();
+                if (editState.selectionMode === 'square') {
+                    const [startX, startY] = editState.selectionPath[0];
+                    const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
+                    editContext.rect(startX, startY, endX - startX, endY - startY);
+                } else if (editState.selectionMode === 'circle') {
+                    const [startX, startY] = editState.selectionPath[0];
+                    const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
+                    const diameter = Math.max(0, endX - startX, endY - startY);
+                    editContext.arc(startX, startY, diameter, 0, Math.PI * 2);
+                } else if (editState.selectionMode === 'lasso') {
+                    editContext.moveTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
+                    for (let i = 1; i < editState.selectionPath.length; i++) {
+                        editContext.lineTo(editState.selectionPath[i][0], editState.selectionPath[i][1]);
+                    }
+                    editContext.lineTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
+                }
+                editContext.clip();
+                editContext.drawImage(tempCanvas, 0, 0);
+                editContext.restore();
+            }
         });
 
         // Botão de fechar
