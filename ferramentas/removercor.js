@@ -1,18 +1,16 @@
-// removercor.js
-
 // Variáveis globais
 let isColorRemovalActive = false;
 let isTotalColorRemovalActive = false;
 let tolerance = 30;
-let lastRemovedState = null; // Armazena o estado antes da remoção de cor
+let lastRemovedState = null;
 
-// Função para abrir o modal do slider
+// Abrir modal do slider
 function openDetectionLevelModal() {
     const modal = document.getElementById('detectionLevelModal');
     modal.style.display = 'flex';
 }
 
-// Função para fechar o modal do slider
+// Fechar modal do slider
 function closeDetectionLevelModal() {
     const modal = document.getElementById('detectionLevelModal');
     modal.style.display = 'none';
@@ -25,70 +23,60 @@ document.getElementById('detection-level').addEventListener('input', function ()
 });
 
 // Lógica para o botão "Remover Cor Clique"
-function setupRemoveCorCliqueBtn() {
-    const removeCorCliqueBtn = document.getElementById('removeCorCliqueBtn');
-    removeCorCliqueBtn.addEventListener('click', function () {
-        isColorRemovalActive = !isColorRemovalActive;
-        isTotalColorRemovalActive = false;
+document.getElementById('removeCorCliqueBtn').addEventListener('click', function () {
+    isColorRemovalActive = !isColorRemovalActive;
+    isTotalColorRemovalActive = false;
 
-        if (isColorRemovalActive) {
-            openDetectionLevelModal();
-            canvas.defaultCursor = 'crosshair';
-        } else {
-            closeDetectionLevelModal();
-            canvas.defaultCursor = 'default';
-        }
-    });
-}
+    if (isColorRemovalActive) {
+        openDetectionLevelModal();
+        canvas.defaultCursor = 'crosshair';
+    } else {
+        closeDetectionLevelModal();
+        canvas.defaultCursor = 'default';
+    }
+});
 
 // Lógica para o botão "Remover Cor Total"
-function setupRemoveCorTotalBtn() {
-    const removeCorTotalBtn = document.getElementById('removeCorTotalBtn');
-    removeCorTotalBtn.addEventListener('click', function () {
-        isTotalColorRemovalActive = !isTotalColorRemovalActive;
-        isColorRemovalActive = false;
+document.getElementById('removeCorTotalBtn').addEventListener('click', function () {
+    isTotalColorRemovalActive = !isTotalColorRemovalActive;
+    isColorRemovalActive = false;
 
-        if (isTotalColorRemovalActive) {
-            openDetectionLevelModal();
-            canvas.defaultCursor = 'crosshair';
-        } else {
-            closeDetectionLevelModal();
-            canvas.defaultCursor = 'default';
-        }
-    });
-}
+    if (isTotalColorRemovalActive) {
+        openDetectionLevelModal();
+        canvas.defaultCursor = 'crosshair';
+    } else {
+        closeDetectionLevelModal();
+        canvas.defaultCursor = 'default';
+    }
+});
 
 // Fechar modal e cancelar remoção ao clicar fora do canvas ou do botão
-function setupCloseModalOnClickOutside() {
-    document.addEventListener('click', function (e) {
-        const canvasContainer = document.getElementById('canvas-container');
-        const removeCorCliqueBtn = document.getElementById('removeCorCliqueBtn');
-        const removeCorTotalBtn = document.getElementById('removeCorTotalBtn');
-        const modal = document.getElementById('detectionLevelModal');
+document.addEventListener('click', function (e) {
+    const canvasContainer = document.getElementById('canvas-container');
+    const removeCorCliqueBtn = document.getElementById('removeCorCliqueBtn');
+    const removeCorTotalBtn = document.getElementById('removeCorTotalBtn');
+    const modal = document.getElementById('detectionLevelModal');
 
-        // Verifica se o clique foi fora do canvas, dos botões ou do modal
-        if (
-            !canvasContainer.contains(e.target) &&
-            !removeCorCliqueBtn.contains(e.target) &&
-            !removeCorTotalBtn.contains(e.target) &&
-            !modal.contains(e.target)
-        ) {
-            closeDetectionLevelModal();
-            isColorRemovalActive = false;
-            isTotalColorRemovalActive = false;
-            canvas.defaultCursor = 'default';
-        }
-    });
-}
+    // Verifica se o clique foi fora do canvas, dos botões ou do modal
+    if (
+        !canvasContainer.contains(e.target) &&
+        !removeCorCliqueBtn.contains(e.target) &&
+        !removeCorTotalBtn.contains(e.target) &&
+        !modal.contains(e.target)
+    ) {
+        closeDetectionLevelModal();
+        isColorRemovalActive = false;
+        isTotalColorRemovalActive = false;
+        canvas.defaultCursor = 'default';
+    }
+});
 
 // Lógica para remover cores
-function setupColorRemoval() {
-    canvas.on('mouse:down', function (options) {
-        if (isColorRemovalActive || isTotalColorRemovalActive) {
-            handleColorRemoval(options);
-        }
-    });
-}
+canvas.on('mouse:down', function (options) {
+    if (isColorRemovalActive || isTotalColorRemovalActive) {
+        handleColorRemoval(options);
+    }
+});
 
 function handleColorRemoval(options) {
     const pointer = canvas.getPointer(options.e);
@@ -188,38 +176,21 @@ function removeColorArea(imageData, targetColor, pointer, obj) {
     }
 }
 
-// Função para desfazer a remoção de cor
-function setupUndoColorRemovalBtn() {
-    document.getElementById('undoColorRemovalBtn').addEventListener('click', function () {
-        if (lastRemovedState) {
-            // Preserva o objeto CloudFolha
-            const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+document.getElementById('undoColorRemovalBtn').addEventListener('click', function () {
+    if (lastRemovedState) {
+        // Preserva o objeto CloudFolha
+        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
 
-            // Carrega o estado salvo
-            canvas.loadFromJSON(lastRemovedState, function () {
-                // Readiciona o CloudFolha ao canvas
-                if (cloudFolha) {
-                    canvas.add(cloudFolha);
-                    canvas.sendToBack(cloudFolha); // Garante que o CloudFolha fique no fundo
-                }
+        // Carrega o estado salvo
+        canvas.loadFromJSON(lastRemovedState, function () {
+            // Readiciona o CloudFolha ao canvas
+            if (cloudFolha) {
+                canvas.add(cloudFolha);
+                canvas.sendToBack(cloudFolha); // Garante que o CloudFolha fique no fundo
+            }
 
-                canvas.renderAll();
-                lastRemovedState = null; // Limpa o estado salvo após desfazer
-            });
-        }
-    });
-}
-
-// Inicializa todas as funções
-function initRemoverCor() {
-    setupRemoveCorCliqueBtn();
-    setupRemoveCorTotalBtn();
-    setupCloseModalOnClickOutside();
-    setupColorRemoval();
-    setupUndoColorRemovalBtn();
-}
-
-// Inicializa o módulo quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function () {
-    initRemoverCor();
+            canvas.renderAll();
+            lastRemovedState = null; // Limpa o estado salvo após desfazer
+        });
+    }
 });
