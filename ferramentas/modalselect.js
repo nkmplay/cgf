@@ -169,15 +169,24 @@ document.addEventListener('DOMContentLoaded', function () {
             editContext.stroke();
         }
 
-        function clearSelection() {
-            if (editContext && activeImage && activeImage.getElement()) {
-                editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
-                editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
-                editState.selectionPath = [];
-                editState.originalImageData = null;
-                editState.isColorSelection = false;
-            }
-        }
+function clearSelection() {
+    if (editContext && activeImage && activeImage.getElement()) {
+        editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
+        editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+        editState.selectionPath = [];
+        editState.originalImageData = null;
+        editState.isColorSelection = false;
+        editState.isDrawing = false; // Reinicia o estado de desenho
+    }
+}
+
+editCanvas.addEventListener('mouseout', function () {
+    if (editState.isDrawing) {
+        editState.isDrawing = false;
+        editContext.restore();
+        document.body.style.cursor = 'auto'; // Restaura o cursor padrão
+    }
+});
 
         function copySelectedAreaEdit() {
             if (editState.isColorSelection) {
@@ -324,64 +333,83 @@ document.addEventListener('DOMContentLoaded', function () {
             editContext.moveTo(x, y);
         });
 
-        editCanvas.addEventListener('mousemove', function (e) {
-            if (!editState.isDrawing) return;
-            const rect = editCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
-            editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+editCanvas.addEventListener('mousemove', function (e) {
+    if (!editState.isDrawing) return;
 
-            if (editState.selectionMode === 'square') {
-                drawSelectionRect(x, y);
-            } else if (editState.selectionMode === 'circle') {
-                drawSelectionCircle(x, y);
-            } else if (editState.selectionMode === 'lasso') {
-                drawLassoSelection(x, y);
+    const rect = editCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Verifica se o mouse está dentro do canvas
+    if (x < 0 || x > editCanvas.width || y < 0 || y > editCanvas.height) {
+        editState.isDrawing = false;
+        editContext.restore();
+        return;
+    }
+
+    editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
+    editContext.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+
+    if (editState.selectionMode === 'square') {
+        drawSelectionRect(x, y);
+    } else if (editState.selectionMode === 'circle') {
+        drawSelectionCircle(x, y);
+    } else if (editState.selectionMode === 'lasso') {
+        drawLassoSelection(x, y);
+    }
+});
+
+ editCanvas.addEventListener('mouseup', function () {
+    if (!editState.isDrawing) return;
+    editState.isDrawing = false;
+    editContext.restore();
+
+    if (editState.selectionMode === 'square' || editState.selectionMode === 'circle' || editState.selectionMode === 'lasso') {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = editCanvas.width;
+        tempCanvas.height = editCanvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
+        editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
+        editContext.save();
+        editContext.beginPath();
+
+        if (editState.selectionMode === 'square') {
+            const [startX, startY] = editState.selectionPath[0];
+            const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
+            editContext.rect(startX, startY, endX - startX, endY - startY);
+        } else if (editState.selectionMode === 'circle') {
+            const [startX, startY] = editState.selectionPath[0];
+            const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
+            const diameter = Math.max(0, endX - startX, endY - startY);
+            editContext.arc(startX, startY, diameter, 0, Math.PI * 2);
+        } else if (editState.selectionMode === 'lasso') {
+            editContext.moveTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
+            for (let i = 1; i < editState.selectionPath.length; i++) {
+                editContext.lineTo(editState.selectionPath[i][0], editState.selectionPath[i][1]);
             }
-        });
+            editContext.lineTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
+        }
 
-        editCanvas.addEventListener('mouseup', function () {
-            if (!editState.isDrawing) return;
-            editState.isDrawing = false;
-            editContext.restore();
-            if (editState.selectionMode === 'square' || editState.selectionMode === 'circle' || editState.selectionMode === 'lasso') {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = editCanvas.width;
-                tempCanvas.height = editCanvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(activeImage.getElement(), 0, 0, editCanvas.width, editCanvas.height);
-                editContext.clearRect(0, 0, editCanvas.width, editCanvas.height);
-                editContext.save();
-                editContext.beginPath();
-                if (editState.selectionMode === 'square') {
-                    const [startX, startY] = editState.selectionPath[0];
-                    const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
-                    editContext.rect(startX, startY, endX - startX, endY - startY);
-                } else if (editState.selectionMode === 'circle') {
-                    const [startX, startY] = editState.selectionPath[0];
-                    const [endX, endY] = editState.selectionPath[editState.selectionPath.length - 1];
-                    const diameter = Math.max(0, endX - startX, endY - startY);
-                    editContext.arc(startX, startY, diameter, 0, Math.PI * 2);
-                } else if (editState.selectionMode === 'lasso') {
-                    editContext.moveTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
-                    for (let i = 1; i < editState.selectionPath.length; i++) {
-                        editContext.lineTo(editState.selectionPath[i][0], editState.selectionPath[i][1]);
-                    }
-                    editContext.lineTo(editState.selectionPath[0][0], editState.selectionPath[0][1]);
-                }
-                editContext.clip();
-                editContext.drawImage(tempCanvas, 0, 0);
-                editContext.restore();
-            }
-        });
+        editContext.clip();
+        editContext.drawImage(tempCanvas, 0, 0);
+        editContext.restore();
+    }
+});
 
-        // Botão de fechar
-        document.getElementById('closeModal').addEventListener('click', function() {
-            modal.remove();
-            clearSelection();
-            document.body.style.cursor = 'auto'; // Restaura o cursor padrão
-        });
+editCanvas.addEventListener('mouseleave', function () {
+    if (editState.isDrawing) {
+        editState.isDrawing = false;
+        editContext.restore();
+    }
+});
+
+document.getElementById('closeModal').addEventListener('click', function () {
+    modal.remove();
+    clearSelection();
+    editState.isDrawing = false; // Reinicia o estado de desenho
+    document.body.style.cursor = 'auto'; // Restaura o cursor padrão
+});
 
         // Botão de copiar
         document.getElementById('copySelection').addEventListener('click', function() {
