@@ -40,6 +40,13 @@
   .tool-button i {
     font-size:12px;
   }
+  .tool-button .shortcut {
+    color: #4a90e2;
+    font-size: 0.8em;
+    margin-left: auto;
+    padding-left: 10px;
+    opacity: 0.8;
+}
   .tool-button.selected {
     background-color: #4a90e2;
   }
@@ -53,7 +60,14 @@
   .menu-item:hover .dropdown{display:block}
   .dropdown{display:none;position:absolute;top:40px;left:0;background-color:#0f3460;min-width:250px;box-shadow:0 12px 24px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3)}
   .dropdown a{color:#fff;padding:12px 16px;text-decoration:none;display:block;display:flex;justify-content:space-between;align-items:center}
-  .dropdown a:hover{background-color:#16213e}
+  
+  .dropdown a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    gap: 10px;
+}
+  
   .dropdown input{width:60px;padding:2px 4px;margin-left:10px;border-radius:3px;border:1px solid #ccc}
 
   .size-controls {
@@ -1074,21 +1088,27 @@ resolution-controls {
  <div class="menu-item">
     Arquivo
     <div class="dropdown">
-        <a href="javascript:void(0)" id="openDocumentBtn">Abrir Documento</a>
-        <a href="javascript:void(0)" id="saveDocumentBtn">Salvar Documento</a>
+        <a href="javascript:void(0)" id="openDocumentBtn">
+            Abrir Documento
+            <span class="shortcut">Ctrl + O</span>
+        </a>
+        <a href="javascript:void(0)" id="saveDocumentBtn">
+            Salvar Documento
+            <span class="shortcut">Ctrl + S</span>
+        </a>
         <a href="javascript:void(0)" class="document-size-item" id="docSizeBtn">
             Tamanho do Documento
         </a>
         <div class="separator"></div>
-        <a href="javascript:void(0)" id="saveAsBtn">Exportar</a>
+        <a href="javascript:void(0)" id="saveAsBtn">Exportar<span class="shortcut">Ctrl + E</span></a>
     </div>
 </div>
 
   <div class="menu-item">
     Editar
     <div class="dropdown">
-    <a href="javascript:void(0)" id="copyBtn">Copiar</a>
-    <a href="javascript:void(0)" id="pasteBtn">Colar</a>
+    <a href="javascript:void(0)" id="copyBtn">Copiar<span class="shortcut">Ctrl + C</span></a>
+    <a href="javascript:void(0)" id="pasteBtn">Colar<span class="shortcut">Ctrl + V</span></a>
 </div>
   </div>
   <div class="menu-item">
@@ -1124,7 +1144,7 @@ resolution-controls {
   <div class="menu-item">
     Guias
     <div class="dropdown">
-      <a href="javascript:void(0)" id="addDefaultGuidesBtn">Adicionar Guias Padr&#xe3;o</a>
+      <a href="javascript:void(0)" id="addDefaultGuidesBtn">Adicionar Guias Padrão<span class="shortcut">F2</span></a>
       <a href="javascript:void(0)" class="guides-item" id="addGuidesBtn">
         Adicionar Guia
         <div class="guides-controls">
@@ -1134,7 +1154,7 @@ resolution-controls {
           </div>
           <div class="guide-options">
             <button id="singleGuideBtn" class="guide-btn selected">Uma Guia</button>
-            <button id="multipleGuidesBtn" class="guide-btn">V&#xe1;rias Guias</button>
+            <button id="multipleGuidesBtn" class="guide-btn">Várias Guias</button>
           </div>
           <div class="guide-position">
             <span>a cada (cm)</span>
@@ -1143,7 +1163,7 @@ resolution-controls {
 			<button id="addGuideBtn" class="guide-btn selected">Adicionar</button>
         </div>
       </a>
-      <a href="javascript:void(0)" id="removeGuidesBtn">Apagar Guias</a>
+      <a href="javascript:void(0)" id="removeGuidesBtn">Apagar Guias<span class="shortcut">Shift + F2</span></a>
     </div>
   </div>
   <div class="menu-item">
@@ -1155,6 +1175,7 @@ resolution-controls {
   <div class="menu-item">
     Extra
     <div class="dropdown">
+		<a href="javascript:void(0)" id="fontepersonBtn">Fontes Personalizada</a>
         <a href="javascript:void(0)" id="calendarBtn">Calendário</a>
     </div>
 </div>
@@ -1183,54 +1204,54 @@ resolution-controls {
 </div>
 
 <div id="left-menu">
-  <button class="tool-button" id="loadImageBtn">
+<button class="tool-button" id="loadImageBtn" title="Atalho: I">
     <i class="fa-regular fa-image"></i>
     Importar Imagem
-  </button>
-  <button class="tool-button selected" id="moveBtn">
+</button>
+<button class="tool-button selected" id="moveBtn" title="Atalho: V">
     <i class="fa-solid fa-up-down-left-right"></i>
     Mover
-  </button>
+</button>
   <div class="separator"></div>
-  <button class="tool-button" id="selectBtn">
+<button class="tool-button" id="selectBtn" title="Atalho: M">
     <i class="fa-solid fa-vector-square" style="color: #ffffff;"></i>
     Selecionar
-  </button>
-  <button class="tool-button" id="textoBtn">
+</button>
+<button class="tool-button" id="textoBtn" title="Atalho: T">
     <i class="fa-solid fa-font"></i>
     Texto
-  </button>
-  <button id="btnPincel" class="tool-button">
+</button>
+<button id="btnPincel" class="tool-button" title="Atalho: B">
     <i class="fa-solid fa-palette"></i>
     Pincel
-  </button>
-  <button id="btnBalde" class="tool-button">
+</button>
+<button id="btnBalde" class="tool-button" title="Atalho: G">
     <i class="fa-solid fa-palette"></i>
-   Balde
-  </button>
-  <button id="btnBorracha" class="tool-button">
+    Balde
+</button>
+<button id="btnBorracha" class="tool-button" title="Atalho: E">
     <i class="fa-solid fa-eraser"></i>
     Borracha
-  </button>
+</button>
   <div class="separator"></div>
-  <button id="removeCorCliqueBtn"  class="tool-button">
+<button id="removeCorCliqueBtn" class="tool-button" title="Atalho: W">
     <i class="fa-solid fa-wand-magic-sparkles"></i>
     Remover Cor Clique
-  </button>
-  <button id="removeCorTotalBtn"  class="tool-button">
+</button>
+<button id="removeCorTotalBtn"  class="tool-button">
     <i class="fa-solid fa-wand-magic-sparkles"></i>
     Remover Cor Total
-  </button>
+</button>
   <div class="separator"></div>
-  <button id="cropImageBtn"  class="tool-button">
+<button id="cropImageBtn" class="tool-button" title="Atalho: C">
     <i class="fa-solid fa-scissors"></i>
     Recortar
-  </button>
-  <button id="extractRegionsBtn" class="tool-button">
+</button>
+<button id="extractRegionsBtn" class="tool-button">
     <i class="fa-solid fa-icons"></i>
     Extrair
-  </button>
-  <button id="vectorizePBBtn" class="tool-button">
+</button>
+<button id="vectorizePBBtn" class="tool-button">
     <i class="fa-solid fa-bezier-curve"></i>
     Vetor PB
 </button>
@@ -2392,6 +2413,12 @@ document.getElementById('setA4Horizontal').addEventListener('click', () => {
 let lastRemovedState = null;
 
 document.addEventListener('keydown', function (e) {
+    const activeObject = canvas.getActiveObject();
+
+    if (activeObject && activeObject.isEditing) {
+        return;
+    }
+
     if (e.key === 'Delete') {
         const activeObjects = canvas.getActiveObjects();
         if (activeObjects && activeObjects.length) {
@@ -2403,55 +2430,6 @@ document.addEventListener('keydown', function (e) {
             canvas.discardActiveObject();
             canvas.requestRenderAll();
         }
-    }
-
-    // Colar (Ctrl + V)
-    if (e.ctrlKey && e.key === 'v') {
-        e.preventDefault();
-        navigator.clipboard.read().then(data => {
-            data.forEach(item => {
-                if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
-                    item.getType('image/png').then(blob => {
-                        const reader = new FileReader();
-                        reader.onload = function (e) {
-                            fabric.Image.fromURL(e.target.result, function (img) {
-                                const pageWidth = 21 * CM_TO_PX;
-                                const pageHeight = 29.7 * CM_TO_PX;
-                                const scale = Math.min(pageWidth * 0.8 / img.width, pageHeight * 0.8 / img.height);
-                                img.scale(scale);
-                                const a4Page = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-                                if (a4Page) {
-                                    img.set({
-                                        left: a4Page.left + (a4Page.width - img.width * scale) / 2,
-                                        top: a4Page.top + (a4Page.height - img.height * scale) / 2
-                                    });
-                                }
-                                canvas.add(img);
-                                canvas.setActiveObject(img);
-                                canvas.renderAll();
-                            });
-                        };
-                        reader.readAsDataURL(blob);
-                    });
-                }
-                if (item.types.includes('text/plain')) {
-                    item.getType('text/plain').then(blob => {
-                        blob.text().then(text => {
-                            const itext = new fabric.IText(text, {
-                                left: 100,
-                                top: 100,
-                                fontFamily: 'Arial',
-                                fontSize: 20,
-                                fill: 'black'
-                            });
-                            canvas.add(itext);
-                            canvas.setActiveObject(itext);
-                            canvas.renderAll();
-                        });
-                    });
-                }
-            });
-        });
     }
 
     // Duplicar (Ctrl + D)
@@ -2522,7 +2500,158 @@ document.addEventListener('keydown', function (e) {
         }
     }
 });
+document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        navigator.clipboard.read().then(data => {
+            data.forEach(item => {
+                if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                    item.getType('image/png').then(blob => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            fabric.Image.fromURL(e.target.result, function (img) {
+                                const pageWidth = 21 * CM_TO_PX;
+                                const pageHeight = 29.7 * CM_TO_PX;
+                                const scale = Math.min(pageWidth * 0.8 / img.width, pageHeight * 0.8 / img.height);
+                                img.scale(scale);
+                                const a4Page = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+                                if (a4Page) {
+                                    img.set({
+                                        left: a4Page.left + (a4Page.width - img.width * scale) / 2,
+                                        top: a4Page.top + (a4Page.height - img.height * scale) / 2
+                                    });
+                                }
+                                canvas.add(img);
+                                canvas.setActiveObject(img);
+                                canvas.renderAll();
 
+                                // Notificação personalizada
+                                showCustomAlert('Imagem colada com sucesso!');
+                            });
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+                }
+                if (item.types.includes('text/plain')) {
+                    item.getType('text/plain').then(blob => {
+                        blob.text().then(text => {
+                            const itext = new fabric.IText(text, {
+                                left: 100,
+                                top: 100,
+                                fontFamily: 'Arial',
+                                fontSize: 20,
+                                fill: 'black'
+                            });
+                            canvas.add(itext);
+                            canvas.setActiveObject(itext);
+                            canvas.renderAll();
+
+                            // Notificação personalizada
+                            showCustomAlert('Texto colado com sucesso!');
+                        });
+                    });
+                }
+            });
+        }).catch(error => {
+            console.error('Erro ao colar:', error);
+            showCustomAlert('Erro ao colar. Verifique se há algo na área de transferência.');
+        });
+    }
+});
+
+// Adiciona os atalhos
+document.addEventListener('keydown', function (e) {
+    // F2: Adiciona as guias padrão
+    if (e.key === 'F2') {
+        e.preventDefault();
+        document.getElementById('addDefaultGuidesBtn').click();
+    }
+
+    // Shift + F2: Apaga as guias padrão
+    if (e.shiftKey && e.key === 'F2') {
+        e.preventDefault();
+        document.getElementById('removeGuidesBtn').click();
+    }
+
+    // Ctrl + O: Abrir Documento
+    if (e.ctrlKey && e.key === 'o') {
+        e.preventDefault();
+        document.getElementById('openDocumentBtn').click();
+    }
+
+    // Ctrl + S: Salvar Documento
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('saveDocumentBtn').click();
+    }
+
+    // Ctrl + E: Modal flutuante exportar
+    if (e.ctrlKey && e.key === 'e') {
+        e.preventDefault();
+        document.getElementById('saveAsBtn').click();
+    }
+});
+
+document.addEventListener('keydown', function (e) {
+    // Verifica se a edição de texto está ativa
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.isEditing) {
+        return; // Sai da função se estiver editando texto
+    }
+
+    // Previne o comportamento padrão para evitar conflitos com atalhos do navegador
+    if (e.ctrlKey || e.metaKey) { // Ctrl (Windows) ou Command (Mac)
+        switch (e.key.toLowerCase()) {
+            case 'c': // Ctrl + C (Copiar)
+            case 'v': // Ctrl + V (Colar)
+            case 'x': // Ctrl + X (Recortar)
+            case 'z': // Ctrl + Z (Desfazer)
+            case 'y': // Ctrl + Y (Refazer)
+                e.preventDefault(); // Previne o comportamento padrão
+                break;
+        }
+    }
+
+    // Mapeia as teclas para os botões do menu esquerdo
+    switch (e.key.toLowerCase()) {
+        case 'c': // Recortar
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('cropImageBtn').click();
+            break;
+        case 'v': // Mover (não faz nada)
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('moveBtn').click();
+            break;
+        case 'g': // Balde
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('btnBalde').click();
+            break;
+        case 'b': // Pincel
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('btnPincel').click();
+            break;
+        case 'e': // Borracha
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('btnBorracha').click();
+            break;
+        case 'w': // Remover cor clique
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('removeCorCliqueBtn').click();
+            break;
+        case 'm': // Selecionar
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('selectBtn').click();
+            break;
+        case 't': // Texto
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('textoBtn').click();
+            break;
+        case 'i': // Importar imagem
+            e.preventDefault(); // Previne o comportamento padrão
+            document.getElementById('loadImageBtn').click();
+            break;
+    }
+});
 
 // ----------------------------------------- Seção Inicio Impressão ---------------------------------
 
@@ -3852,6 +3981,10 @@ document.getElementById('closeDynamicModal').addEventListener('click', function 
 
 document.getElementById('calendarBtn').addEventListener('click', function () {
     openDynamicModal('https://nkmplay.github.io/cgf/ferramentas/calend.html');
+});
+
+document.getElementById('fontepersonBtn').addEventListener('click', function () {
+    openDynamicModal('https://nkmplay.github.io/cgf/ferramentas/fonpers.html');
 });
 // ---------- Fim Seção Modal Ferramenta links -------------------------------------------
 
