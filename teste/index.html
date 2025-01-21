@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="https://example.com">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editor de Imagem com Fabric.js</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+
+    .main-container {
+      display: flex;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+
+    .top-menu {
+      background-color: #2c3e50;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      color: #ecf0f1;
+    }
+
+    .menu-buttons {
+      display: flex;
+      gap: 10px;
+      margin-right: 20px;
+    }
+
+    .menu-button {
+      background: none;
+      border: none;
+      color: #ecf0f1;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .menu-button:hover {
+      background-color: #34495e;
+    }
+
+    .dimension-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dimension-input {
+      width: 60px;
+      padding: 3px;
+      border: 1px solid #34495e;
+      border-radius: 3px;
+      background-color: #34495e;
+      color: #ecf0f1;
+    }
+
+    .dimension-input:focus {
+      outline: none;
+      background-color: #3d566e;
+    }
+
+    .sidebar {
+      width: 60px;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 10px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex-grow: 1;
+    }
+
+    .sidebar li {
+      margin-bottom: 15px;
+    }
+
+    .sidebar button {
+      width: 100%;
+      padding: 5px;
+      background-color: #34495e;
+      color: #ecf0f1;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background-color 0.3s ease;
+      font-size: 8px;
+      text-align: center;
+    }
+
+    .sidebar button svg {
+      margin-bottom: 4px;
+    }
+
+    .sidebar button:hover {
+      background-color: #3d566e;
+    }
+
+    #container {
+      background-color: #e0e0e0;
+      flex-grow: 1;
+    }
+
+    .layers-panel {
+      width: 200px;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #34495e;
+    }
+
+    .layers-title {
+      font-size: 12px;
+      font-weight: bold;
+      padding: 5px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #34495e;
+    }
+
+    .layers-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex-grow: 1;
+    }
+
+    .layer-item {
+      padding: 8px;
+      margin: 2px 0;
+      background-color: #34495e;
+      border-radius: 4px;
+      cursor: move;
+      user-select: none;
+      font-size: 12px;
+      position: relative;
+      transition: transform 0.2s;
+    }
+
+    .layer-item.selected {
+      background-color: #3498db;
+    }
+
+    .layer-item.dragging {
+      opacity: 0.5;
+      background-color: #2c3e50;
+    }
+
+    .layer-item.drag-over {
+      border-top: 2px solid #3498db;
+      transform: translateY(2px);
+    }
+
+    .layer-item.drag-over-bottom {
+      border-bottom: 2px solid #3498db;
+      transform: translateY(-2px);
+    }
+
+    .selection-rect {
+      position: absolute;
+      border: 1px solid #0099ff;
+      background: rgba(0, 153, 255, 0.1);
+      pointer-events: none;
+    }
+
+    textarea.text-edit {
+      position: absolute;
+      border: none;
+      padding: 0px;
+      margin: 0px;
+      overflow: hidden;
+      background: none;
+      outline: none;
+      resize: none;
+      line-height: 1;
+      font-family: Arial, sans-serif;
+      font-size: 20px;
+      color: #000;
+    }
+
+    .dropdown {
+      position: relative;
+    }
+
+    .dropdown-toggle {
+      background: none;
+      border: none;
+      color: #ecf0f1;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: #34495e;
+      min-width: 120px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+
+    .dropdown-menu button {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #ecf0f1;
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .dropdown-menu button:hover {
+      background-color: #3d566e;
+    }
+
+    .text-styling-controls {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-left: 20px;
+    }
+
+    select.dimension-input {
+      padding: 3px;
+      border: 1px solid #34495e;
+      border-radius: 3px;
+      background-color: #34495e;
+      color: #ecf0f1;
+    }
+
+    input.dimension-input[type="color"] {
+      padding: 3px;
+      border: 1px solid #34495e;
+      border-radius: 3px;
+      background-color: #34495e;
+      color: #ecf0f1;
+    }
+    .print-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 600px;
+      background-color: white;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+      display: none;
+    }
+    .print-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 999;
+      display: none;
+    }
+    .print-modal-content {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+    .print-modal-canvas, .print-modal-sidebar {
+      box-sizing: border-box;
+      padding: 10px;
+    }
+    .print-modal-canvas {
+      background-color: #f0f0f0;
+    }
+    .print-modal-sidebar {
+      background-color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-menu">
+    <div class="menu-buttons">
+      <div class="menu-button dropdown">
+        <button class="dropdown-toggle">Arquivo</button>
+        <div class="dropdown-menu">
+          <button id="print-button">Imprimir</button>
+        </div>
+      </div>
+      <button class="menu-button">Editar</button>
+      <button class="menu-button">Formas</button>
+    </div>
+    <div class="dimension-controls">
+      <span>&#x2194;</span>
+      <input type="number" id="width-input" class="dimension-input" step="0.1" placeholder="L (cm)">
+      <button id="swap-dimensions" class="menu-button">&#x21c5;</button>
+      <span>&#x2195;</span>
+      <input type="number" id="height-input" class="dimension-input" step="0.1" placeholder="A (cm)">
+      <button id="lock-ratio" class="menu-button">&#x1f513;</button>
+    </div>
+    <div class="text-styling-controls">
+      <select id="font-select" class="dimension-input">
+        <option value="Arial">Arial</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Helvetica">Helvetica</option>
+        <option value="Times New Roman">Times New Roman</option>
+      </select>
+      <input type="color" id="text-color-picker" class="dimension-input">
+      <input type="number" id="font-size-input" class="dimension-input" min="8" max="72" value="20">
+    </div>
+    <select id="printer-select" class="dimension-input">
+      <option value="">Selecione uma impressora</option>
+    </select>
+  </div>
+  <div class="main-container">
+    <div class="sidebar">
+      <ul>
+        <li>
+          <button id="insert-image">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 19V5H3V19H21Z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <circle cx="8.5" cy="12.5" r="2.5" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M21 19L16 14L12 18L8 14L3 19" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            Inserir
+          </button>
+          <input type="file" id="image-upload" accept="image/*" multiple style="display: none;">
+        </li>
+        <li>
+          <button id="insert-text">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 4H20V20H4V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
+              <text x="12" y="16" text-anchor="middle" fill="currentColor" font-size="12">T</text>
+            </svg>
+            Texto
+          </button>
+        </li>
+      </ul>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="layers-panel">
+      <div class="layers-title">Camadas</div>
+      <ul class="layers-list"></ul>
+    </div>
+  </div>
+  <div class="print-modal-overlay" id="print-modal-overlay">
+    <div class="print-modal" id="print-modal">
+      <div class="print-modal-content">
+        <div class="print-modal-canvas" style="width: 600px; height: 100%;">
+          <!-- Canvas content will be dynamically populated here -->
+        </div>
+        <div class="print-modal-sidebar" style="width: 200px; height: 100%;">
+          <!-- Optional sidebar content can be added later -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ---------- Configurações Iniciais -------------------------------------------
+      const sidebarWidth = 250;
+      const topMenuHeight = document.querySelector('.top-menu').offsetHeight;
+      const ROTATION_SNAP_ANGLE = 15;
+      const canvas = new fabric.Canvas('canvas', {
+        width: window.innerWidth - sidebarWidth,
+        height: window.innerHeight - topMenuHeight,
+        selection: true,
+        preserveObjectStacking: true,
+        rotationCursor: 'crosshair',
+        snapAngle: ROTATION_SNAP_ANGLE * (Math.PI / 180)
+      });
+
+      const cmToPx = 37.795275591;
+      const a4Width = 21 * cmToPx;
+      const a4Height = 29.7 * cmToPx;
+      const initialScale = 0.7;
+
+      // ---------- Criação do Objeto CloudFolha -------------------------------------------
+      const cloudFolha = new fabric.Rect({
+        width: a4Width,
+        height: a4Height,
+        left: (canvas.getWidth() / 2) - (a4Width / 2)- 250,
+        top: (canvas.getHeight() / 2) - (a4Height / 2)+ 100,
+        fill: 'white',
+        stroke: '#ccc',
+        strokeWidth: 1,
+        selectable: false,
+        name: 'CloudFolha'
+      });
+
+      cloudFolha.set({
+        hoverCursor: 'default'
+      });
+
+      canvas.add(cloudFolha);
+      canvas.sendToBack(cloudFolha);
+
+      canvas.setZoom(initialScale);
+	  canvas.absolutePan({
+        x: -((canvas.getWidth() - a4Width * initialScale) / 2),
+        y: -((canvas.getHeight() - a4Height * initialScale) / 2)
+      });
+
+      // ---------- Eventos de Zoom e Panning -------------------------------------------
+      canvas.on('mouse:wheel', opt => {
+        const delta = opt.e.deltaY;
+        let zoom = canvas.getZoom();
+        zoom *= 0.999 ** delta;
+        zoom = Math.min(Math.max(0.1, zoom), 4);
+        const point = new fabric.Point(opt.e.offsetX, opt.e.offsetY);
+        canvas.zoomToPoint(point, zoom);
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
+      });
+
+      canvas.on('mouse:down', opt => {
+        const evt = opt.e;
+        if (evt.altKey === true) {
+          canvas.isDragging = true;
+          canvas.selection = false;
+          canvas.lastPosX = evt.clientX;
+          canvas.lastPosY = evt.clientY;
+        }
+      });
+
+      canvas.on('mouse:move', opt => {
+        if (canvas.isDragging) {
+          const e = opt.e;
+          const vpt = canvas.viewportTransform;
+          vpt[4] += e.clientX - canvas.lastPosX;
+          vpt[5] += e.clientY - canvas.lastPosY;
+          canvas.requestRenderAll();
+          canvas.lastPosX = e.clientX;
+          canvas.lastPosY = e.clientY;
+        }
+      });
+
+      canvas.on('mouse:up', () => {
+        canvas.setViewportTransform(canvas.viewportTransform);
+        canvas.isDragging = false;
+        canvas.selection = true;
+      });
+
+      // ---------- Eventos de Rotação e Escala -------------------------------------------
+      canvas.on('object:rotating', opt => {
+        const target = opt.target;
+        target.set({
+          angle: Math.round(target.angle / ROTATION_SNAP_ANGLE) * ROTATION_SNAP_ANGLE
+        });
+      });
+
+	  canvas.on('object:modified', opt => {
+		  const obj = opt.target;
+		  updateDimensionInputs(obj);
+		});
+
+	  canvas.on('object:scaling', opt => {
+		  const obj = opt.target;
+		  updateDimensionInputs(obj);
+		});
+
+      canvas.on('object:scaling', opt => {
+        const obj = opt.target;
+        if (obj.type === 'i-text') {
+          const fontSizeInput = document.getElementById('font-size-input');
+          const newFontSize = Math.round(obj.fontSize * obj.scaleX);
+          fontSizeInput.value = newFontSize;
+          obj.set({
+            fontSize: newFontSize,
+            scaleX: 1,
+            scaleY: 1
+          });
+          const pxToCm = 1 / cmToPx;
+          const widthInput = document.getElementById('width-input');
+          const heightInput = document.getElementById('height-input');
+          widthInput.value = (obj.width * pxToCm).toFixed(1);
+          heightInput.value = (obj.height * pxToCm).toFixed(1);
+        }
+        const pxToCm = 1 / cmToPx;
+        const widthInput = document.getElementById('width-input');
+        const heightInput = document.getElementById('height-input');
+        widthInput.value = (obj.width * obj.scaleX * pxToCm).toFixed(1);
+        heightInput.value = (obj.height * obj.scaleY * pxToCm).toFixed(1);
+      });
+
+      // ---------- Eventos de Seleção -------------------------------------------
+canvas.on('selection:created', e => {
+  const activeObj = e.selected[0];
+  if (activeObj) {
+    updateDimensionInputs(activeObj);
+    updateLayersList();
+
+    // Show text styling controls only for text objects
+    const textStylingControls = document.querySelector('.text-styling-controls');
+    if (activeObj.type === 'i-text') {
+      textStylingControls.style.display = 'flex';
+      const fontSelect = document.getElementById('font-select');
+      const textColorPicker = document.getElementById('text-color-picker');
+      const fontSizeInput = document.getElementById('font-size-input');
+
+      fontSelect.value = activeObj.fontFamily || 'Arial';
+      textColorPicker.value = activeObj.fill || '#000000';
+      fontSizeInput.value = Math.round(activeObj.fontSize * activeObj.scaleX) || 20;
+
+      fontSelect.addEventListener('change', updateTextStyle);
+      textColorPicker.addEventListener('input', updateTextStyle);
+      fontSizeInput.addEventListener('change', updateTextStyle);
+    } else {
+      textStylingControls.style.display = 'none';
+    }
+  }
+});
+
+      canvas.on('selection:cleared', () => {
+        let selectedShapes = [];
+        updateDimensionInputs(null);
+        updateLayersList();
+        const textStylingControls = document.querySelector('.text-styling-controls');
+        textStylingControls.style.display = 'none';
+      });
+
+      // ---------- Inserção de Imagens -------------------------------------------
+      document.getElementById('insert-image').addEventListener('click', () => {
+        document.getElementById('image-upload').click();
+      });
+
+      document.getElementById('image-upload').addEventListener('change', e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = f => {
+          fabric.Image.fromURL(f.target.result, img => {
+            img.set({
+              left: cloudFolha.left + cloudFolha.width / 2,
+              top: cloudFolha.top + cloudFolha.height / 2,
+              originX: 'center',
+              originY: 'center'
+            });
+            canvas.add(img);
+            canvas.setActiveObject(img);
+            updateLayersList();
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+
+	  // ---------- Atualização dos Inputs de Dimensão -------------------------------------------
+function updateDimensionInputs(objects) {
+  const pxToCm = 1 / cmToPx;
+  const widthInput = document.getElementById('width-input');
+  const heightInput = document.getElementById('height-input');
+
+  if (!objects) {
+    widthInput.value = (cloudFolha.width * pxToCm).toFixed(1);
+    heightInput.value = (cloudFolha.height * pxToCm).toFixed(1);
+    return;
+  }
+
+  const activeObj = canvas.getActiveObject();
+  if (activeObj) {
+    let width, height;
+
+    if (activeObj.type === 'image') {
+      width = activeObj.width * activeObj.scaleX;
+      height = activeObj.height * activeObj.scaleY;
+    } else if (activeObj.type === 'i-text') {
+      width = activeObj.width * activeObj.scaleX;
+      height = activeObj.height * activeObj.scaleY;
+    } else {
+      width = activeObj.width * activeObj.scaleX;
+      height = activeObj.height * activeObj.scaleY;
+    }
+
+    widthInput.value = (width * pxToCm).toFixed(1);
+    heightInput.value = (height * pxToCm).toFixed(1);
+  } else {
+    widthInput.value = '';
+    heightInput.value = '';
+  }
+}
+
+	  // ---------- Eventos de Alteração de Dimensão -------------------------------------------
+      document.getElementById('width-input').addEventListener('change', e => {
+        const newWidthCm = parseFloat(e.target.value);
+        const activeObj = canvas.getActiveObject();
+        if (activeObj) {
+          const newWidth = newWidthCm * cmToPx;
+          activeObj.scaleX = newWidth / activeObj.width;
+          if (isRatioLocked) {
+            activeObj.scaleY = activeObj.scaleX;
+          }
+          if (activeObj.type === 'i-text') {
+            const fontSizeInput = document.getElementById('font-size-input');
+            fontSizeInput.value = Math.round(activeObj.fontSize * activeObj.scaleX);
+          }
+        } else {
+          cloudFolha.set('width', newWidthCm * cmToPx);
+        }
+        canvas.requestRenderAll();
+      });
+
+      document.getElementById('height-input').addEventListener('change', e => {
+        const newHeightCm = parseFloat(e.target.value);
+        const activeObj = canvas.getActiveObject();
+        if (activeObj) {
+          const newHeight = newHeightCm * cmToPx;
+          activeObj.scaleY = newHeight / activeObj.height;
+          if (isRatioLocked) {
+            activeObj.scaleX = activeObj.scaleY;
+          }
+          if (activeObj.type === 'i-text') {
+            const fontSizeInput = document.getElementById('font-size-input');
+            fontSizeInput.value = Math.round(activeObj.fontSize * activeObj.scaleX);
+          }
+        } else {
+          cloudFolha.set('height', newHeightCm * cmToPx);
+        }
+        canvas.requestRenderAll();
+      });
+
+      // ---------- Bloqueio de Proporção e troca de dimensão -------------------------------------------
+	  document.getElementById('swap-dimensions').addEventListener('click', () => {
+  const widthInput = document.getElementById('width-input');
+  const heightInput = document.getElementById('height-input');
+
+  const tempWidth = widthInput.value;
+  const tempHeight = heightInput.value;
+
+  widthInput.value = tempHeight;
+  heightInput.value = tempWidth;
+
+  const activeObj = canvas.getActiveObject();
+  if (activeObj) {
+    const newWidth = parseFloat(widthInput.value) * cmToPx;
+    const newHeight = parseFloat(heightInput.value) * cmToPx;
+
+    activeObj.set({
+      scaleX: newWidth / activeObj.width,
+      scaleY: newHeight / activeObj.height
+    });
+    activeObj.setCoords();
+  } else {
+    const newWidth = parseFloat(widthInput.value) * cmToPx;
+    const newHeight = parseFloat(heightInput.value) * cmToPx;
+
+    cloudFolha.set({
+      width: newWidth,
+      height: newHeight
+    });
+
+    cloudFolha.set({
+      left: (canvas.getWidth() / 2) - (newWidth / 2) - 250,
+      top: (canvas.getHeight() / 2) - (newHeight / 2) + 50
+    });
+
+    cloudFolha.setCoords();
+  }
+
+  canvas.requestRenderAll();
+});
+
+      let isRatioLocked = false;
+      document.getElementById('lock-ratio').addEventListener('click', () => {
+        isRatioLocked = !isRatioLocked;
+        document.getElementById('lock-ratio').textContent = isRatioLocked ? '🔒' : '🔓';
+      });
+
+      // ---------- Atualização da Lista de Camadas -------------------------------------------
+      function updateLayersList() {
+        const layersList = document.querySelector('.layers-list');
+        layersList.innerHTML = '';
+        canvas.getObjects().forEach((obj, i) => {
+          if (obj === cloudFolha) return;
+          const li = document.createElement('li');
+          li.className = 'layer-item';
+          if (canvas.getActiveObjects().includes(obj)) {
+            li.classList.add('selected');
+          }
+          li.textContent = obj.type === 'i-text' ? `Texto ${i}` : `Imagem ${i}`;
+          li.addEventListener('click', () => {
+            canvas.setActiveObject(obj);
+            canvas.requestRenderAll();
+          });
+          layersList.appendChild(li);
+        });
+      }
+
+      // ---------- Inserção de Texto -------------------------------------------
+      document.getElementById('insert-text').addEventListener('click', () => {
+        const text = new fabric.IText('Texto', {
+          left: cloudFolha.left + cloudFolha.width / 2,
+          top: cloudFolha.top + cloudFolha.height / 2,
+          originX: 'center',
+          originY: 'center',
+          fontSize: 20
+        });
+        canvas.add(text);
+        canvas.setActiveObject(text);
+        updateLayersList();
+      });
+
+      // ---------- Atualização do Estilo do Texto -------------------------------------------
+      function updateTextStyle() {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && activeObj.type === 'i-text') {
+          const fontSelect = document.getElementById('font-select');
+          const textColorPicker = document.getElementById('text-color-picker');
+          const fontSizeInput = document.getElementById('font-size-input');
+          activeObj.set({
+            fontFamily: fontSelect.value,
+            fill: textColorPicker.value,
+            fontSize: parseInt(fontSizeInput.value),
+            scaleX: 1,
+            scaleY: 1
+          });
+          const pxToCm = 1 / cmToPx;
+          const widthInput = document.getElementById('width-input');
+          const heightInput = document.getElementById('height-input');
+          widthInput.value = (activeObj.width * pxToCm).toFixed(1);
+          heightInput.value = (activeObj.height * pxToCm).toFixed(1);
+          canvas.requestRenderAll();
+        }
+      }
+
+      // ---------- Criação do Canvas de Impressão -------------------------------------------
+      function createPrintCanvas() {
+        const printCanvas = document.createElement('canvas');
+        const printScale = 3;
+        const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+        const a4Width = cloudFolha.width;
+        const a4Height = cloudFolha.height;
+        printCanvas.width = a4Width * printScale;
+        printCanvas.height = a4Height * printScale;
+        const printCanvasContext = printCanvas.getContext('2d');
+        printCanvasContext.scale(printScale, printScale);
+        printCanvasContext.fillStyle = 'white';
+        printCanvasContext.fillRect(0, 0, a4Width, a4Height);
+        canvas.getObjects().forEach(obj => {
+          if (obj.name !== 'CloudFolha') {
+            const objClone = fabric.util.object.clone(obj);
+            objClone.set({
+              left: obj.left - cloudFolha.left,
+              top: obj.top - cloudFolha.top
+            });
+            objClone.render(printCanvasContext);
+          }
+        });
+        return printCanvas;
+      }
+
+      // ---------- Eventos de Impressão -------------------------------------------
+document.getElementById('print-button').addEventListener('click', () => {
+  canvas.setZoom(initialScale);
+  canvas.absolutePan({
+    x: -((canvas.getWidth() - a4Width * initialScale) / 2),
+    y: -((canvas.getHeight() - a4Height * initialScale) / 2)
+  });
+
+  const printCanvas = createPrintCanvas();
+
+  const printModalOverlay = document.getElementById('print-modal-overlay');
+  const printModal = document.getElementById('print-modal');
+  printModalOverlay.style.display = 'block';
+  printModal.style.display = 'block';
+
+  const printModalCanvas = printModal.querySelector('.print-modal-canvas');
+
+  printModalCanvas.innerHTML = `
+    <img
+      src="${printCanvas.toDataURL('image/png', 1.0)}"
+      style="
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+      "
+    >`;
+
+  const printModalSidebar = printModal.querySelector('.print-modal-sidebar');
+  printModalSidebar.innerHTML = '<p>Detalhes de impressão podem ser adicionados aqui</p>';
+});
+
+document.getElementById('print-modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) {
+    const printModalOverlay = document.getElementById('print-modal-overlay');
+    const printModal = document.getElementById('print-modal');
+    printModalOverlay.style.display = 'none';
+    printModal.style.display = 'none';
+
+    canvas.setZoom(initialScale);
+    canvas.absolutePan({
+      x: -((canvas.getWidth() - a4Width * initialScale) / 2),
+      y: -((canvas.getHeight() - a4Height * initialScale) / 2)
+    });
+
+    canvas.getObjects().forEach(obj => {
+      if (obj.type === 'i-text') {
+        obj.setCoords();
+      }
+    });
+
+    canvas.requestRenderAll();
+  }
+});
+
+      // ---------- Eventos de Redimensionamento da Janela -------------------------------------------
+      window.addEventListener('resize', () => {
+        canvas.setWidth(window.innerWidth - sidebarWidth);
+        canvas.setHeight(window.innerHeight - topMenuHeight);
+        canvas.requestRenderAll();
+      });
+
+      // ---------- Inicialização -------------------------------------------
+      updateDimensionInputs(null);
+      canvas.requestRenderAll();
+
+      // ---------- População do ComboBox de Impressoras -------------------------------------------
+      if (window.printers) {
+        const printerSelect = document.getElementById('printer-select');
+        window.printers.forEach(printer => {
+          const option = document.createElement('option');
+          option.value = printer;
+          option.textContent = printer;
+          printerSelect.appendChild(option);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
