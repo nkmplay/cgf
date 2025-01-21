@@ -376,8 +376,13 @@
           <!-- Canvas content will be dynamically populated here -->
         </div>
         <div class="print-modal-sidebar" style="width: 200px; height: 100%;">
-          <!-- Optional sidebar content can be added later -->
-        </div>
+		  <h3>Impressão</h3>
+		  <label for="printer-select-modal">Selecione a impressora:</label>
+		  <select id="printer-select-modal" class="dimension-input">
+			<option value="">Selecione uma impressora</option>
+		  </select>
+		  <button id="print-confirm-button" class="menu-button">Imprimir</button>
+		</div>
       </div>
     </div>
   </div>
@@ -804,7 +809,36 @@ document.getElementById('print-button').addEventListener('click', () => {
     >`;
 
   const printModalSidebar = printModal.querySelector('.print-modal-sidebar');
-  printModalSidebar.innerHTML = '<p>Detalhes de impressão podem ser adicionados aqui</p>';
+  printModalSidebar.innerHTML = `
+    <h3>Impressão</h3>
+    <label for="printer-select-modal">Selecione a impressora:</label>
+    <select id="printer-select-modal" class="dimension-input">
+      <option value="">Selecione uma impressora</option>
+    </select>
+    <button id="print-confirm-button" class="menu-button">Imprimir</button>
+  `;
+
+  // Preenche o combobox de impressoras no modal
+  if (window.printers) {
+    const printerSelectModal = document.getElementById('printer-select-modal');
+    window.printers.forEach(printer => {
+      const option = document.createElement('option');
+      option.value = printer;
+      option.textContent = printer;
+      printerSelectModal.appendChild(option);
+    });
+  }
+
+  // Adiciona o evento de clique no botão de confirmação de impressão
+  document.getElementById('print-confirm-button').addEventListener('click', () => {
+    const selectedPrinter = document.getElementById('printer-select-modal').value;
+    if (selectedPrinter) {
+      // Aqui você pode adicionar a lógica para enviar o trabalho de impressão para a impressora selecionada
+      alert(`Imprimindo na impressora: ${selectedPrinter}`);
+    } else {
+      alert('Por favor, selecione uma impressora.');
+    }
+  });
 });
 
 document.getElementById('print-modal-overlay').addEventListener('click', e => {
