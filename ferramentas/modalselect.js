@@ -267,27 +267,40 @@ document.addEventListener('DOMContentLoaded', function () {
     croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
     fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-        if (cloudFolha) {
-            const centerX = cloudFolha.left + cloudFolha.width / 2;
-            const centerY = cloudFolha.top + cloudFolha.height / 2;
+        const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+        const zoom = canvas.getZoom();
+        const vpt = canvas.viewportTransform;
 
+        if (cloudFolha) {
+            // Calcular posição absoluta considerando zoom e pan
+            const canvasCenter = {
+                x: (canvas.getWidth() / 2 - vpt[4]) / zoom,
+                y: (canvas.getHeight() / 2 - vpt[5]) / zoom
+            };
+
+            // Configurar propriedades críticas
             img.set({
-                left: centerX - img.width / 2,
-                top: centerY - img.height / 2,
-                originX: 'center', // Definir a origem como centro
-                originY: 'center', // Definir a origem como centro
-                angle: 0, // Resetar o ângulo
-                scaleX: 1, // Resetar a escala X
-                scaleY: 1  // Resetar a escala Y
+                left: canvasCenter.x,
+                top: canvasCenter.y,
+                originX: 'center',
+                originY: 'center',
+                angle: 0,
+                scaleX: 1 / zoom,  // Compensar o zoom global
+                scaleY: 1 / zoom,
+                centeredRotation: true,
+                centeredScaling: true
             });
 
-            img.setCoords(); // Atualizar as coordenadas
+            // Resetar matriz de transformação
+            img.resetTransformMatrix();
+            
+            // Atualizar coordenadas
+            img.setCoords();
         }
 
         canvas.add(img);
         canvas.setActiveObject(img);
-        canvas.renderAll();
+        canvas.requestRenderAll();
         modal.remove();
         clearSelection();
     });
