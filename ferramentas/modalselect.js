@@ -180,98 +180,118 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function copySelectedAreaEdit() {
-            if (editState.isColorSelection) {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = editCanvas.width;
-                tempCanvas.height = editCanvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(editCanvas, 0, 0);
-                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                let minX = tempCanvas.width,
-                    minY = tempCanvas.height,
-                    maxX = 0,
-                    maxY = 0;
-                for (let y = 0; y < tempCanvas.height; y++) {
-                    for (let x = 0; x < tempCanvas.width; x++) {
-                        const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
-                        if (alpha > 0) {
-                            minX = Math.min(minX, x);
-                            minY = Math.min(minY, y);
-                            maxX = Math.max(maxX, x);
-                            maxY = Math.max(maxY, y);
-                        }
-                    }
-                }
-                const croppedCanvas = document.createElement('canvas');
-                croppedCanvas.width = maxX - minX + 1;
-                croppedCanvas.height = maxY - minY + 1;
-                const croppedCtx = croppedCanvas.getContext('2d');
-                croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
-
-                fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-                    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-                    if (cloudFolha) {
-                        const centerX = cloudFolha.left + cloudFolha.width / 2;
-                        const centerY = cloudFolha.top + cloudFolha.height / 2;
-
-                        img.set({
-                            left: centerX - img.width / 2,
-                            top: centerY - img.height / 2
-                        });
-                    }
-                    canvas.add(img);
-                    canvas.renderAll();
-                    modal.remove();
-                    clearSelection();
-                });
-                return;
-            }
-
-            if (!editState.selectionPath.length) return;
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = editCanvas.width;
-            tempCanvas.height = editCanvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(editCanvas, 0, 0);
-            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            let minX = tempCanvas.width,
-                minY = tempCanvas.height,
-                maxX = 0,
-                maxY = 0;
-            for (let y = 0; y < tempCanvas.height; y++) {
-                for (let x = 0; x < tempCanvas.width; x++) {
-                    const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
-                    if (alpha > 0) {
-                        minX = Math.min(minX, x);
-                        minY = Math.min(minY, y);
-                        maxX = Math.max(maxX, x);
-                        maxY = Math.max(maxY, y);
-                    }
+    if (editState.isColorSelection) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = editCanvas.width;
+        tempCanvas.height = editCanvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(editCanvas, 0, 0);
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        let minX = tempCanvas.width,
+            minY = tempCanvas.height,
+            maxX = 0,
+            maxY = 0;
+        for (let y = 0; y < tempCanvas.height; y++) {
+            for (let x = 0; x < tempCanvas.width; x++) {
+                const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
+                if (alpha > 0) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
                 }
             }
-            const croppedCanvas = document.createElement('canvas');
-            croppedCanvas.width = maxX - minX + 1;
-            croppedCanvas.height = maxY - minY + 1;
-            const croppedCtx = croppedCanvas.getContext('2d');
-            croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
-
-            fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-                const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-                if (cloudFolha) {
-                    const centerX = cloudFolha.left + cloudFolha.width / 2;
-                    const centerY = cloudFolha.top + cloudFolha.height / 2;
-
-                    img.set({
-                        left: centerX - img.width / 2,
-                        top: centerY - img.height / 2
-                    });
-                }
-                canvas.add(img);
-                canvas.renderAll();
-                modal.remove();
-                clearSelection();
-            });
         }
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = maxX - minX + 1;
+        croppedCanvas.height = maxY - minY + 1;
+        const croppedCtx = croppedCanvas.getContext('2d');
+        croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
+
+        fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+            const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+            if (cloudFolha) {
+                const centerX = cloudFolha.left + cloudFolha.width / 2;
+                const centerY = cloudFolha.top + cloudFolha.height / 2;
+
+                img.set({
+                    left: centerX - img.width / 2,
+                    top: centerY - img.height / 2,
+                    originX: 'center', // Definir a origem como centro
+                    originY: 'center', // Definir a origem como centro
+                    angle: 0, // Resetar o ângulo
+                    scaleX: 1, // Resetar a escala X
+                    scaleY: 1  // Resetar a escala Y
+                });
+
+                img.setCoords(); // Atualizar as coordenadas
+            }
+            canvas.add(img);
+            canvas.renderAll();
+            modal.remove();
+            clearSelection();
+        });
+        return;
+    }
+
+    if (!editState.selectionPath.length) return;
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = editCanvas.width;
+    tempCanvas.height = editCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(editCanvas, 0, 0);
+
+    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    let minX = tempCanvas.width,
+        minY = tempCanvas.height,
+        maxX = 0,
+        maxY = 0;
+
+    for (let y = 0; y < tempCanvas.height; y++) {
+        for (let x = 0; x < tempCanvas.width; x++) {
+            const alpha = imageData.data[(y * tempCanvas.width + x) * 4 + 3];
+            if (alpha > 0) {
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
+            }
+        }
+    }
+
+    const croppedCanvas = document.createElement('canvas');
+    croppedCanvas.width = maxX - minX + 1;
+    croppedCanvas.height = maxY - minY + 1;
+    const croppedCtx = croppedCanvas.getContext('2d');
+    croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
+
+    fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+        const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+        if (cloudFolha) {
+            const centerX = cloudFolha.left + cloudFolha.width / 2;
+            const centerY = cloudFolha.top + cloudFolha.height / 2;
+
+            img.set({
+                left: centerX - img.width / 2,
+                top: centerY - img.height / 2,
+                originX: 'center', // Definir a origem como centro
+                originY: 'center', // Definir a origem como centro
+                angle: 0, // Resetar o ângulo
+                scaleX: 1, // Resetar a escala X
+                scaleY: 1  // Resetar a escala Y
+            });
+
+            img.setCoords(); // Atualizar as coordenadas
+        }
+
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        modal.remove();
+        clearSelection();
+    });
+}
 
         // Adicionar eventos para cada ferramenta
         const toolEvents = ['squareSelect', 'circleSelect', 'lassoSelect', 'colorSelect'];
