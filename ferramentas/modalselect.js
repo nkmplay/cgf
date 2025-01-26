@@ -209,21 +209,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
                 fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-                    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-                    if (cloudFolha) {
-                        const centerX = cloudFolha.left + cloudFolha.width / 2;
-                        const centerY = cloudFolha.top + cloudFolha.height / 2;
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+        const centerX = cloudFolha.left + cloudFolha.width / 2;
+        const centerY = cloudFolha.top + cloudFolha.height / 2;
 
-                        img.set({
-                            left: centerX - img.width / 2,
-                            top: centerY - img.height / 2
-                        });
-                    }
-                    canvas.add(img);
-                    canvas.renderAll();
-                    modal.remove();
-                    clearSelection();
-                });
+        img.set({
+            left: centerX - img.width / 2,
+            top: centerY - img.height / 2,
+            scaleX: 1,  // Adicione esta linha
+            scaleY: 1,  // Adicione esta linha
+            angle: 0,   // Adicione esta linha
+            originX: 'center', // Adicione esta linha
+            originY: 'center'  // Adicione esta linha
+        });
+    }
+    canvas.add(img);
+    canvas.renderAll();
+    modal.remove();
+    clearSelection();
+});
                 return;
             }
 
@@ -256,21 +261,26 @@ document.addEventListener('DOMContentLoaded', function () {
             croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
             fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-                const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
-                if (cloudFolha) {
-                    const centerX = cloudFolha.left + cloudFolha.width / 2;
-                    const centerY = cloudFolha.top + cloudFolha.height / 2;
+    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+    if (cloudFolha) {
+        const centerX = cloudFolha.left + cloudFolha.width / 2;
+        const centerY = cloudFolha.top + cloudFolha.height / 2;
 
-                    img.set({
-                        left: centerX - img.width / 2,
-                        top: centerY - img.height / 2
-                    });
-                }
-                canvas.add(img);
-                canvas.renderAll();
-                modal.remove();
-                clearSelection();
-            });
+        img.set({
+            left: centerX - img.width / 2,
+            top: centerY - img.height / 2,
+            scaleX: 1,  // Adicione esta linha
+            scaleY: 1,  // Adicione esta linha
+            angle: 0,   // Adicione esta linha
+            originX: 'center', // Adicione esta linha
+            originY: 'center'  // Adicione esta linha
+        });
+    }
+    canvas.add(img);
+    canvas.renderAll();
+    modal.remove();
+    clearSelection();
+});
         }
 
         // Adicionar eventos para cada ferramenta
