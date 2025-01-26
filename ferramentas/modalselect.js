@@ -208,7 +208,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 const croppedCtx = croppedCanvas.getContext('2d');
                 croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
-                fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+               fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+                   console.log('Imagem adicionada:', {
+        width: img.width,
+        height: img.height,
+        scaleX: img.scaleX,
+        scaleY: img.scaleY,
+        left: img.left,
+        top: img.top
+    });
     const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
     if (cloudFolha) {
         const centerX = cloudFolha.left + cloudFolha.width / 2;
@@ -217,14 +225,24 @@ document.addEventListener('DOMContentLoaded', function () {
         img.set({
             left: centerX - img.width / 2,
             top: centerY - img.height / 2,
-            scaleX: 1,  // Adicione esta linha
-            scaleY: 1,  // Adicione esta linha
-            angle: 0,   // Adicione esta linha
-            originX: 'center', // Adicione esta linha
-            originY: 'center'  // Adicione esta linha
+            originX: 'center', // Ponto de origem no centro horizontal
+            originY: 'center', // Ponto de origem no centro vertical
+            centeredRotation: true, // Força rotação centralizada
+            lockScalingX: false, // Permite escala se necessário
+            lockScalingY: false
+        });
+
+        // Configuração adicional para garantir rotação no centro
+        img.setControlsVisibility({
+            mt: false, // Desabilita movimento no topo
+            mb: false, // Desabilita movimento na base
+            ml: false, // Desabilita movimento à esquerda
+            mr: false  // Desabilita movimento à direita
         });
     }
+
     canvas.add(img);
+    canvas.setActiveObject(img); // Define a imagem como objeto ativo
     canvas.renderAll();
     modal.remove();
     clearSelection();
@@ -260,7 +278,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const croppedCtx = croppedCanvas.getContext('2d');
             croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
-            fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+             fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+                   console.log('Imagem adicionada:', {
+        width: img.width,
+        height: img.height,
+        scaleX: img.scaleX,
+        scaleY: img.scaleY,
+        left: img.left,
+        top: img.top
+    });
     const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
     if (cloudFolha) {
         const centerX = cloudFolha.left + cloudFolha.width / 2;
@@ -269,14 +295,24 @@ document.addEventListener('DOMContentLoaded', function () {
         img.set({
             left: centerX - img.width / 2,
             top: centerY - img.height / 2,
-            scaleX: 1,  // Adicione esta linha
-            scaleY: 1,  // Adicione esta linha
-            angle: 0,   // Adicione esta linha
-            originX: 'center', // Adicione esta linha
-            originY: 'center'  // Adicione esta linha
+            originX: 'center', // Ponto de origem no centro horizontal
+            originY: 'center', // Ponto de origem no centro vertical
+            centeredRotation: true, // Força rotação centralizada
+            lockScalingX: false, // Permite escala se necessário
+            lockScalingY: false
+        });
+
+        // Configuração adicional para garantir rotação no centro
+        img.setControlsVisibility({
+            mt: false, // Desabilita movimento no topo
+            mb: false, // Desabilita movimento na base
+            ml: false, // Desabilita movimento à esquerda
+            mr: false  // Desabilita movimento à direita
         });
     }
+
     canvas.add(img);
+    canvas.setActiveObject(img); // Define a imagem como objeto ativo
     canvas.renderAll();
     modal.remove();
     clearSelection();
