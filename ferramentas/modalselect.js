@@ -208,41 +208,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 const croppedCtx = croppedCanvas.getContext('2d');
                 croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
-               fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-                   console.log('Imagem adicionada:', {
-        width: img.width,
-        height: img.height,
-        scaleX: img.scaleX,
-        scaleY: img.scaleY,
-        left: img.left,
-        top: img.top
-    });
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+    const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
     if (cloudFolha) {
         const centerX = cloudFolha.left + cloudFolha.width / 2;
         const centerY = cloudFolha.top + cloudFolha.height / 2;
 
+        // Preservar as propriedades originais de escala e rotação
         img.set({
-            left: centerX - img.width / 2,
-            top: centerY - img.height / 2,
-            originX: 'center', // Ponto de origem no centro horizontal
-            originY: 'center', // Ponto de origem no centro vertical
-            centeredRotation: true, // Força rotação centralizada
-            lockScalingX: false, // Permite escala se necessário
-            lockScalingY: false
+            left: centerX - (img.width * activeImage.scaleX / 2),
+            top: centerY - (img.height * activeImage.scaleY / 2),
+            angle: activeImage.angle, // Preservar o ângulo original
+            scaleX: activeImage.scaleX, // Preservar a escala X original
+            scaleY: activeImage.scaleY, // Preservar a escala Y original
+            originX: 'center',
+            originY: 'center',
+            centeredRotation: true
         });
 
-        // Configuração adicional para garantir rotação no centro
+        // Configurações adicionais para garantir rotação e manipulação corretas
         img.setControlsVisibility({
-            mt: false, // Desabilita movimento no topo
-            mb: false, // Desabilita movimento na base
-            ml: false, // Desabilita movimento à esquerda
-            mr: false  // Desabilita movimento à direita
+            mt: false,
+            mb: false,
+            ml: false,
+            mr: false
         });
     }
 
     canvas.add(img);
-    canvas.setActiveObject(img); // Define a imagem como objeto ativo
+    canvas.setActiveObject(img);
     canvas.renderAll();
     modal.remove();
     clearSelection();
@@ -278,41 +272,35 @@ document.addEventListener('DOMContentLoaded', function () {
             const croppedCtx = croppedCanvas.getContext('2d');
             croppedCtx.drawImage(tempCanvas, minX, minY, maxX - minX + 1, maxY - minY + 1, 0, 0, maxX - minX + 1, maxY - minY + 1);
 
-             fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
-                   console.log('Imagem adicionada:', {
-        width: img.width,
-        height: img.height,
-        scaleX: img.scaleX,
-        scaleY: img.scaleY,
-        left: img.left,
-        top: img.top
-    });
-    const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+fabric.Image.fromURL(croppedCanvas.toDataURL(), img => {
+    const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
     if (cloudFolha) {
         const centerX = cloudFolha.left + cloudFolha.width / 2;
         const centerY = cloudFolha.top + cloudFolha.height / 2;
 
+        // Preservar as propriedades originais de escala e rotação
         img.set({
-            left: centerX - img.width / 2,
-            top: centerY - img.height / 2,
-            originX: 'center', // Ponto de origem no centro horizontal
-            originY: 'center', // Ponto de origem no centro vertical
-            centeredRotation: true, // Força rotação centralizada
-            lockScalingX: false, // Permite escala se necessário
-            lockScalingY: false
+            left: centerX - (img.width * activeImage.scaleX / 2),
+            top: centerY - (img.height * activeImage.scaleY / 2),
+            angle: activeImage.angle, // Preservar o ângulo original
+            scaleX: activeImage.scaleX, // Preservar a escala X original
+            scaleY: activeImage.scaleY, // Preservar a escala Y original
+            originX: 'center',
+            originY: 'center',
+            centeredRotation: true
         });
 
-        // Configuração adicional para garantir rotação no centro
+        // Configurações adicionais para garantir rotação e manipulação corretas
         img.setControlsVisibility({
-            mt: false, // Desabilita movimento no topo
-            mb: false, // Desabilita movimento na base
-            ml: false, // Desabilita movimento à esquerda
-            mr: false  // Desabilita movimento à direita
+            mt: false,
+            mb: false,
+            ml: false,
+            mr: false
         });
     }
 
     canvas.add(img);
-    canvas.setActiveObject(img); // Define a imagem como objeto ativo
+    canvas.setActiveObject(img);
     canvas.renderAll();
     modal.remove();
     clearSelection();
