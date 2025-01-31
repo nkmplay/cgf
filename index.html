@@ -2,10 +2,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CloudPhoto</title>
 <link rel="stylesheet" href="https://example.com/styles.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 <style>
   body {
     margin: 0;
@@ -665,6 +665,21 @@
 .general-controls button:hover {
   background-color: #0056b3;
 }
+@media print {
+  @page {
+    margin: 0;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  #print-container img {
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -676,7 +691,9 @@
   <div class="dropdown-menu">
 	<button id="openImagePDFBtn">Abrir Imagem | PDF </button>
     <button id="openDocumentBtn">Abrir Documento</button>
+	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
     <button id="saveDocumentBtn">Salvar Documento</button>
+	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
     <div class="dropdown">
       <button class="dropdown-toggle">Exportar</button>
       <div class="dropdown-menu export-submenu">
@@ -703,6 +720,16 @@
         </div>
       </div>
     </div>
+	<div class="dropdown">
+      <button class="dropdown-toggle">Importar</button>
+      <div class="dropdown-menu export-submenu">
+        <div class="export-option">
+          <button id="import-svg">Importar SVG</button>
+        </div>
+      </div>
+    </div>
+	
+	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
     <button id="print-button">Imprimir</button>
   </div>
 </div>
@@ -833,8 +860,6 @@
 	  <input type="number" id="stroke-width-input" class="dimension-input" min="0" value="0">
 	  <input type="color" id="stroke-color-picker" class="dimension-input" value="#000000">
     </div>
-	<button id="confirm-crop" style="display: none;">✂ Confirmar Corte</button>
-	
 		<div class="general-controls" style="display: none;">
 		  <label for="opacity-input">Opac.:</label>
 		  <input type="number" id="opacity-input" class="dimension-input" min="1" max="100" step="1">
@@ -1529,29 +1554,27 @@ document.getElementById('print-button').addEventListener('click', () => {
   const originalWidth = canvas.getWidth();
   const originalHeight = canvas.getHeight();
 
+  // Marca todos os objetos como "dirty" antes de qualquer manipulação
+  canvas.forEachObject(obj => {
+    obj.dirty = true;
+    obj.setCoords(); // Marca as coordenadas dos objetos
+  });
+  canvas.requestRenderAll();
+
   canvas.setZoom(1);
   canvas.requestRenderAll();
 
-  const TARGET_DPI = 300;
+  const TARGET_DPI = 300; 
   const BROWSER_DPI = 96;
   const dpiScale = TARGET_DPI / BROWSER_DPI;
-  const marginCompensation = 0.1 * cmToPx * dpiScale;
 
-  const printWidth = cloudFolhaObj.width * dpiScale + marginCompensation;
-  const printHeight = cloudFolhaObj.height * dpiScale + marginCompensation;
+  const printWidth = cloudFolhaObj.width * dpiScale;
+  const printHeight = cloudFolhaObj.height * dpiScale;
 
   const printCanvas = new fabric.Canvas(null, {
     width: printWidth,
     height: printHeight,
     backgroundColor: 'white'
-  });
-
-  const clipPath = new fabric.Rect({
-    left: marginCompensation / 2,
-    top: marginCompensation / 2,
-    width: cloudFolhaObj.width * dpiScale,
-    height: cloudFolhaObj.height * dpiScale,
-    absolutePositioned: true
   });
 
   const objectsToPrint = canvas.getObjects()
@@ -1562,11 +1585,10 @@ document.getElementById('print-button').addEventListener('click', () => {
       const relativeTop = obj.top - cloudFolhaObj.top;
 
       clone.set({
-        left: (relativeLeft * dpiScale) + (marginCompensation / 2),
-        top: (relativeTop * dpiScale) + (marginCompensation / 2),
+        left: relativeLeft * dpiScale,
+        top: relativeTop * dpiScale,
         scaleX: obj.scaleX * dpiScale,
         scaleY: obj.scaleY * dpiScale,
-        clipPath: clipPath,
         selectable: false
       });
 
@@ -1578,12 +1600,9 @@ document.getElementById('print-button').addEventListener('click', () => {
           scaleX: 1,
           scaleY: 1,
           paintFirst: 'stroke',
-          left: clone.left - (clone.strokeWidth * strokeScale / 2),
-          top: clone.top - (clone.strokeWidth * strokeScale / 2)
+          left: clone.left,
+          top: clone.top
         });
-
-        clone.width = clone.width + (clone.strokeWidth * strokeScale);
-        clone.height = clone.height + (clone.strokeWidth * strokeScale);
       }
 
       return clone;
@@ -1592,79 +1611,45 @@ document.getElementById('print-button').addEventListener('click', () => {
   printCanvas.add(...objectsToPrint);
   printCanvas.renderAll();
 
-  const printWindow = window.open('', '_blank');
+  const printContainer = document.createElement('div');
+  printContainer.id = 'print-container';
+  printContainer.style = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `;
 
-  const widthMM = (printWidth / TARGET_DPI) * 25.4;
-  const heightMM = (printHeight / TARGET_DPI) * 25.4;
+  const printImg = document.createElement('img');
+  printImg.src = printCanvas.toDataURL({
+    format: 'png',
+    quality: 1.0,
+    enableRetinaScaling: true,
+    width: printWidth,
+    height: printHeight 
+  });
+  printImg.style = `
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    margin: -1px; /* Tentativa de remover a possível margem invisível */
+  `;
 
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Impressão</title>
-        <style>
-          @page {
-            size: ${widthMM.toFixed(2)}mm ${heightMM.toFixed(2)}mm;
-            margin: 0;
-          }
-          body {
-            margin: 0;
-            padding: 0;
-            width: ${widthMM.toFixed(2)}mm;
-            height: ${heightMM.toFixed(2)}mm;
-          }
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-          }
-          .controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          }
-          .controls button {
-            margin: 0 5px;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            background: #007bff;
-            color: white;
-            cursor: pointer;
-          }
-          .controls button:hover {
-            background: #0056b3;
-          }
-          @media print {
-            .controls {
-              display: none;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <img src="${printCanvas.toDataURL({
-          format: 'png',
-          quality: 1.0,
-          enableRetinaScaling: true
-        })}">
-        <div class="controls">
-          <button onclick="window.print()">Imprimir</button>
-          <button onclick="window.close()">Fechar Janela</button>
-        </div>
-      </body>
-    </html>
-  `);
+  printContainer.appendChild(printImg);
 
-  printWindow.document.close();
+  document.body.appendChild(printContainer);
 
-  printWindow.onbeforeunload = () => {
+  window.setTimeout(() => {
+    window.print();
+    document.body.removeChild(printContainer);
+
     canvas.setDimensions({
       width: originalWidth,
       height: originalHeight
@@ -1672,6 +1657,7 @@ document.getElementById('print-button').addEventListener('click', () => {
     canvas.setViewportTransform(originalViewportTransform);
     canvas.setZoom(originalZoom);
 
+    // Marca os objetos novamente como "dirty" e atualiza suas coordenadas após o retorno
     canvas.forEachObject(obj => {
       obj.dirty = true;
       obj.setCoords(); 
@@ -1681,10 +1667,17 @@ document.getElementById('print-button').addEventListener('click', () => {
 
     setTimeout(() => {
       canvas.calcViewportBoundaries();
-      canvas.requestRenderAll();
+      canvas.discardActiveObject();
+      canvas.forEachObject(obj => {
+        obj.set("dirty", true);
+        obj.setCoords();
+      });
+      canvas.renderAll();
     }, 100);
-  };
+
+  }, 500);
 });
+
 
       // ---------- Função para Excluir Selecionados -------------------------------------------
       document.getElementById('delete-selected').addEventListener('click', () => {
@@ -2912,11 +2905,51 @@ document.getElementById('saveDocumentBtn').addEventListener('click', function ()
     URL.revokeObjectURL(url); 
 });
 
-// ---------------- ferramenta de Corte  ----------------------------------------
-
+// ---------------- ferramenta de corte ---------------------------
 let cropMode = false; 
 let cropRect = null; 
 let originalImage = null; 
+let cropButtons = null;
+
+function createCropButtons() {
+  const cropButtonsContainer = document.createElement('div');
+  cropButtonsContainer.className = 'crop-buttons';
+  cropButtonsContainer.style.display = 'none';
+  cropButtonsContainer.style.position = 'absolute';
+  cropButtonsContainer.style.zIndex = '1000';
+  cropButtonsContainer.style.textAlign = 'center'; // Alinha os botões no centro
+
+  const confirmButton = document.createElement('button');
+  confirmButton.id = 'crop-confirm';
+  confirmButton.textContent = 'Confirmar';
+  confirmButton.style.background = '#1a1a1a';
+  confirmButton.style.color = 'white';
+  confirmButton.style.border = 'none';
+  confirmButton.style.padding = '5px 10px';
+  confirmButton.style.margin = '5px';
+  confirmButton.style.borderRadius = '5px';
+  confirmButton.style.cursor = 'pointer';
+  confirmButton.addEventListener('click', applyCrop);
+
+  const cancelButton = document.createElement('button');
+  cancelButton.id = 'crop-cancel';
+  cancelButton.textContent = 'Cancelar';
+  cancelButton.style.background = '#1a1a1a';
+  cancelButton.style.color = 'white';
+  cancelButton.style.border = 'none';
+  cancelButton.style.padding = '5px 10px';
+  cancelButton.style.margin = '5px';
+  cancelButton.style.borderRadius = '5px';
+  cancelButton.style.cursor = 'pointer';
+  cancelButton.addEventListener('click', cancelCrop);
+
+  cropButtonsContainer.appendChild(confirmButton);
+  cropButtonsContainer.appendChild(cancelButton);
+
+  document.body.appendChild(cropButtonsContainer);
+
+  return cropButtonsContainer;
+}
 
 function activateCropMode() {
   const activeObject = canvas.getActiveObject();
@@ -2947,7 +2980,7 @@ function activateCropMode() {
     height: imgBounds.height,
     fill: 'rgba(0, 0, 0, 0)',
     stroke: 'blue',
-    strokeWidth: 2,
+    strokeWidth: 1,
     hasControls: true,
     hasBorders: true,
     lockRotation: true,
@@ -2959,73 +2992,122 @@ function activateCropMode() {
     cornerColor: 'blue',
     cornerStyle: 'rect',
     cornerSize: 10,
-    padding: 0
+    padding: 0,
+    lockUniScaling: false // Inicia com movimento livre por padrão
   });
 
+  // Monitora o início do scaling para definir o estado inicial
+  canvas.on('mouse:down', function(e) {
+    if (e.target === cropRect) {
+      cropRect.lockUniScaling = false; // Garante que começa livre
+    }
+  });
+
+  // Durante o scaling, verifica o Shift
+  canvas.on('object:scaling', function(e) {
+    if (e.target === cropRect) {
+      cropRect.lockUniScaling = e.e.shiftKey; // true quando Shift está pressionado
+    }
+  });
+
+  // Adiciona os botões de corte
+  cropButtons = createCropButtons();
+
   canvas.add(cropRect);
-  
   canvas.bringToFront(cropRect);
-  
   canvas.setActiveObject(cropRect);
 
   canvas.backgroundColor = 'rgba(0, 0, 0, 0.5)';
   canvas.renderAll();
 
-  document.getElementById('confirm-crop').style.display = 'inline-block';
+  // Exibe os botões no centro do retângulo de corte
+  const cropBounds = cropRect.getBoundingRect(true);
+  cropButtons.style.display = 'block';
+  cropButtons.style.left = `${cropBounds.left + cropBounds.width / 2 - cropButtons.offsetWidth / 2}px`;
+  cropButtons.style.top = `${cropBounds.top + cropBounds.height / 2 - cropButtons.offsetHeight / 2}px`;
+
+  // Adiciona listeners para controlar a visibilidade e posicionamento dos botões
+  canvas.on('mouse:down', (e) => {
+    if (e.target === cropRect) {
+      cropButtons.style.display = 'none';
+    }
+  });
+
+  canvas.on('mouse:up', (e) => {
+    if (e.target === cropRect) {
+      const cropBounds = cropRect.getBoundingRect(true);
+      cropButtons.style.display = 'block';
+      cropButtons.style.left = `${cropBounds.left + cropBounds.width / 2 - cropButtons.offsetWidth / 2}px`;
+      cropButtons.style.top = `${cropBounds.top + cropBounds.height / 2 - cropButtons.offsetHeight / 2}px`;
+    }
+  });
 }
 
 function applyCrop() {
   if (!cropRect || !originalImage) return;
 
-  const cropArea = cropRect.getBoundingRect(true);
+  const angle = fabric.util.degreesToRadians(originalImage.angle);
+  const imgElement = originalImage.getElement();
+
   const imgBounds = originalImage.getBoundingRect(true);
+  const cropBounds = cropRect.getBoundingRect(true);
 
   const scaleX = originalImage.scaleX;
   const scaleY = originalImage.scaleY;
 
-  const relativeLeft = (cropArea.left - imgBounds.left) / scaleX;
-  const relativeTop = (cropArea.top - imgBounds.top) / scaleY;
-  const relativeWidth = cropArea.width / scaleX;
-  const relativeHeight = cropArea.height / scaleY;
-
   const tempCanvas = document.createElement('canvas');
   const tempCtx = tempCanvas.getContext('2d');
 
-  tempCanvas.width = cropArea.width;
-  tempCanvas.height = cropArea.height;
+  tempCanvas.width = imgBounds.width;
+  tempCanvas.height = imgBounds.height;
 
+  tempCtx.translate(imgBounds.width / 2, imgBounds.height / 2);
+  tempCtx.rotate(angle);
+  
+  const scaledWidth = originalImage.width * scaleX;
+  const scaledHeight = originalImage.height * scaleY;
   tempCtx.drawImage(
-    originalImage.getElement(),
-    relativeLeft,
-    relativeTop,
-    relativeWidth,
-    relativeHeight,
-    0,
-    0,
-    cropArea.width,
-    cropArea.height
+    imgElement,
+    -scaledWidth / 2,
+    -scaledHeight / 2,
+    scaledWidth,
+    scaledHeight
   );
 
-  fabric.Image.fromURL(tempCanvas.toDataURL(), newImg => {
+  const cropCanvas = document.createElement('canvas');
+  const cropCtx = cropCanvas.getContext('2d');
+  
+  cropCanvas.width = cropBounds.width;
+  cropCanvas.height = cropBounds.height;
+
+  const dx = cropBounds.left - (imgBounds.left);
+  const dy = cropBounds.top - (imgBounds.top);
+
+  cropCtx.drawImage(
+    tempCanvas,
+    dx,
+    dy,
+    cropBounds.width,
+    cropBounds.height,
+    0,
+    0,
+    cropBounds.width,
+    cropBounds.height
+  );
+
+  fabric.Image.fromURL(cropCanvas.toDataURL(), newImg => {
     newImg.set({
-      left: cropArea.left + cropArea.width / 2,
-      top: cropArea.top + cropArea.height / 2,  
-      originX: 'center', 
-      originY: 'center', 
-      width: cropArea.width,
-      height: cropArea.height,
-      scaleX: 1,
-      scaleY: 1,
-      selectable: true,
-      evented: true
+      left: cropBounds.left + cropBounds.width / 2,
+      top: cropBounds.top + cropBounds.height / 2,
+      originX: 'center',
+      originY: 'center',
+      angle: 0
     });
 
-    newImg.setCoords();
-
     canvas.remove(originalImage);
+    canvas.remove(cropRect);
     canvas.add(newImg);
     canvas.setActiveObject(newImg);
-    canvas.remove(cropRect);
 
     canvas.forEachObject(obj => {
       if (obj.name === 'CloudFolha') {
@@ -3037,12 +3119,17 @@ function applyCrop() {
       }
     });
 
+    canvas.off('mouse:down');
+    canvas.off('object:scaling');
+    canvas.off('mouse:up');
+
+    if (cropButtons) {
+      document.body.removeChild(cropButtons);
+      cropButtons = null;
+    }
+
     canvas.backgroundColor = '#151f28';
     canvas.requestRenderAll();
-
-    document.getElementById('confirm-crop').style.display = 'none';
-
-    newImg.fire('moving');
 
     cropMode = false;
     cropRect = null;
@@ -3056,6 +3143,15 @@ function cancelCrop() {
     canvas.renderAll();
   }
 
+  canvas.off('mouse:down');
+  canvas.off('object:scaling');
+  canvas.off('mouse:up');
+
+  if (cropButtons) {
+    document.body.removeChild(cropButtons);
+    cropButtons = null;
+  }
+
   canvas.forEachObject(obj => {
     obj.selectable = true;
     obj.evented = true;
@@ -3064,23 +3160,19 @@ function cancelCrop() {
   canvas.backgroundColor = '#151f28';
   canvas.renderAll();
 
-  document.getElementById('confirm-crop').style.display = 'none';
-
   cropMode = false;
   cropRect = null;
   originalImage = null;
 }
 
 document.getElementById('crop-button').addEventListener('click', activateCropMode);
-
-document.getElementById('confirm-crop').addEventListener('click', applyCrop);
-
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && cropMode) {
     cancelCrop();
   }
 });
 
+// ---------------------------- contraste Automático --------------------------------------------------
 
 function applyAutoContrast() {
   const activeObject = canvas.getActiveObject();
@@ -3908,9 +4000,8 @@ function validateFileType(file) {
 }
 
 function getUniqueFileName(fileName) {
-  // Remove file extension and clean the name
   const baseName = fileName.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_");
-  return baseName.substring(0, 20); // Limit name length
+  return baseName.substring(0, 20);
 }
 
 canvas.wrapperEl.addEventListener('drop', async (e) => {
@@ -3921,101 +4012,11 @@ canvas.wrapperEl.addEventListener('drop', async (e) => {
   if (files.length > 0) {
     for (const file of files) {
       if (file.type.startsWith('image/')) {
-        // Handle images
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const pointer = canvas.getPointer(e);
-          fabric.Image.fromURL(event.target.result, (img) => {
-            const fileName = getUniqueFileName(file.name);
-            img.set({
-              left: pointer.x,
-              top: pointer.y,
-              originX: 'center',
-              originY: 'center',
-              fileName: fileName, // Store original file name
-              name: fileName,     // Also store as name for consistency
-              originalFile: file.name // Store complete original filename
-            });
-            addObject(img);
-            canvas.setActiveObject(img);
-            canvas.requestRenderAll();
-            updateLayersList();
-          });
-        };
-        reader.readAsDataURL(file);
+        await processImageFile(file, true);
       } else if (file.type === 'application/pdf') {
-        // Handle PDFs
-        const pdf = await pdfjsLib.getDocument({ url: URL.createObjectURL(file) }).promise;
-        const numPages = pdf.numPages;
-        const pdfName = getUniqueFileName(file.name);
-        
-        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-          const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 1 });
-          const canvasElement = document.createElement('canvas');
-          const context = canvasElement.getContext('2d');
-          canvasElement.width = viewport.width;
-          canvasElement.height = viewport.height;
-          
-          await page.render({ canvasContext: context, viewport: viewport }).promise;
-          const imgData = canvasElement.toDataURL();
-          const pointer = canvas.getPointer(e);
-          
-          fabric.Image.fromURL(imgData, (img) => {
-            const pageName = `${pdfName}_p${pageNum}`;
-            img.set({
-              left: pointer.x,
-              top: pointer.y,
-              originX: 'center',
-              originY: 'center',
-              fileName: pageName,
-              name: pageName,
-              originalFile: `${file.name} - Página ${pageNum}`,
-              isPdfPage: true,
-              pageNumber: pageNum
-            });
-            addObject(img);
-            canvas.setActiveObject(img);
-            canvas.requestRenderAll();
-            updateLayersList();
-          });
-        }
+        await processPDFFile(file, true); 
       } else if (file.name.endsWith('.cloudapp')) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const canvasState = JSON.parse(event.target.result);
-          const cloudFolhaState = canvasState.cloudFolha;
-          const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
-          
-          const preserveNames = (objects) => {
-            objects.forEach(obj => {
-              if (obj.fileName) {
-                obj.name = obj.fileName;
-              }
-            });
-          };
-          
-          if (cloudFolha && cloudFolhaState) {
-            cloudFolha.set({
-              width: cloudFolhaState.width,
-              height: cloudFolhaState.height
-            });
-            cloudFolha.setCoords();
-          }
-          
-          canvas.loadFromJSON(canvasState, function () {
-            preserveNames(canvas.getObjects());
-            if (cloudFolha) {
-              const widthCm = cloudFolha.width / cmToPx;
-              const heightCm = cloudFolha.height / cmToPx;
-              document.getElementById('width-input').value = widthCm.toFixed(1);
-              document.getElementById('height-input').value = heightCm.toFixed(1);
-            }
-            canvas.requestRenderAll();
-            updateLayersList();
-          });
-        };
-        reader.readAsText(file);
+        await processCloudAppFile(file);
       } else {
         showCustomAlert('Por favor, arraste apenas arquivos de imagem, PDF ou .cloudapp.');
       }
@@ -4037,17 +4038,30 @@ async function processImageFile(file, center = true) {
         reader.onload = (event) => {
             fabric.Image.fromURL(event.target.result, (img) => {
                 const fileName = getUniqueFileName(file.name);
-                img.set({
-                    left: center ? canvas.width / 2 : 100,
-                    top: center ? canvas.height / 2 : 100,
-                    originX: 'center',
-                    originY: 'center',
-                    fileName: fileName,
-                    name: fileName,
-                    originalFile: file.name
-                });
-                addObject(img);
-                canvas.setActiveObject(img);
+
+                const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+                if (cloudFolha) {
+                    const scaleX = cloudFolha.width / img.width;
+                    const scaleY = cloudFolha.height / img.height;
+                    const scale = Math.min(scaleX, scaleY); 
+
+                    img.set({
+                        left: cloudFolha.left + cloudFolha.width / 2,
+                        top: cloudFolha.top + cloudFolha.height / 2,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: scale,
+                        scaleY: scale,
+                        fileName: fileName,
+                        name: fileName,
+                        originalFile: file.name
+                    });
+
+                    addObject(img);
+                    canvas.setActiveObject(img);
+                    canvas.requestRenderAll();
+                }
+
                 resolve(img);
             });
         };
@@ -4055,43 +4069,65 @@ async function processImageFile(file, center = true) {
     });
 }
 
+
 async function processPDFFile(file, center = true) {
     const pdf = await pdfjsLib.getDocument({ url: URL.createObjectURL(file) }).promise;
     const numPages = pdf.numPages;
     const pdfName = getUniqueFileName(file.name);
-    
+
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1 });
+
+        const scale = 4; 
+        const viewport = page.getViewport({ scale });
+
         const canvasElement = document.createElement('canvas');
-        const context = canvasElement.getContext('2d');
+        const context = canvasElement.getContext('2d', { alpha: false });
         canvasElement.width = viewport.width;
         canvasElement.height = viewport.height;
-        
-        await page.render({ canvasContext: context, viewport: viewport }).promise;
-        const imgData = canvasElement.toDataURL();
-        
+
+        await page.render({
+            canvasContext: context,
+            viewport: viewport
+        }).promise;
+
+        const imgData = canvasElement.toDataURL('image/png'); 
+
         await new Promise((resolve) => {
             fabric.Image.fromURL(imgData, (img) => {
                 const pageName = `${pdfName}_p${pageNum}`;
-                img.set({
-                    left: center ? canvas.width / 2 : 100,
-                    top: center ? canvas.height / 2 : 100,
-                    originX: 'center',
-                    originY: 'center',
-                    fileName: pageName,
-                    name: pageName,
-                    originalFile: `${file.name} - Página ${pageNum}`,
-                    isPdfPage: true,
-                    pageNumber: pageNum
-                });
-                addObject(img);
-                canvas.setActiveObject(img);
+
+                const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+                if (cloudFolha) {
+                    const scaleX = cloudFolha.width / img.width;
+                    const scaleY = cloudFolha.height / img.height;
+                    const finalScale = Math.min(scaleX, scaleY);
+
+                    img.set({
+                        left: cloudFolha.left + cloudFolha.width / 2,
+                        top: cloudFolha.top + cloudFolha.height / 2,
+                        originX: 'center',
+                        originY: 'center',
+                        scaleX: finalScale,
+                        scaleY: finalScale,
+                        fileName: pageName,
+                        name: pageName,
+                        originalFile: `${file.name} - Página ${pageNum}`,
+                        isPdfPage: true,
+                        pageNumber: pageNum
+                    });
+
+                    addObject(img);
+                    canvas.setActiveObject(img);
+                    canvas.requestRenderAll();
+                }
+
                 resolve();
             });
         });
     }
 }
+
 
 async function processCloudAppFile(file) {
     return new Promise((resolve) => {
@@ -4714,7 +4750,99 @@ document.getElementById('export-PDF').addEventListener('click', () => {
   });
 
   updateOpacity();
+  
+  
+  // ------------- importar em svg ------------------------------
 
+document.getElementById('import-svg').addEventListener('click', () => {
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.svg';
+  fileInput.style.display = 'none';
+  document.body.appendChild(fileInput);
+  fileInput.click();
+
+  fileInput.addEventListener('change', handleSVGImport);
+
+  document.body.removeChild(fileInput);
+});
+
+function handleSVGImport(event) {
+  const file = event.target.files[0];
+  if (file && file.type === 'image/svg+xml') {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const svgContent = e.target.result;
+
+      fabric.loadSVGFromString(svgContent, function(objects, options) {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        objects.forEach((obj) => {
+          const objBounds = obj.getBoundingRect();
+          minX = Math.min(minX, objBounds.left);
+          minY = Math.min(minY, objBounds.top);
+          maxX = Math.max(maxX, objBounds.left + objBounds.width);
+          maxY = Math.max(maxY, objBounds.top + objBounds.height);
+        });
+
+        const originalWidth = maxX - minX;
+        const originalHeight = maxY - minY;
+
+        const scaleX = cloudFolha.width / originalWidth;
+        const scaleY = cloudFolha.height / originalHeight;
+        const scale = Math.min(scaleX, scaleY);
+
+        objects.forEach((obj) => {
+          const originalFill = obj.fill;
+          const originalStroke = obj.stroke;
+
+          const normalizedLeft = (obj.left - minX) * scale;
+          const normalizedTop = (obj.top - minY) * scale;
+
+          obj.set({
+            left: normalizedLeft + (cloudFolha.left + cloudFolha.width / 2),
+            top: normalizedTop + (cloudFolha.top + cloudFolha.height / 2),
+            scaleX: obj.scaleX * scale,
+            scaleY: obj.scaleY * scale,
+            strokeWidth: obj.strokeWidth || 1,
+            stroke: originalStroke || '#000000',
+            fill: originalFill || 'transparent',
+            objectCaching: false,
+            perPixelTargetFind: true,
+            strokeUniform: true,
+            cornerColor: '#0066ff',
+            cornerSize: 12,
+            cornerStyle: 'circle',
+            transparentCorners: false,
+            hasBorders: true,
+            hasControls: true,
+            selectable: true
+          });
+
+          canvas.add(obj);
+          obj.setCoords();
+        });
+
+        const allObjects = canvas.getObjects().filter(obj => obj !== cloudFolha);
+        if (allObjects.length > 0) {
+          const selection = new fabric.ActiveSelection(allObjects, { canvas: canvas });
+          selection.center();
+          canvas.discardActiveObject();
+          canvas.setActiveObject(selection);
+        }
+
+        canvas.requestRenderAll();
+        updateLayersList();
+      });
+    };
+    reader.readAsText(file);
+  } else {
+    showCustomAlert('Por favor, selecione um arquivo SVG válido.');
+  }
+}
     });
   </script>
 </body>
