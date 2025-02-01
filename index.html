@@ -1,8 +1,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CloudPhoto</title>
-<link rel="stylesheet" href="https://example.com/styles.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<title>CloudPhoto Editor</title>
+<link rel="stylesheet" href="">
+<script src="https://nkmplay.github.io/cgf/scripts/fabric_5.2.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
@@ -679,6 +679,16 @@
     object-fit: contain;
   }
 }
+.print-container {
+  background-color: #151f28;
+  padding: 20px;
+}
+
+@media print {
+ .print-container {
+    background-color: #151f28;
+  }
+}
 
 </style>
 </head>
@@ -724,7 +734,7 @@
       <button class="dropdown-toggle">Importar</button>
       <div class="dropdown-menu export-submenu">
         <div class="export-option">
-          <button id="import-svg">Importar SVG</button>
+          <button id="import-svg">Importar SVG em Camadas</button>
         </div>
       </div>
     </div>
@@ -900,7 +910,19 @@
 		  <span style="font-size: 24px;">✂</span> Recortar
 		</button>
     </li>
-		
+	
+<li>
+  <button id="eraser-button">
+  <svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+    <rect x="12" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="currentColor"/>
+    <rect x="4" y="4" width="16" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+  </svg>
+  Borracha
+</button>
+
+</li>
+
       </ul>
     </div>
     <canvas id="canvas"></canvas>
@@ -951,10 +973,11 @@
   </div>
 </div>
 
+<div id="bottom-buttons" style="display: none; position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000;">
+  <button id="save-button">Salvar</button>
+  <button id="finish-button">Finalizar</button>
+</div>
 
-
-
-	
 	<canvas id="hiddenCanvas" class="hidden-canvas"></canvas>
 	
 <script src="https://nkmplay.github.io/cgf/ferramentas/modalselect.js"></script>
@@ -1554,10 +1577,9 @@ document.getElementById('print-button').addEventListener('click', () => {
   const originalWidth = canvas.getWidth();
   const originalHeight = canvas.getHeight();
 
-  // Marca todos os objetos como "dirty" antes de qualquer manipulação
   canvas.forEachObject(obj => {
     obj.dirty = true;
-    obj.setCoords(); // Marca as coordenadas dos objetos
+    obj.setCoords(); 
   });
   canvas.requestRenderAll();
 
@@ -1657,7 +1679,6 @@ document.getElementById('print-button').addEventListener('click', () => {
     canvas.setViewportTransform(originalViewportTransform);
     canvas.setZoom(originalZoom);
 
-    // Marca os objetos novamente como "dirty" e atualiza suas coordenadas após o retorno
     canvas.forEachObject(obj => {
       obj.dirty = true;
       obj.setCoords(); 
@@ -2915,9 +2936,12 @@ function createCropButtons() {
   const cropButtonsContainer = document.createElement('div');
   cropButtonsContainer.className = 'crop-buttons';
   cropButtonsContainer.style.display = 'none';
-  cropButtonsContainer.style.position = 'absolute';
+  cropButtonsContainer.style.position = 'fixed';  // Mudado para fixed
   cropButtonsContainer.style.zIndex = '1000';
-  cropButtonsContainer.style.textAlign = 'center'; // Alinha os botões no centro
+  cropButtonsContainer.style.textAlign = 'center';
+  cropButtonsContainer.style.left = '50%';  // Centraliza horizontalmente
+  cropButtonsContainer.style.transform = 'translateX(-50%)';  // Ajusta a centralização
+  cropButtonsContainer.style.bottom = '20px';  // Distância do fundo da janela
 
   const confirmButton = document.createElement('button');
   confirmButton.id = 'crop-confirm';
@@ -2925,7 +2949,7 @@ function createCropButtons() {
   confirmButton.style.background = '#1a1a1a';
   confirmButton.style.color = 'white';
   confirmButton.style.border = 'none';
-  confirmButton.style.padding = '5px 10px';
+  confirmButton.style.padding = '8px 16px';  // Botões um pouco maiores
   confirmButton.style.margin = '5px';
   confirmButton.style.borderRadius = '5px';
   confirmButton.style.cursor = 'pointer';
@@ -2937,7 +2961,7 @@ function createCropButtons() {
   cancelButton.style.background = '#1a1a1a';
   cancelButton.style.color = 'white';
   cancelButton.style.border = 'none';
-  cancelButton.style.padding = '5px 10px';
+  cancelButton.style.padding = '8px 16px';  // Botões um pouco maiores
   cancelButton.style.margin = '5px';
   cancelButton.style.borderRadius = '5px';
   cancelButton.style.cursor = 'pointer';
@@ -2993,25 +3017,23 @@ function activateCropMode() {
     cornerStyle: 'rect',
     cornerSize: 10,
     padding: 0,
-    lockUniScaling: false // Inicia com movimento livre por padrão
+    lockUniScaling: false
   });
 
-  // Monitora o início do scaling para definir o estado inicial
   canvas.on('mouse:down', function(e) {
     if (e.target === cropRect) {
-      cropRect.lockUniScaling = false; // Garante que começa livre
+      cropRect.lockUniScaling = false;
     }
   });
 
-  // Durante o scaling, verifica o Shift
   canvas.on('object:scaling', function(e) {
     if (e.target === cropRect) {
-      cropRect.lockUniScaling = e.e.shiftKey; // true quando Shift está pressionado
+      cropRect.lockUniScaling = e.e.shiftKey;
     }
   });
 
-  // Adiciona os botões de corte
   cropButtons = createCropButtons();
+  cropButtons.style.display = 'block';  // Mostra os botões imediatamente
 
   canvas.add(cropRect);
   canvas.bringToFront(cropRect);
@@ -3019,28 +3041,6 @@ function activateCropMode() {
 
   canvas.backgroundColor = 'rgba(0, 0, 0, 0.5)';
   canvas.renderAll();
-
-  // Exibe os botões no centro do retângulo de corte
-  const cropBounds = cropRect.getBoundingRect(true);
-  cropButtons.style.display = 'block';
-  cropButtons.style.left = `${cropBounds.left + cropBounds.width / 2 - cropButtons.offsetWidth / 2}px`;
-  cropButtons.style.top = `${cropBounds.top + cropBounds.height / 2 - cropButtons.offsetHeight / 2}px`;
-
-  // Adiciona listeners para controlar a visibilidade e posicionamento dos botões
-  canvas.on('mouse:down', (e) => {
-    if (e.target === cropRect) {
-      cropButtons.style.display = 'none';
-    }
-  });
-
-  canvas.on('mouse:up', (e) => {
-    if (e.target === cropRect) {
-      const cropBounds = cropRect.getBoundingRect(true);
-      cropButtons.style.display = 'block';
-      cropButtons.style.left = `${cropBounds.left + cropBounds.width / 2 - cropButtons.offsetWidth / 2}px`;
-      cropButtons.style.top = `${cropBounds.top + cropBounds.height / 2 - cropButtons.offsetHeight / 2}px`;
-    }
-  });
 }
 
 function applyCrop() {
@@ -4843,6 +4843,355 @@ function handleSVGImport(event) {
     showCustomAlert('Por favor, selecione um arquivo SVG válido.');
   }
 }
+
+// ------------ Borracha Apagar -----------------------------------
+const eraserButton = document.getElementById('eraser-button');
+eraserButton.addEventListener('click', () => {
+  const activeObject = canvas.getActiveObject();
+
+  if (!activeObject) {
+    showCustomAlert('Nenhuma imagem selecionada!');
+    return;
+  }
+
+  const originalProps = {
+    left: activeObject.left,
+    top: activeObject.top,
+    scaleX: activeObject.scaleX,
+    scaleY: activeObject.scaleY,
+    width: activeObject.width,
+    height: activeObject.height,
+    angle: activeObject.angle,
+    originX: activeObject.originX,
+    originY: activeObject.originY
+  };
+
+  const modalContainer = document.createElement('div');
+  modalContainer.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  `;
+
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: #151f28;
+    padding: 20px;
+    border-radius: 8px;
+    width: 800px;
+    height: 600px;
+    position: relative;
+    margin-bottom: 20px;
+  `;
+
+  const brushControls = document.createElement('div');
+  brushControls.style.cssText = `
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 4px;
+    z-index: 1002;
+  `;
+
+  const brushSlider = document.createElement('input');
+  brushSlider.type = 'range';
+  brushSlider.min = '1';
+  brushSlider.max = '500';
+  brushSlider.value = '20';
+  brushSlider.style.cssText = `
+    width: 150px;
+    accent-color: #2ecc71;
+  `;
+
+  const brushSizeInput = document.createElement('input');
+  brushSizeInput.type = 'number';
+  brushSizeInput.value = '20';
+  brushSizeInput.min = '1';
+  brushSizeInput.max = '500';
+  brushSizeInput.style.cssText = `
+    width: 60px;
+    padding: 5px;
+    border: 1px solid #2ecc71;
+    border-radius: 4px;
+    background: #151f28;
+    color: white;
+  `;
+
+  const brushLabel = document.createElement('span');
+  brushLabel.textContent = 'Tamanho:';
+  brushLabel.style.cssText = `
+    color: white;
+    font-size: 14px;
+  `;
+
+  brushControls.appendChild(brushLabel);
+  brushControls.appendChild(brushSlider);
+  brushControls.appendChild(brushSizeInput);
+
+  const cursorPreview = document.createElement('div');
+  cursorPreview.style.cssText = `
+    position: absolute;
+    pointer-events: none;
+    border: 2px solid white;
+    border-radius: 50%;
+    display: none;
+    z-index: 1001;
+  `;
+
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.style.cssText = `
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  `;
+
+  const confirmButton = document.createElement('button');
+  confirmButton.textContent = 'Confirmar';
+  confirmButton.style.cssText = `
+    padding: 10px 20px;
+    background: #2ecc71;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+  `;
+  confirmButton.onmouseover = () => confirmButton.style.background = '#27ae60';
+  confirmButton.onmouseout = () => confirmButton.style.background = '#2ecc71';
+
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = 'Cancelar';
+  cancelButton.style.cssText = `
+    padding: 10px 20px;
+    background: #e74c3c;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+  `;
+  cancelButton.onmouseover = () => cancelButton.style.background = '#c0392b';
+  cancelButton.onmouseout = () => cancelButton.style.background = '#e74c3c';
+
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = '×';
+  closeButton.style.cssText = `
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001;
+  `;
+
+  const canvasContainer = document.createElement('div');
+  canvasContainer.style.cssText = `
+    width: 100%;
+    height: 100%;
+    position: relative;
+  `;
+
+  const eraserCanvasElement = document.createElement('canvas');
+  eraserCanvasElement.id = 'modal-eraser-canvas';
+
+  canvasContainer.appendChild(eraserCanvasElement);
+  canvasContainer.appendChild(cursorPreview);
+  modalContent.appendChild(closeButton);
+  modalContent.appendChild(canvasContainer);
+  modalContent.appendChild(brushControls);
+  buttonsContainer.appendChild(confirmButton);
+  buttonsContainer.appendChild(cancelButton);
+  modalContainer.appendChild(modalContent);
+  modalContainer.appendChild(buttonsContainer);
+  document.body.appendChild(modalContainer);
+
+  const eraserCanvas = new fabric.Canvas('modal-eraser-canvas', {
+    width: 760,
+    height: 560,
+    selection: false,
+    preserveObjectStacking: true
+  });
+
+  activeObject.clone((clonedObj) => {
+    const scale = Math.min(
+      760 / clonedObj.width,
+      560 / clonedObj.height
+    ) * 0.9;
+
+    clonedObj.set({
+      left: eraserCanvas.width / 2,
+      top: eraserCanvas.height / 2,
+      scaleX: clonedObj.scaleX * scale,
+      scaleY: clonedObj.scaleY * scale,
+      originX: 'center',
+      originY: 'center',
+      erasable: true
+    });
+
+    eraserCanvas.add(clonedObj);
+    eraserCanvas.setActiveObject(clonedObj);
+
+    eraserCanvas.freeDrawingBrush = new fabric.EraserBrush(eraserCanvas);
+    eraserCanvas.freeDrawingBrush.width = parseInt(brushSlider.value);
+    eraserCanvas.isDrawingMode = true;
+
+    function updateBrushSize(size) {
+      const intSize = Math.min(Math.max(parseInt(size), 1), 500);
+      eraserCanvas.freeDrawingBrush.width = intSize;
+      brushSlider.value = intSize;
+      brushSizeInput.value = intSize;
+
+      const zoom = eraserCanvas.getZoom();
+      const adjustedSize = intSize * zoom;
+      cursorPreview.style.width = adjustedSize + 'px';
+      cursorPreview.style.height = adjustedSize + 'px';
+    }
+
+    brushSlider.addEventListener('input', (e) => {
+      updateBrushSize(e.target.value);
+    });
+
+    brushSizeInput.addEventListener('input', (e) => {
+      updateBrushSize(e.target.value);
+    });
+
+    brushSizeInput.addEventListener('blur', (e) => {
+      updateBrushSize(e.target.value);
+    });
+
+    canvasContainer.addEventListener('mousemove', (e) => {
+      const rect = canvasContainer.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const zoom = eraserCanvas.getZoom();
+      const adjustedSize = eraserCanvas.freeDrawingBrush.width * zoom;
+
+      cursorPreview.style.display = 'block';
+      cursorPreview.style.left = (x - adjustedSize / 2) + 'px';
+      cursorPreview.style.top = (y - adjustedSize / 2) + 'px';
+      cursorPreview.style.width = adjustedSize + 'px';
+      cursorPreview.style.height = adjustedSize + 'px';
+    });
+
+    canvasContainer.addEventListener('mouseleave', () => {
+      cursorPreview.style.display = 'none';
+    });
+
+    eraserCanvas.on('mouse:wheel', (opt) => {
+      const delta = opt.e.deltaY;
+      let zoom = eraserCanvas.getZoom();
+      zoom *= 0.999 ** delta;
+      zoom = Math.min(Math.max(0.1, zoom), 4);
+      const point = new fabric.Point(opt.e.offsetX, opt.e.offsetY);
+      eraserCanvas.zoomToPoint(point, zoom);
+
+      const adjustedSize = eraserCanvas.freeDrawingBrush.width * zoom;
+      cursorPreview.style.width = adjustedSize + 'px';
+      cursorPreview.style.height = adjustedSize + 'px';
+
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+
+confirmButton.addEventListener('click', () => {
+  clonedObj.clone((erasedObj) => {
+    erasedObj.set({
+      left: originalProps.left,
+      top: originalProps.top,
+      scaleX: originalProps.scaleX,
+      scaleY: originalProps.scaleY,
+      width: originalProps.width,
+      height: originalProps.height,
+      angle: originalProps.angle,
+      originX: originalProps.originX,
+      originY: originalProps.originY
+    });
+    
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = erasedObj.width;
+    tempCanvas.height = erasedObj.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    const erasedCanvas = erasedObj.toCanvasElement();
+    
+    tempCtx.drawImage(
+      erasedCanvas,
+      0, 0, erasedCanvas.width, erasedCanvas.height,
+      0, 0, erasedObj.width, erasedObj.height
+    );
+    
+    tempCanvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      
+      fabric.Image.fromURL(url, (newImg) => {
+        newImg.set({
+          left: originalProps.left,
+          top: originalProps.top,
+          scaleX: originalProps.scaleX,
+          scaleY: originalProps.scaleY,
+          width: originalProps.width,
+          height: originalProps.height,
+          angle: originalProps.angle,
+          originX: originalProps.originX,
+          originY: originalProps.originY
+        });
+        
+        canvas.remove(activeObject);
+        canvas.add(newImg);
+        canvas.setActiveObject(newImg);
+        canvas.renderAll();
+        
+        URL.revokeObjectURL(url);
+        tempCanvas.remove();
+      }, { crossOrigin: 'anonymous' });
+    });
+  });
+  closeModal();
+});
+	
+  });
+
+  const closeModal = () => {
+    eraserCanvas.dispose();
+    document.body.removeChild(modalContainer);
+  };
+
+  closeButton.addEventListener('click', closeModal);
+  cancelButton.addEventListener('click', closeModal);
+  modalContainer.addEventListener('click', (e) => {
+    if (e.target === modalContainer) {
+      closeModal();
+    }
+  });
+
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+});
+
     });
   </script>
 </body>
