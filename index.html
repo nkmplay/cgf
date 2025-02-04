@@ -690,6 +690,17 @@
   }
 }
 
+/* Estilo para remover as setas do input number */
+.numerSemSeta::-webkit-outer-spin-button,
+.numerSemSeta::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numerSemSeta[type=number] {
+  -moz-appearance: textfield;
+}
+
 </style>
 </head>
 <body>
@@ -705,7 +716,7 @@
     <button id="saveDocumentBtn">Salvar Documento</button>
 	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
     <div class="dropdown">
-      <button class="dropdown-toggle">Exportar</button>
+      <button class="dropdown-toggle">⇱ Exportar</button>
       <div class="dropdown-menu export-submenu">
         <div class="export-option">
           <button id="export-png">Exportar como PNG</button>
@@ -731,7 +742,7 @@
       </div>
     </div>
 	<div class="dropdown">
-      <button class="dropdown-toggle">Importar</button>
+      <button class="dropdown-toggle">⇲ Importar</button>
       <div class="dropdown-menu export-submenu">
         <div class="export-option">
           <button id="import-svg">Importar SVG em Camadas</button>
@@ -740,7 +751,7 @@
     </div>
 	
 	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
-    <button id="print-button">Imprimir</button>
+    <button id="print-button">⎙ Imprimir</button>
   </div>
 </div>
 	  
@@ -829,6 +840,7 @@
       <span>&#x2195;</span>
       <input type="number" id="height-input" class="dimension-input" step="0.1" placeholder="A (cm)">
       <button id="lock-ratio" class="menu-button">&#x1f513;</button>
+	  <button id="separar" class="menu-button">┇</button>
     </div>
     <div class="text-styling-controls">
       <select id="font-select" class="dimension-input">
@@ -865,7 +877,7 @@
 			<option value="Rage Italic" style="font-family: 'Rage Italic';">Rage Italic</option>
       </select>
       <input type="color" id="text-color-picker" class="dimension-input">
-      <input type="number" id="font-size-input" class="dimension-input" min="8" max="72" value="20">
+      <input type="number" id="font-size-input" class="dimension-input numerSemSeta" min="8" max="72" value="20">
 	  <span style="color: #ecf0f1; font-size: 14px;">Contorno:</span>
 	  <input type="number" id="stroke-width-input" class="dimension-input" min="0" value="0">
 	  <input type="color" id="stroke-color-picker" class="dimension-input" value="#000000">
@@ -901,7 +913,7 @@
         </li>
 		<li>
 		  <button id="selectBtn">
-			  <span style="font-size: 24px;">⿴</span> Seleção
+			  <span style="font-size: 24px;">⿻</span> Seleção
 			</button>
 		</li>
 		
@@ -1307,51 +1319,57 @@ document.getElementById('height-input').addEventListener('change', e => {
 
       // ---------- Bloqueio de Proporção e troca de dimensão -------------------------------------------
       document.getElementById('swap-dimensions').addEventListener('click', () => {
-        const widthInput = document.getElementById('width-input');
-        const heightInput = document.getElementById('height-input');
-        
-        const tempWidth = widthInput.value;
-        const tempHeight = heightInput.value;
-        
-        widthInput.value = tempHeight;
-        heightInput.value = tempWidth;
-        
-        const activeObjects = canvas.getActiveObjects();
-        if (activeObjects.length > 0) {
-          activeObjects.forEach(obj => {
-            if (obj.name && obj.name.startsWith('Guia')) {
-              return;
-            }
-            const newWidth = parseFloat(widthInput.value) * cmToPx;
-            const newHeight = parseFloat(heightInput.value) * cmToPx;
-            
-            obj.set({
-              scaleX: newWidth / obj.width,
-              scaleY: newHeight / obj.height
-            });
-            obj.setCoords();
-          });
-        } else {
-          const newWidth = parseFloat(widthInput.value) * cmToPx;
-          const newHeight = parseFloat(heightInput.value) * cmToPx;
-          
-          cloudFolha.set({
-            width: newWidth,
-            height: newHeight
-          });
-          
-          cloudFolha.set({
-            left: (canvas.getWidth() / 2) - (cloudFolha.width / 2) - 250,
-            top: (canvas.getHeight() / 2) - (cloudFolha.height / 2) + 100
-          });
-          
-          cloudFolha.setCoords(); 
-        }
-        
-        canvas.requestRenderAll();
-        updateLayersList();
+  const widthInput = document.getElementById('width-input');
+  const heightInput = document.getElementById('height-input');
+  
+  const tempWidth = widthInput.value;
+  widthInput.value = heightInput.value;
+  heightInput.value = tempWidth;
+  
+  const activeObjects = canvas.getActiveObjects();
+  const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+  
+  if (activeObjects.length > 0) {
+    activeObjects.forEach(obj => {
+      if (obj.name && obj.name.startsWith('Guia')) {
+        return;
+      }
+      const newWidth = parseFloat(widthInput.value) * cmToPx;
+      const newHeight = parseFloat(heightInput.value) * cmToPx;
+      
+      const currentWidth = obj.width * obj.scaleX;
+      const currentHeight = obj.height * obj.scaleY;
+      
+      obj.set({
+        width: obj.width,
+        height: obj.height,
+        scaleX: newWidth / obj.width,
+        scaleY: newHeight / obj.height
       });
-
+      obj.setCoords();
+    });
+  } else if (cloudFolha) {
+    const newWidth = parseFloat(widthInput.value) * cmToPx;
+    const newHeight = parseFloat(heightInput.value) * cmToPx;
+    
+    cloudFolha.set({
+      width: newWidth,
+      height: newHeight,
+      scaleX: 1,
+      scaleY: 1
+    });
+    
+    cloudFolha.set({
+      left: (canvas.getWidth() / 2) - (cloudFolha.width / 2) - 250,
+      top: (canvas.getHeight() / 2) - (cloudFolha.height / 2) + 100
+    });
+    
+    cloudFolha.setCoords();
+  }
+  
+  canvas.requestRenderAll();
+  updateLayersList();
+});
       let isRatioLocked = false;
       document.getElementById('lock-ratio').addEventListener('click', () => {
         isRatioLocked = !isRatioLocked;
@@ -1453,7 +1471,7 @@ document.getElementById('height-input').addEventListener('change', e => {
       });
 
       // ---------- Atualização do Estilo do Texto -------------------------------------------
-      function updateTextStylingControls() {
+     function updateTextStylingControls() {
   const activeObjects = canvas.getActiveObjects();
   const textStylingControls = document.querySelector('.text-styling-controls');
   
@@ -1465,15 +1483,13 @@ document.getElementById('height-input').addEventListener('change', e => {
     const fontSelect = document.getElementById('font-select');
     const textColorPicker = document.getElementById('text-color-picker');
     const fontSizeInput = document.getElementById('font-size-input');
-    
-    // Novos elementos de contorno
     const strokeWidthInput = document.getElementById('stroke-width-input');
     const strokeColorPicker = document.getElementById('stroke-color-picker');
 
     // Atualizar valores dos controles
     fontSelect.value = activeObj.fontFamily || 'Arial';
     textColorPicker.value = activeObj.fill || '#000000';
-    fontSizeInput.value = Math.round(activeObj.fontSize * activeObj.scaleX) || 20;
+    fontSizeInput.value = Math.round(activeObj.fontSize) || 20;
     strokeWidthInput.value = activeObj.strokeWidth || 0;
     strokeColorPicker.value = activeObj.stroke || '#000000';
 
@@ -1490,45 +1506,51 @@ document.getElementById('height-input').addEventListener('change', e => {
     strokeWidthInput.replaceWith(newStrokeWidthInput);
     strokeColorPicker.replaceWith(newStrokeColorPicker);
 
-    // Adicionar listeners
-    newFontSelect.addEventListener('change', updateTextStyle);
-    newTextColorPicker.addEventListener('input', updateTextStyle);
-    newFontSizeInput.addEventListener('change', updateTextStyle);
-    newStrokeWidthInput.addEventListener('change', updateTextStyle);
-    newStrokeColorPicker.addEventListener('input', updateTextStyle);
-    
+    // Adicionar listeners separados para cada propriedade
+    newFontSelect.addEventListener('change', updateFont);
+    newTextColorPicker.addEventListener('input', updateTextColor);
+    newFontSizeInput.addEventListener('change', updateFontSize);
+    newStrokeWidthInput.addEventListener('change', updateTextStroke);
+    newStrokeColorPicker.addEventListener('input', updateTextStroke);
   } else {
     textStylingControls.style.display = 'none';
   }
 }
 
-function updateTextStyle() {
+// Funções separadas para cada propriedade
+function updateFont() {
   const activeObjects = canvas.getActiveObjects();
+  const fontSelect = document.getElementById('font-select');
+  
   activeObjects.forEach(obj => {
     if (obj.type === 'i-text') {
-      // Obter valores dos controles
-      const fontSelect = document.getElementById('font-select');
-      const textColorPicker = document.getElementById('text-color-picker');
-      const fontSizeInput = document.getElementById('font-size-input');
-      const strokeWidthInput = document.getElementById('stroke-width-input');
-      const strokeColorPicker = document.getElementById('stroke-color-picker');
+      obj.set('fontFamily', fontSelect.value);
+    }
+  });
+  canvas.requestRenderAll();
+}
 
-      // Calcular novas propriedades
-      const newFontSize = parseInt(fontSizeInput.value);
-      const strokeWidth = parseInt(strokeWidthInput.value) || 0;
+function updateTextColor() {
+  const activeObjects = canvas.getActiveObjects();
+  const textColorPicker = document.getElementById('text-color-picker');
+  
+  activeObjects.forEach(obj => {
+    if (obj.type === 'i-text') {
+      obj.set('fill', textColorPicker.value);
+    }
+  });
+  canvas.requestRenderAll();
+}
 
-      // Aplicar propriedades
-      obj.set({
-        fontFamily: fontSelect.value,
-        fill: textColorPicker.value,
-        fontSize: newFontSize,
-        stroke: strokeWidth > 0 ? strokeColorPicker.value : null,
-        strokeWidth: strokeWidth,
-        paintFirst: 'stroke', // Renderiza o contorno primeiro
-        scaleX: 1,
-        scaleY: 1
-      });
-
+function updateFontSize() {
+  const activeObjects = canvas.getActiveObjects();
+  const fontSizeInput = document.getElementById('font-size-input');
+  const newFontSize = parseInt(fontSizeInput.value);
+  
+  activeObjects.forEach(obj => {
+    if (obj.type === 'i-text') {
+      obj.set('fontSize', newFontSize);
+      
       // Atualizar dimensões nos inputs
       const pxToCm = 1 / cmToPx;
       const widthInput = document.getElementById('width-input');
@@ -1540,22 +1562,22 @@ function updateTextStyle() {
   canvas.requestRenderAll();
 }
 
-	  function updateTextStroke() {
-	  const activeObjects = canvas.getActiveObjects();
-	  const strokeWidth = parseInt(document.getElementById('stroke-width-input').value) || 0;
-	  const strokeColor = document.getElementById('stroke-color-picker').value;
+function updateTextStroke() {
+  const activeObjects = canvas.getActiveObjects();
+  const strokeWidth = parseInt(document.getElementById('stroke-width-input').value) || 0;
+  const strokeColor = document.getElementById('stroke-color-picker').value;
 
-	  activeObjects.forEach(obj => {
-		if (obj.type === 'i-text') {
-		  obj.set({
-			stroke: strokeWidth > 0 ? strokeColor : null,
-			strokeWidth: strokeWidth,
-			paintFirst: 'stroke'
-		  });
-		}
-	  });
-	  canvas.requestRenderAll();
-	}
+  activeObjects.forEach(obj => {
+    if (obj.type === 'i-text') {
+      obj.set({
+        stroke: strokeWidth > 0 ? strokeColor : null,
+        strokeWidth: strokeWidth,
+        paintFirst: 'stroke'
+      });
+    }
+  });
+  canvas.requestRenderAll();
+}
 	
 	document.getElementById('stroke-width-input').addEventListener('change', updateTextStroke);
 	document.getElementById('stroke-color-picker').addEventListener('input', updateTextStroke);
@@ -1717,30 +1739,47 @@ document.getElementById('print-button').addEventListener('click', () => {
 document.getElementById('duplicate-selected').addEventListener('click', () => {
     const activeObjects = canvas.getActiveObjects();
     if (!activeObjects.length) return;
-
+    
     const zoom = canvas.getZoom();
     const offset = {
         x: 20 / zoom,
         y: 20 / zoom
     };
-
     const clones = [];
     const vpt = canvas.viewportTransform;
-
+    
     activeObjects.forEach(obj => {
         if (obj.name?.startsWith('Guia')) return;
+        
+        obj.clone((clonedObj) => {
+            // Store original properties before any modifications
+            const originalProps = {
+                fontFamily: obj.fontFamily,
+                fontSize: obj.fontSize,
+                fontWeight: obj.fontWeight,
+                fontStyle: obj.fontStyle,
+                textAlign: obj.textAlign,
+                lineHeight: obj.lineHeight,
+                underline: obj.underline,
+                overline: obj.overline,
+                linethrough: obj.linethrough,
+                textBackgroundColor: obj.textBackgroundColor,
+                charSpacing: obj.charSpacing,
+                fill: obj.fill,
+                stroke: obj.stroke,
+                strokeWidth: obj.strokeWidth
+            };
 
-        obj.clone(clonedObj => {
+            // Base position and transformation
             const objCenter = obj.getCenterPoint();
             const transformedPoint = fabric.util.transformPoint(objCenter, vpt);
-
             const newPosition = {
                 x: transformedPoint.x + offset.x,
                 y: transformedPoint.y + offset.y
             };
-
             const finalPosition = fabric.util.transformPoint(newPosition, fabric.util.invertTransform(vpt));
-
+            
+            // Set position and transformation properties
             clonedObj.set({
                 left: finalPosition.x,
                 top: finalPosition.y,
@@ -1748,26 +1787,50 @@ document.getElementById('duplicate-selected').addEventListener('click', () => {
                 scaleX: obj.scaleX,
                 scaleY: obj.scaleY,
                 originX: 'center',
-                originY: 'center'
-            });
-
-            clonedObj.set({
+                originY: 'center',
                 shadow: obj.shadow ? new fabric.Shadow(obj.shadow) : null,
-                stroke: obj.stroke,
-                strokeWidth: obj.strokeWidth,
                 opacity: obj.opacity,
                 flipX: obj.flipX,
                 flipY: obj.flipY
             });
 
+            // Special handling for text objects
             if (clonedObj.type === 'i-text') {
-                clonedObj.set({
-                    fontSize: obj.fontSize,
-                    fontFamily: obj.fontFamily,
-                    textBackgroundColor: obj.textBackgroundColor
-                });
-            }
+                // Apply text properties
+                clonedObj.set(originalProps);
+                
+                // Store properties on the object
+                clonedObj._originalProps = originalProps;
 
+                // Override the setProperty method
+                const originalSetProperty = clonedObj.set.bind(clonedObj);
+                clonedObj.set = function(key, value) {
+                    if (typeof key === 'object') {
+                        // If setting multiple properties
+                        originalSetProperty(key);
+                        // Ensure font properties are maintained
+                        originalSetProperty({
+                            fontFamily: this._originalProps.fontFamily,
+                            fontSize: this._originalProps.fontSize,
+                            fontWeight: this._originalProps.fontWeight,
+                            fontStyle: this._originalProps.fontStyle
+                        });
+                    } else {
+                        // If setting single property
+                        originalSetProperty(key, value);
+                        // If changing stroke or strokeWidth, ensure font is maintained
+                        if (key === 'stroke' || key === 'strokeWidth') {
+                            originalSetProperty('fontFamily', this._originalProps.fontFamily);
+                            originalSetProperty('fontSize', this._originalProps.fontSize);
+                            originalSetProperty('fontWeight', this._originalProps.fontWeight);
+                            originalSetProperty('fontStyle', this._originalProps.fontStyle);
+                        }
+                    }
+                    return this;
+                };
+            }
+            
+            // Special handling for images
             if (clonedObj.type === 'image') {
                 clonedObj.set({
                     crossOrigin: 'anonymous',
@@ -1775,13 +1838,13 @@ document.getElementById('duplicate-selected').addEventListener('click', () => {
                 });
                 clonedObj.applyFilters();
             }
-
+            
             canvas.add(clonedObj);
             clonedObj.setCoords();
             clones.push(clonedObj);
         });
     });
-
+    
     canvas.discardActiveObject();
     const activeSelection = new fabric.ActiveSelection(clones, {
         canvas: canvas,
@@ -4130,42 +4193,46 @@ async function processPDFFile(file, center = true) {
 
 
 async function processCloudAppFile(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const canvasState = JSON.parse(event.target.result);
-            const cloudFolhaState = canvasState.cloudFolha;
-            const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
-            
-            const preserveNames = (objects) => {
-                objects.forEach(obj => {
-                    if (obj.fileName) {
-                        obj.name = obj.fileName;
-                    }
-                });
-            };
-            
-            if (cloudFolha && cloudFolhaState) {
-                cloudFolha.set({
-                    width: cloudFolhaState.width,
-                    height: cloudFolhaState.height
-                });
-                cloudFolha.setCoords();
-            }
-            
-            canvas.loadFromJSON(canvasState, function () {
-                preserveNames(canvas.getObjects());
-                if (cloudFolha) {
-                    const widthCm = cloudFolha.width / cmToPx;
-                    const heightCm = cloudFolha.height / cmToPx;
-                    document.getElementById('width-input').value = widthCm.toFixed(1);
-                    document.getElementById('height-input').value = heightCm.toFixed(1);
-                }
-                resolve();
-            });
-        };
-        reader.readAsText(file);
-    });
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const canvasState = JSON.parse(event.target.result);
+      const cloudFolhaState = canvasState.cloudFolha;
+      
+      canvas.loadFromJSON(canvasState, function () {
+        const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+        
+        if (cloudFolha && cloudFolhaState) {
+          // Aplicar dimensões originais
+          cloudFolha.set({
+            width: cloudFolhaState.width,
+            height: cloudFolhaState.height,
+            scaleX: 1,
+            scaleY: 1
+          });
+          
+          // Atualizar inputs com valores em cm
+          const widthCm = cloudFolha.width / cmToPx;
+          const heightCm = cloudFolha.height / cmToPx;
+          document.getElementById('width-input').value = widthCm.toFixed(1);
+          document.getElementById('height-input').value = heightCm.toFixed(1);
+          
+          // Centralizar o objeto
+          cloudFolha.set({
+            left: (canvas.getWidth() / 2) - (cloudFolha.width / 2) - 250,
+            top: (canvas.getHeight() / 2) - (cloudFolha.height / 2) + 100
+          });
+          
+          cloudFolha.setCoords();
+        }
+        
+        canvas.requestRenderAll();
+        updateLayersList();
+        resolve();
+      });
+    };
+    reader.readAsText(file);
+  });
 }
 
 document.getElementById('openImagePDFBtn').addEventListener('click', () => {
@@ -4200,140 +4267,11 @@ fileInput.addEventListener('change', async (e) => {
     }
 });
 
-// --------- exportar png jpg e pdf ----------------------------------
-document.getElementById('export-png').addEventListener('click', () => {
+function exportCanvas(format, extension, inputId) {
   const cloudFolhaObj = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
   if (!cloudFolhaObj) return;
 
-  const cloudFolhaBackup = {
-    id: cloudFolhaObj.id,
-    name: cloudFolhaObj.name,
-    selectable: cloudFolhaObj.selectable,
-    hoverCursor: cloudFolhaObj.hoverCursor,
-    hasControls: cloudFolhaObj.hasControls,
-    hasBorders: cloudFolhaObj.hasBorders,
-    lockMovementX: cloudFolhaObj.lockMovementX,
-    lockMovementY: cloudFolhaObj.lockMovementY
-  };
-
-  const originalState = canvas.toJSON();
-  const originalZoom = canvas.getZoom();
-  const originalViewportTransform = [...canvas.viewportTransform];
-  const originalWidth = canvas.getWidth();
-  const originalHeight = canvas.getHeight();
-
-  canvas.setZoom(1);
-  canvas.requestRenderAll();
-
-  const TARGET_DPI = parseInt(document.getElementById('dpi-input').value) || 300;
-  const BROWSER_DPI = 96;
-  const dpiScale = TARGET_DPI / BROWSER_DPI;
-  const marginCompensation = 0.1 * cmToPx * dpiScale;
-
-  const exportWidth = cloudFolhaObj.width * dpiScale + marginCompensation;
-  const exportHeight = cloudFolhaObj.height * dpiScale + marginCompensation;
-
-  const exportCanvas = new fabric.Canvas(null, {
-    width: exportWidth,
-    height: exportHeight,
-    backgroundColor: 'white'
-  });
-
-  const clipPath = new fabric.Rect({
-    left: marginCompensation / 2,
-    top: marginCompensation / 2,
-    width: cloudFolhaObj.width * dpiScale,
-    height: cloudFolhaObj.height * dpiScale,
-    absolutePositioned: true
-  });
-
-  const objectsToExport = canvas.getObjects()
-    .filter(obj => obj !== cloudFolhaObj && !obj.name?.includes('Guia'))
-    .map(obj => {
-      const clone = fabric.util.object.clone(obj);
-      const relativeLeft = obj.left - cloudFolhaObj.left;
-      const relativeTop = obj.top - cloudFolhaObj.top;
-
-      clone.set({
-        left: (relativeLeft * dpiScale) + (marginCompensation / 2),
-        top: (relativeTop * dpiScale) + (marginCompensation / 2),
-        scaleX: obj.scaleX * dpiScale,
-        scaleY: obj.scaleY * dpiScale,
-        clipPath: clipPath,
-        selectable: false
-      });
-
-      return clone;
-    });
-
-  exportCanvas.add(...objectsToExport);
-  exportCanvas.renderAll();
-
-  const link = document.createElement('a');
-  link.download = `CloudAppPNG_${TARGET_DPI}dpi.png`;
-  link.href = exportCanvas.toDataURL({
-    format: 'png',
-    quality: 1.0,
-    enableRetinaScaling: true
-  });
-  link.click();
-
-  canvas.clear();
-  canvas.loadFromJSON(originalState, () => {
-    canvas.setDimensions({
-      width: originalWidth,
-      height: originalHeight
-    });
-    canvas.setViewportTransform(originalViewportTransform);
-    canvas.setZoom(originalZoom);
-
-    const restoredCloudFolha = canvas.getObjects().find(obj => obj.type === 'rect' && (!obj.name || obj.name === 'CloudFolha'));
-    if (restoredCloudFolha) {
-      restoredCloudFolha.set({
-        ...cloudFolhaBackup,
-        id: cloudFolhaBackup.id,
-        name: 'CloudFolha',
-        selectable: false,
-        hoverCursor: 'default',
-        hasControls: false,
-        hasBorders: false,
-        lockMovementX: true,
-        lockMovementY: true
-      });
-      canvas.sendToBack(restoredCloudFolha);
-    }
-
-    canvas.discardActiveObject();
-    canvas.requestRenderAll();
-    updateLayersList();
-  });
-});
-
-document.getElementById('export-JPG').addEventListener('click', () => {
-  const cloudFolhaObj = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
-  if (!cloudFolhaObj) return;
-
-  const cloudFolhaBackup = {
-    id: cloudFolhaObj.id,
-    name: cloudFolhaObj.name,
-    selectable: cloudFolhaObj.selectable,
-    hoverCursor: cloudFolhaObj.hoverCursor,
-    hasControls: cloudFolhaObj.hasControls,
-    hasBorders: cloudFolhaObj.hasBorders,
-    lockMovementX: cloudFolhaObj.lockMovementX,
-    lockMovementY: cloudFolhaObj.lockMovementY
-  };
-
-  const originalState = canvas.toJSON();
-  const originalZoom = canvas.getZoom();
-  const originalViewportTransform = [...canvas.viewportTransform];
-  const originalWidth = canvas.getWidth();
-  const originalHeight = canvas.getHeight();
-
-  canvas.setZoom(1);
-  canvas.requestRenderAll();
-
-  const TARGET_DPI = parseInt(document.getElementById('dpijpg-input').value) || 300;
+  const TARGET_DPI = parseInt(document.getElementById(inputId).value) || 300;
   const BROWSER_DPI = 96;
   const dpiScale = TARGET_DPI / BROWSER_DPI;
   const marginCompensation = 0.1 * cmToPx * dpiScale;
@@ -4372,10 +4310,10 @@ document.getElementById('export-JPG').addEventListener('click', () => {
       });
 
       if (clone.type === 'i-text') {
-        const strokeScale = dpiScale * (clone.strokeWidth > 0 ? 1.2 : 1); 
+        const strokeScale = dpiScale * (clone.strokeWidth > 0 ? 1.2 : 1);
         clone.set({
           fontSize: clone.fontSize * dpiScale,
-          strokeWidth: clone.strokeWidth * strokeScale, 
+          strokeWidth: clone.strokeWidth * strokeScale,
           scaleX: 1,
           scaleY: 1,
           paintFirst: 'stroke',
@@ -4393,160 +4331,59 @@ document.getElementById('export-JPG').addEventListener('click', () => {
   exportCanvas.add(...objectsToExport);
   exportCanvas.renderAll();
 
-  const link = document.createElement('a');
-  link.download = `CloudAppJPG_${TARGET_DPI}dpi.jpg`;
-  link.href = exportCanvas.toDataURL({
-    format: 'jpeg',
+  const imgData = exportCanvas.toDataURL({
+    format: format,
     quality: 1.0,
     enableRetinaScaling: true
   });
+
+  const link = document.createElement('a');
+  link.download = `CloudApp${extension}_${TARGET_DPI}dpi.${extension}`;
+  link.href = imgData;
   link.click();
 
-  canvas.clear();
-  canvas.loadFromJSON(originalState, () => {
-    canvas.setDimensions({
-      width: originalWidth,
-      height: originalHeight
-    });
-    canvas.setViewportTransform(originalViewportTransform);
-    canvas.setZoom(originalZoom);
+  // Limpar o canvas temporário após a exportação
+  exportCanvas.clear();
 
-    const restoredCloudFolha = canvas.getObjects().find(obj => obj.type === 'rect' && (!obj.name || obj.name === 'CloudFolha'));
-    if (restoredCloudFolha) {
-      restoredCloudFolha.set({
-        ...cloudFolhaBackup,
-        id: cloudFolhaBackup.id,
-        name: 'CloudFolha',
-        selectable: false,
-        hoverCursor: 'default',
-        hasControls: false,
-        hasBorders: false,
-        lockMovementX: true,
-        lockMovementY: true
+  // SOLUÇÃO: Corrigir o bug de renderização dos textos
+  setTimeout(() => {
+    const textObjects = canvas.getObjects().filter(obj => obj.type === 'i-text');
+
+    textObjects.forEach(obj => {
+      obj.set({
+        scaleX: 1,
+        scaleY: 1
       });
-      canvas.sendToBack(restoredCloudFolha);
-    }
+      obj.setCoords();
+    });
 
-    canvas.discardActiveObject();
+    // Pequeno truque: mudar o zoom temporariamente para forçar atualização
+    const currentZoom = canvas.getZoom();
+    canvas.setZoom(currentZoom * 1.01);
+    setTimeout(() => canvas.setZoom(currentZoom), 10);
+
     canvas.requestRenderAll();
-    updateLayersList();
-  });
-});
+  }, 50); // Pequeno atraso para garantir que Fabric.js termine as operações
+}
 
+document.getElementById('export-png').addEventListener('click', () => exportCanvas('png', 'PNG', 'dpi-input'));
+document.getElementById('export-JPG').addEventListener('click', () => exportCanvas('jpeg', 'JPG', 'dpijpg-input'));
 document.getElementById('export-PDF').addEventListener('click', () => {
   if (typeof window.jspdf === 'undefined') {
     console.error('jsPDF não está carregado. Verifique se a biblioteca foi importada corretamente.');
-	showCustomAlert('Erro: biblioteca PDF não encontrada');
+    showCustomAlert('Erro: biblioteca PDF não encontrada');
     return;
   }
 
-  const cloudFolhaObj = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
-  if (!cloudFolhaObj) {
-    console.error('CloudFolha não encontrado');
-    return;
-  }
-
-  try {
-    const cloudFolhaBackup = {
-      id: cloudFolhaObj.id,
-      name: cloudFolhaObj.name,
-      selectable: cloudFolhaObj.selectable,
-      hoverCursor: cloudFolhaObj.hoverCursor,
-      hasControls: cloudFolhaObj.hasControls,
-      hasBorders: cloudFolhaObj.hasBorders,
-      lockMovementX: cloudFolhaObj.lockMovementX,
-      lockMovementY: cloudFolhaObj.lockMovementY
-    };
-
-    const originalState = canvas.toJSON();
-    const originalZoom = canvas.getZoom();
-    const originalViewportTransform = [...canvas.viewportTransform];
-    const originalWidth = canvas.getWidth();
-    const originalHeight = canvas.getHeight();
-
-    canvas.setZoom(1);
-    canvas.requestRenderAll();
-
-    const TARGET_DPI = parseInt(document.getElementById('dpipdf-input').value) || 300;
-    const BROWSER_DPI = 96;
-    const dpiScale = TARGET_DPI / BROWSER_DPI;
-    const marginCompensation = 0.1 * cmToPx * dpiScale;
-
-    const pdfWidth = cloudFolhaObj.width;
-    const pdfHeight = cloudFolhaObj.height;
-
-    console.log('Dimensões PDF:', { pdfWidth, pdfHeight, dpiScale });
-
-    const exportCanvas = new fabric.Canvas(null, {
-      width: pdfWidth * dpiScale + marginCompensation,
-      height: pdfHeight * dpiScale + marginCompensation,
-      backgroundColor: null
-    });
-
-    const clipPath = new fabric.Rect({
-      left: marginCompensation / 2,
-      top: marginCompensation / 2,
-      width: cloudFolhaObj.width * dpiScale,
-      height: cloudFolhaObj.height * dpiScale,
-      absolutePositioned: true
-    });
-
-    const objectsToExport = canvas.getObjects()
-      .filter(obj => obj !== cloudFolhaObj && !obj.name?.includes('Guia'))
-      .map(obj => {
-        const clone = fabric.util.object.clone(obj);
-        const relativeLeft = obj.left - cloudFolhaObj.left;
-        const relativeTop = obj.top - cloudFolhaObj.top;
-
-        clone.set({
-          left: (relativeLeft * dpiScale) + (marginCompensation / 2),
-          top: (relativeTop * dpiScale) + (marginCompensation / 2),
-          scaleX: obj.scaleX * dpiScale,
-          scaleY: obj.scaleY * dpiScale,
-          clipPath: clipPath,
-          selectable: false
-        });
-
-        if (clone.type === 'i-text') {
-          const strokeScale = dpiScale * (clone.strokeWidth > 0 ? 1.2 : 1); 
-          clone.set({
-            fontSize: clone.fontSize * dpiScale,
-            strokeWidth: clone.strokeWidth * strokeScale, 
-            scaleX: 1,
-            scaleY: 1,
-            paintFirst: 'stroke',
-            left: clone.left - (clone.strokeWidth * strokeScale / 2),
-            top: clone.top - (clone.strokeWidth * strokeScale / 2)
-          });
-
-          clone.width = clone.width + (clone.strokeWidth * strokeScale);
-          clone.height = clone.height + (clone.strokeWidth * strokeScale);
-        }
-
-        return clone;
-      });
-
-    exportCanvas.add(...objectsToExport);
-    exportCanvas.renderAll();
-
-    const imgData = exportCanvas.toDataURL({
-      format: 'png',
-      quality: 1.0,
-      enableRetinaScaling: true
-    });
-
-    console.log('Imagem gerada com sucesso');
-
-    const pdfWidth_mm = pdfWidth * 0.264583;
-    const pdfHeight_mm = pdfHeight * 0.264583;
-
-    console.log('Dimensões em mm:', { pdfWidth_mm, pdfHeight_mm });
+  exportCanvas('png', 'PDF', 'dpipdf-input').then(imgData => {
+    const pdfWidth = cloudFolhaObj.width * 0.264583;
+    const pdfHeight = cloudFolhaObj.height * 0.264583;
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({
       orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
       unit: 'mm',
-      format: [pdfWidth_mm, pdfHeight_mm]
+      format: [pdfWidth, pdfHeight]
     });
 
     pdf.addImage(
@@ -4554,50 +4391,17 @@ document.getElementById('export-PDF').addEventListener('click', () => {
       'PNG',
       0,
       0,
-      pdfWidth_mm,
-      pdfHeight_mm,
+      pdfWidth,
+      pdfHeight,
       undefined,
       'FAST'
     );
 
-    console.log('Imagem adicionada ao PDF');
     pdf.save(`CloudAppPDF_${TARGET_DPI}dpi.pdf`);
-    console.log('PDF salvo com sucesso');
-
-    canvas.clear();
-    canvas.loadFromJSON(originalState, () => {
-      canvas.setDimensions({
-        width: originalWidth,
-        height: originalHeight
-      });
-      canvas.setViewportTransform(originalViewportTransform);
-      canvas.setZoom(originalZoom);
-
-      const restoredCloudFolha = canvas.getObjects().find(obj => obj.type === 'rect' && (!obj.name || obj.name === 'CloudFolha'));
-      if (restoredCloudFolha) {
-        restoredCloudFolha.set({
-          ...cloudFolhaBackup,
-          id: cloudFolhaBackup.id,
-          name: 'CloudFolha',
-          selectable: false,
-          hoverCursor: 'default',
-          hasControls: false,
-          hasBorders: false,
-          lockMovementX: true,
-          lockMovementY: true
-        });
-        canvas.sendToBack(restoredCloudFolha);
-      }
-
-      canvas.discardActiveObject();
-      canvas.requestRenderAll();
-      updateLayersList();
-    });
-
-  } catch (error) {
+  }).catch(error => {
     console.error('Erro ao gerar PDF:', error);
-	showCustomAlert('Erro ao gerar PDF');
-  }
+    showCustomAlert('Erro ao gerar PDF');
+  });
 });
 
 
@@ -4631,53 +4435,49 @@ document.getElementById('export-PDF').addEventListener('click', () => {
   });
 
   function exportSelectedObjectsToPNG() {
-    const activeObjects = canvas.getActiveObjects();
-    if (activeObjects.length === 0) {
-      showCustomAlert('Nenhum objeto selecionado para exportar.');
-      return;
+  const activeObjects = canvas.getActiveObjects();
+  if (activeObjects.length === 0) {
+    showCustomAlert('Nenhum objeto selecionado para exportar.');
+    return;
+  }
+
+  // Cria um novo canvas temporário
+  const tempCanvasElement = document.createElement('canvas');
+  tempCanvasElement.style.display = 'none';
+  document.body.appendChild(tempCanvasElement);
+  const tempCanvas = new fabric.StaticCanvas(tempCanvasElement, {
+    backgroundColor: 'transparent'
+  });
+
+  // Clona os objetos selecionados e adiciona ao canvas temporário
+  const clonedObjects = activeObjects.map(obj => fabric.util.object.clone(obj));
+  clonedObjects.forEach(obj => {
+    tempCanvas.add(obj);
+  });
+
+  // Ajusta a escala de texto (scaleX = 1, scaleY = 1)
+  clonedObjects.forEach(obj => {
+    if (obj.type === 'text') {
+      obj.set({ scaleX: 1, scaleY: 1 });
     }
+  });
 
-    const cloudFolhaObj = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
-    const cloudFolhaBackup = cloudFolhaObj ? {
-      id: cloudFolhaObj.id,
-      name: cloudFolhaObj.name,
-      selectable: cloudFolhaObj.selectable,
-      hoverCursor: cloudFolhaObj.hoverCursor,
-      hasControls: cloudFolhaObj.hasControls,
-      hasBorders: cloudFolhaObj.hasBorders,
-      lockMovementX: cloudFolhaObj.lockMovementX,
-      lockMovementY: cloudFolhaObj.lockMovementY
-    } : {};
-
-    const originalState = canvas.toJSON();
-    const originalZoom = canvas.getZoom();
-    const originalViewportTransform = [...canvas.viewportTransform];
-    const originalWidth = canvas.getWidth();
-    const originalHeight = canvas.getHeight();
-
-    const tempCanvas = new fabric.StaticCanvas(null, {
-      backgroundColor: 'transparent'
-    });
-
-    const clonedObjects = activeObjects.map(obj => fabric.util.object.clone(obj));
-    clonedObjects.forEach(obj => {
-      tempCanvas.add(obj);
-    });
-
-    const group = new fabric.Group(clonedObjects, {
-      left: 0,
-      top: 0,
-      originX: 'left',
-      originY: 'top'
-    });
-    tempCanvas.add(group);
-    tempCanvas.requestRenderAll();
-
+  const group = new fabric.Group(clonedObjects, {
+    left: 0,
+    top: 0,
+    originX: 'left',
+    originY: 'top'
+  });
+  tempCanvas.add(group);
+  
+  setTimeout(() => {
     const groupBounds = group.getBoundingRect();
     const width = groupBounds.width;
     const height = groupBounds.height;
 
     tempCanvas.setDimensions({ width, height });
+
+    tempCanvas.requestRenderAll();
 
     const dataUrl = tempCanvas.toDataURL({
       format: 'png',
@@ -4691,66 +4491,37 @@ document.getElementById('export-PDF').addEventListener('click', () => {
     downloadLink.click();
 
     tempCanvas.dispose();
+    document.body.removeChild(tempCanvasElement);
+  }, 50); 
+}
 
-    canvas.clear();
-    canvas.loadFromJSON(originalState, () => {
-      canvas.setDimensions({
-        width: originalWidth,
-        height: originalHeight
-      });
-      canvas.setViewportTransform(originalViewportTransform);
-      canvas.setZoom(originalZoom);
+exportPngButton.addEventListener('click', exportSelectedObjectsToPNG);
 
-      if (cloudFolhaObj) {
-        const restoredCloudFolha = canvas.getObjects().find(obj => obj.type === 'rect' && (!obj.name || obj.name === 'CloudFolha'));
-        if (restoredCloudFolha) {
-          restoredCloudFolha.set({
-            ...cloudFolhaBackup,
-            id: cloudFolhaBackup.id,
-            name: 'CloudFolha',
-            selectable: false,
-            hoverCursor: 'default',
-            hasControls: false,
-            hasBorders: false,
-            lockMovementX: true,
-            lockMovementY: true
-          });
-          canvas.sendToBack(restoredCloudFolha);
-        }
-      }
 
-      canvas.discardActiveObject();
-      canvas.requestRenderAll();
-      updateLayersList();
-    });
-  }
 
-  exportPngButton.addEventListener('click', exportSelectedObjectsToPNG);
-
-  canvas.on('selection:created', () => {
-    updateDimensionInputs();
-    updateLayersList();
-    updateTextStylingControls();
-    updateOpacity();
-  });
-
-  canvas.on('selection:updated', () => {
-    updateDimensionInputs();
-    updateLayersList();
-    updateTextStylingControls();
-    updateOpacity();
-  });
-
-  canvas.on('selection:cleared', () => {
-    updateDimensionInputs();
-    updateLayersList();
-    const textStylingControls = document.querySelector('.text-styling-controls');
-    textStylingControls.style.display = 'none';
-    updateOpacity();
-  });
-
+canvas.on('selection:created', () => {
+  updateDimensionInputs();
+  updateLayersList();
+  updateTextStylingControls();
   updateOpacity();
-  
+});
+
+canvas.on('selection:updated', () => {
+  updateDimensionInputs();
+  updateLayersList();
+  updateTextStylingControls();
+  updateOpacity();
+});
+
+canvas.on('selection:cleared', () => {
+  updateDimensionInputs();
+  updateLayersList();
+  const textStylingControls = document.querySelector('.text-styling-controls');
+  textStylingControls.style.display = 'none';
+  updateOpacity();
+});
+
+updateOpacity();
   
   // ------------- importar em svg ------------------------------
 
