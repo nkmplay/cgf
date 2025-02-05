@@ -5,7 +5,7 @@
 <script src="https://nkmplay.github.io/cgf/scripts/fabric_5.2.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+<script src="https://nkmplay.github.io/cgf/scripts/pdf.min.js"></script>
 <style>
   body {
     margin: 0;
@@ -700,6 +700,12 @@
 .numerSemSeta[type=number] {
   -moz-appearance: textfield;
 }
+.version-number {
+  margin-left: auto;
+  color: yellow;
+  font-size: 12px;
+  padding: 5px 10px;
+}
 
 </style>
 </head>
@@ -887,6 +893,8 @@
 		  <input type="number" id="opacity-input" class="dimension-input" min="1" max="100" step="1">
 		  <button id="export-png-selected">PNG</button>
 		</div>
+		
+		<div class="version-number">1.1</div>
   </div>
   <div class="main-container">
     <div class="sidebar">
@@ -937,6 +945,12 @@
 	<li>
 	<button id="paint-button">
 		<span style="font-size: 24px;">✎</span> Pincel
+	</button>
+	</li>
+	
+	<li>
+	<button id="BaldeBtn">
+		<span style="font-size: 24px;">✎</span> Balde
 	</button>
 	</li>
 
@@ -994,8 +1008,8 @@
   <button id="save-button">Salvar</button>
   <button id="finish-button">Finalizar</button>
 </div>
-
 	<canvas id="hiddenCanvas" class="hidden-canvas"></canvas>
+	
 	
 <script src="https://nkmplay.github.io/cgf/ferramentas/modalselect.js"></script>
   <script>
@@ -4287,13 +4301,18 @@ fileInput.addEventListener('change', async (e) => {
 });
 
 function exportCanvas(format, extension, inputId) {
-  const cloudFolhaObj = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
-  if (!cloudFolhaObj) return;
+  return new Promise((resolve, reject) => {
+    try {
+      const cloudFolhaObj = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+      if (!cloudFolhaObj) {
+        reject(new Error('CloudFolha não encontrada'));
+        return;
+      }
 
-  const TARGET_DPI = parseInt(document.getElementById(inputId).value) || 300;
-  const BROWSER_DPI = 96;
-  const dpiScale = TARGET_DPI / BROWSER_DPI;
-  const marginCompensation = 0.1 * cmToPx * dpiScale;
+      const TARGET_DPI = parseInt(document.getElementById(inputId).value) || 300;
+      const BROWSER_DPI = 96;
+      const dpiScale = TARGET_DPI / BROWSER_DPI;
+      const marginCompensation = 0.1 * cmToPx * dpiScale;
 
   const exportWidth = cloudFolhaObj.width * dpiScale + marginCompensation;
   const exportHeight = cloudFolhaObj.height * dpiScale + marginCompensation;
@@ -4351,50 +4370,61 @@ function exportCanvas(format, extension, inputId) {
   exportCanvas.renderAll();
 
   const imgData = exportCanvas.toDataURL({
-    format: format,
-    quality: 1.0,
-    enableRetinaScaling: true
-  });
-
-  const link = document.createElement('a');
-  link.download = `CloudApp${extension}_${TARGET_DPI}dpi.${extension}`;
-  link.href = imgData;
-  link.click();
-
-  // Limpar o canvas temporário após a exportação
-  exportCanvas.clear();
-
-  // SOLUÇÃO: Corrigir o bug de renderização dos textos
-  setTimeout(() => {
-    const textObjects = canvas.getObjects().filter(obj => obj.type === 'i-text');
-
-    textObjects.forEach(obj => {
-      obj.set({
-        scaleX: 1,
-        scaleY: 1
+        format: format,
+        quality: 1.0,
+        enableRetinaScaling: true
       });
-      obj.setCoords();
-    });
 
-    // Pequeno truque: mudar o zoom temporariamente para forçar atualização
-    const currentZoom = canvas.getZoom();
-    canvas.setZoom(currentZoom * 1.01);
-    setTimeout(() => canvas.setZoom(currentZoom), 10);
+      if (extension === 'PDF') {
+        resolve({ imgData, cloudFolhaObj, TARGET_DPI });
+      } else {
+        const link = document.createElement('a');
+        link.download = `CloudApp${extension}_${TARGET_DPI}dpi.${extension}`;
+        link.href = imgData;
+        link.click();
+        resolve();
+      }
 
-    canvas.requestRenderAll();
-  }, 50); // Pequeno atraso para garantir que Fabric.js termine as operações
+      // Limpar o canvas temporário após a exportação
+      exportCanvas.clear();
+
+      // SOLUÇÃO: Corrigir o bug de renderização dos textos
+      setTimeout(() => {
+        const textObjects = canvas.getObjects().filter(obj => obj.type === 'i-text');
+        textObjects.forEach(obj => {
+          obj.set({
+            scaleX: 1,
+            scaleY: 1
+          });
+          obj.setCoords();
+        });
+
+        const currentZoom = canvas.getZoom();
+        canvas.setZoom(currentZoom * 1.01);
+        setTimeout(() => canvas.setZoom(currentZoom), 10);
+
+        canvas.requestRenderAll();
+      }, 50);
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
 
 document.getElementById('export-png').addEventListener('click', () => exportCanvas('png', 'PNG', 'dpi-input'));
 document.getElementById('export-JPG').addEventListener('click', () => exportCanvas('jpeg', 'JPG', 'dpijpg-input'));
-document.getElementById('export-PDF').addEventListener('click', () => {
+
+document.getElementById('export-PDF').addEventListener('click', async () => {
   if (typeof window.jspdf === 'undefined') {
     console.error('jsPDF não está carregado. Verifique se a biblioteca foi importada corretamente.');
     showCustomAlert('Erro: biblioteca PDF não encontrada');
     return;
   }
 
-  exportCanvas('png', 'PDF', 'dpipdf-input').then(imgData => {
+  try {
+    const { imgData, cloudFolhaObj, TARGET_DPI } = await exportCanvas('png', 'PDF', 'dpipdf-input');
+    
+    // Converter de pixels para milímetros
     const pdfWidth = cloudFolhaObj.width * 0.264583;
     const pdfHeight = cloudFolhaObj.height * 0.264583;
 
@@ -4417,10 +4447,10 @@ document.getElementById('export-PDF').addEventListener('click', () => {
     );
 
     pdf.save(`CloudAppPDF_${TARGET_DPI}dpi.pdf`);
-  }).catch(error => {
+  } catch (error) {
     console.error('Erro ao gerar PDF:', error);
-    showCustomAlert('Erro ao gerar PDF');
-  });
+    showCustomAlert('Erro ao gerar PDF: ' + error.message);
+  }
 });
 
 
@@ -5095,7 +5125,7 @@ paintButton.addEventListener('click', () => {
 
   let paintHistory = [];
   let currentHistoryIndex = -1;
-  const MAX_HISTORY = 10;
+  const MAX_HISTORY = 20;
 
   const modalContainer = document.createElement('div');
   modalContainer.style.cssText = `
@@ -5542,6 +5572,8 @@ brushControls.style.cssText = `
     document.addEventListener('keydown', handleEscape);
   });
 });
+
+// ------------ Balde de tinta -----------------------------------
 
 
     });
