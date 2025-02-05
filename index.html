@@ -923,17 +923,22 @@
 		</button>
     </li>
 	
-<li>
-  <button id="eraser-button">
-  <svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="4" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-    <rect x="12" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="currentColor"/>
-    <rect x="4" y="4" width="16" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-  </svg>
-  Borracha
-</button>
+	<li>
+	  <button id="eraser-button">
+	  <svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<rect x="4" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+		<rect x="12" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="currentColor"/>
+		<rect x="4" y="4" width="16" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+	  </svg>
+	  Borracha
+	</button>
+	</li>
 
-</li>
+	<li>
+	<button id="paint-button">
+		<span style="font-size: 24px;">✎</span> Pincel
+	</button>
+	</li>
 
       </ul>
     </div>
@@ -1470,8 +1475,8 @@ document.getElementById('height-input').addEventListener('change', e => {
         updateLayersList();
       });
 
-      // ---------- Atualização do Estilo do Texto -------------------------------------------
-     function updateTextStylingControls() {
+// ---------- Atualização do Estilo do Texto -------------------------------------------
+function updateTextStylingControls() {
   const activeObjects = canvas.getActiveObjects();
   const textStylingControls = document.querySelector('.text-styling-controls');
   
@@ -1486,32 +1491,34 @@ document.getElementById('height-input').addEventListener('change', e => {
     const strokeWidthInput = document.getElementById('stroke-width-input');
     const strokeColorPicker = document.getElementById('stroke-color-picker');
 
-    // Atualizar valores dos controles
-    fontSelect.value = activeObj.fontFamily || 'Arial';
-    textColorPicker.value = activeObj.fill || '#000000';
-    fontSizeInput.value = Math.round(activeObj.fontSize) || 20;
-    strokeWidthInput.value = activeObj.strokeWidth || 0;
-    strokeColorPicker.value = activeObj.stroke || '#000000';
+    // Atualizar valores dos controles sem substituir os elementos
+    if (fontSelect) fontSelect.value = activeObj.fontFamily || 'Arial';
+    if (textColorPicker) textColorPicker.value = activeObj.fill || '#000000';
+    if (fontSizeInput) fontSizeInput.value = Math.round(activeObj.fontSize) || 20;
+    if (strokeWidthInput) strokeWidthInput.value = activeObj.strokeWidth || 0;
+    if (strokeColorPicker) strokeColorPicker.value = activeObj.stroke || '#000000';
 
-    // Substituir elementos para evitar múltiplos listeners
-    const newFontSelect = fontSelect.cloneNode(true);
-    const newTextColorPicker = textColorPicker.cloneNode(true);
-    const newFontSizeInput = fontSizeInput.cloneNode(true);
-    const newStrokeWidthInput = strokeWidthInput.cloneNode(true);
-    const newStrokeColorPicker = strokeColorPicker.cloneNode(true);
-
-    fontSelect.replaceWith(newFontSelect);
-    textColorPicker.replaceWith(newTextColorPicker);
-    fontSizeInput.replaceWith(newFontSizeInput);
-    strokeWidthInput.replaceWith(newStrokeWidthInput);
-    strokeColorPicker.replaceWith(newStrokeColorPicker);
-
-    // Adicionar listeners separados para cada propriedade
-    newFontSelect.addEventListener('change', updateFont);
-    newTextColorPicker.addEventListener('input', updateTextColor);
-    newFontSizeInput.addEventListener('change', updateFontSize);
-    newStrokeWidthInput.addEventListener('change', updateTextStroke);
-    newStrokeColorPicker.addEventListener('input', updateTextStroke);
+    // Adicionar listeners apenas se ainda não existirem
+    if (!fontSelect.hasListener) {
+      fontSelect.addEventListener('change', updateFont);
+      fontSelect.hasListener = true;
+    }
+    if (!textColorPicker.hasListener) {
+      textColorPicker.addEventListener('input', updateTextColor);
+      textColorPicker.hasListener = true;
+    }
+    if (!fontSizeInput.hasListener) {
+      fontSizeInput.addEventListener('change', updateFontSize);
+      fontSizeInput.hasListener = true;
+    }
+    if (!strokeWidthInput.hasListener) {
+      strokeWidthInput.addEventListener('change', updateTextStroke);
+      strokeWidthInput.hasListener = true;
+    }
+    if (!strokeColorPicker.hasListener) {
+      strokeColorPicker.addEventListener('input', updateTextStroke);
+      strokeColorPicker.hasListener = true;
+    }
   } else {
     textStylingControls.style.display = 'none';
   }
@@ -1578,9 +1585,21 @@ function updateTextStroke() {
   });
   canvas.requestRenderAll();
 }
-	
-	document.getElementById('stroke-width-input').addEventListener('change', updateTextStroke);
-	document.getElementById('stroke-color-picker').addEventListener('input', updateTextStroke);
+
+// Eventos de Seleção
+canvas.on('selection:created', updateTextStylingControls);
+canvas.on('selection:updated', updateTextStylingControls);
+canvas.on('selection:cleared', () => {
+  const textStylingControls = document.querySelector('.text-styling-controls');
+  textStylingControls.style.display = 'none';
+});
+
+// Garantir que as mudanças no objeto sejam refletidas na interface
+canvas.on('object:modified', (e) => {
+  if (e.target && e.target.type === 'i-text') {
+    updateTextStylingControls();
+  }
+});
 
       // ---------- Eventos de Redimensionamento da Janela -------------------------------------------
       window.addEventListener('resize', () => {
@@ -4665,21 +4684,32 @@ eraserButton.addEventListener('click', () => {
     height: 600px;
     position: relative;
     margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
   `;
 
-  const brushControls = document.createElement('div');
-  brushControls.style.cssText = `
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    border-radius: 4px;
-    z-index: 1002;
+  // Criar container com scroll
+  const canvasScrollContainer = document.createElement('div');
+  canvasScrollContainer.style.cssText = `
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    margin-bottom: 20px;
   `;
+
+const brushControls = document.createElement('div');
+brushControls.style.cssText = `
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: #151f28; /* Cor de fundo sólida */
+  padding: 10px;
+  border-radius: 4px;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
 
   const undoButton = document.createElement('button');
   undoButton.textContent = 'Voltar';
@@ -4796,11 +4826,10 @@ eraserButton.addEventListener('click', () => {
     z-index: 1001;
   `;
 
-  const canvasContainer = document.createElement('div');
+   const canvasContainer = document.createElement('div');
   canvasContainer.style.cssText = `
-    width: 100%;
-    height: 100%;
     position: relative;
+    display: inline-block;
   `;
 
   const eraserCanvasElement = document.createElement('canvas');
@@ -4808,8 +4837,9 @@ eraserButton.addEventListener('click', () => {
 
   canvasContainer.appendChild(eraserCanvasElement);
   canvasContainer.appendChild(cursorPreview);
+  canvasScrollContainer.appendChild(canvasContainer);
   modalContent.appendChild(closeButton);
-  modalContent.appendChild(canvasContainer);
+  modalContent.appendChild(canvasScrollContainer);
   modalContent.appendChild(brushControls);
   buttonsContainer.appendChild(confirmButton);
   buttonsContainer.appendChild(cancelButton);
@@ -4817,42 +4847,56 @@ eraserButton.addEventListener('click', () => {
   modalContainer.appendChild(buttonsContainer);
   document.body.appendChild(modalContainer);
 
+  const originalWidth = activeObject._element.naturalWidth || activeObject.width;
+  const originalHeight = activeObject._element.naturalHeight || activeObject.height;
+
   const eraserCanvas = new fabric.Canvas('modal-eraser-canvas', {
-    width: 760,
-    height: 560,
+    width: originalWidth,
+    height: originalHeight,
     selection: false,
-    preserveObjectStacking: true
+    preserveObjectStacking: true,
+    enableRetinaScaling: true,
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high'
   });
 
-  activeObject.clone((clonedObj) => {
-    const scale = Math.min(
-      760 / clonedObj.width,
-      560 / clonedObj.height
-    ) * 0.9;
+  const containerWidth = canvasScrollContainer.clientWidth - 40;
+  const containerHeight = canvasScrollContainer.clientHeight - 40;
+  const initialZoom = Math.min(
+    containerWidth / originalWidth,
+    containerHeight / originalHeight
+  );
 
+  activeObject.clone((clonedObj) => {
     clonedObj.set({
-      left: eraserCanvas.width / 2,
-      top: eraserCanvas.height / 2,
-      scaleX: clonedObj.scaleX * scale,
-      scaleY: clonedObj.scaleY * scale,
+      left: originalWidth / 2,
+      top: originalHeight / 2,
+      scaleX: 1,
+      scaleY: 1,
       originX: 'center',
       originY: 'center',
       erasable: true
     });
 
+    eraserCanvas.setZoom(initialZoom);
+    eraserCanvas.absolutePan(new fabric.Point(
+      (containerWidth - originalWidth * initialZoom) / 2,
+      (containerHeight - originalHeight * initialZoom) / 2
+    ));
+
     const saveToHistory = () => {
       if (currentHistoryIndex < MAX_HISTORY - 1) {
         eraserHistory = eraserHistory.slice(0, currentHistoryIndex + 1);
-        
+
         clonedObj.clone((historyObj) => {
           currentHistoryIndex++;
           eraserHistory.push(historyObj);
-          
+
           if (eraserHistory.length > MAX_HISTORY) {
             eraserHistory.shift();
             currentHistoryIndex--;
           }
-          
+
           undoButton.disabled = currentHistoryIndex <= 0;
         });
       }
@@ -4877,7 +4921,7 @@ eraserButton.addEventListener('click', () => {
       if (currentHistoryIndex > 0) {
         currentHistoryIndex--;
         const previousState = eraserHistory[currentHistoryIndex];
-        
+
         eraserCanvas.remove(clonedObj);
         previousState.clone((restoredObj) => {
           clonedObj = restoredObj;
@@ -4906,17 +4950,17 @@ eraserButton.addEventListener('click', () => {
       }
     });
 
-function updateBrushSize(size) {
-  const intSize = Math.min(Math.max(parseInt(size), 1), 500);
-  eraserCanvas.freeDrawingBrush.width = intSize;
-  brushSlider.value = intSize;
-  brushSizeInput.value = intSize;
+    function updateBrushSize(size) {
+      const intSize = Math.min(Math.max(parseInt(size), 1), 500);
+      eraserCanvas.freeDrawingBrush.width = intSize;
+      brushSlider.value = intSize;
+      brushSizeInput.value = intSize;
 
-  const zoom = eraserCanvas.getZoom();
-  const adjustedSize = intSize * zoom;
-  cursorPreview.style.width = adjustedSize + 'px';
-  cursorPreview.style.height = adjustedSize + 'px';
-}
+      const zoom = eraserCanvas.getZoom();
+      const adjustedSize = intSize * zoom;
+      cursorPreview.style.width = adjustedSize + 'px';
+      cursorPreview.style.height = adjustedSize + 'px';
+    }
 
     brushSlider.addEventListener('input', (e) => {
       updateBrushSize(e.target.value);
@@ -4966,60 +5010,42 @@ function updateBrushSize(size) {
     });
 
     confirmButton.addEventListener('click', () => {
-      const currentState = eraserHistory[currentHistoryIndex];
-      currentState.clone((erasedObj) => {
-        erasedObj.set({
-          left: originalProps.left,
-          top: originalProps.top,
-          scaleX: originalProps.scaleX,
-          scaleY: originalProps.scaleY,
-          width: originalProps.width,
-          height: originalProps.height,
-          angle: originalProps.angle,
-          originX: originalProps.originX,
-          originY: originalProps.originY
-        });
-        
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = erasedObj.width;
-        tempCanvas.height = erasedObj.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        const erasedCanvas = erasedObj.toCanvasElement();
-        
-        tempCtx.drawImage(
-          erasedCanvas,
-          0, 0, erasedCanvas.width, erasedCanvas.height,
-          0, 0, erasedObj.width, erasedObj.height
-        );
-        
-        tempCanvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          
-          fabric.Image.fromURL(url, (newImg) => {
-            newImg.set({
-              left: originalProps.left,
-              top: originalProps.top,
-              scaleX: originalProps.scaleX,
-              scaleY: originalProps.scaleY,
-              width: originalProps.width,
-              height: originalProps.height,
-              angle: originalProps.angle,
-              originX: originalProps.originX,
-              originY: originalProps.originY
-            });
-            
-                        canvas.remove(activeObject);
-            canvas.add(newImg);
-            canvas.setActiveObject(newImg);
-            canvas.renderAll();
-            
-            URL.revokeObjectURL(url);
-            tempCanvas.remove();
-          }, { crossOrigin: 'anonymous' });
-        });
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = originalWidth;
+      tempCanvas.height = originalHeight;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.imageSmoothingEnabled = true;
+      tempCtx.imageSmoothingQuality = 'high';
+
+      const group = new fabric.Group([clonedObj], {
+        originX: 'center',
+        originY: 'center'
       });
-      closeModal();
+
+      const sourceCanvas = group.toCanvasElement({
+        multiplier: 1,
+        width: originalWidth,
+        height: originalHeight
+      });
+
+      tempCtx.drawImage(sourceCanvas, 0, 0);
+
+      fabric.Image.fromURL(tempCanvas.toDataURL('image/png', 1.0), (newImg) => {
+        newImg.set({
+          ...originalProps,
+          width: originalWidth,
+          height: originalHeight
+        });
+
+        canvas.remove(activeObject);
+        canvas.add(newImg);
+        canvas.setActiveObject(newImg);
+        canvas.requestRenderAll();
+
+        tempCanvas.remove();
+        sourceCanvas.remove();
+        closeModal();
+      }, { crossOrigin: 'anonymous' });
     });
 
     const closeModal = () => {
@@ -5044,6 +5070,480 @@ function updateBrushSize(size) {
     document.addEventListener('keydown', handleEscape);
   });
 });
+
+// ------------ Pincel Pintar -----------------------------------
+const paintButton = document.getElementById('paint-button');
+paintButton.addEventListener('click', () => {
+  const activeObject = canvas.getActiveObject();
+
+  if (!activeObject) {
+    showCustomAlert('Nenhuma imagem selecionada!');
+    return;
+  }
+
+  const originalProps = {
+    left: activeObject.left,
+    top: activeObject.top,
+    scaleX: activeObject.scaleX,
+    scaleY: activeObject.scaleY,
+    width: activeObject.width,
+    height: activeObject.height,
+    angle: activeObject.angle,
+    originX: activeObject.originX,
+    originY: activeObject.originY
+  };
+
+  let paintHistory = [];
+  let currentHistoryIndex = -1;
+  const MAX_HISTORY = 10;
+
+  const modalContainer = document.createElement('div');
+  modalContainer.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  `;
+
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: #151f28;
+    padding: 20px;
+    border-radius: 8px;
+    width: 800px;
+    height: 600px;
+    position: relative;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+  `;
+
+  // Create scrollable container for canvas
+  const canvasScrollContainer = document.createElement('div');
+  canvasScrollContainer.style.cssText = `
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    margin-bottom: 20px;
+  `;
+
+const brushControls = document.createElement('div');
+brushControls.style.cssText = `
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: #151f28; /* Cor de fundo sólida */
+  padding: 10px;
+  border-radius: 4px;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+  const undoButton = document.createElement('button');
+  undoButton.textContent = 'Voltar';
+  undoButton.style.cssText = `
+    padding: 5px 15px;
+    background: #3498db;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+    margin-right: 15px;
+  `;
+  undoButton.disabled = true;
+  undoButton.onmouseover = () => undoButton.style.background = '#2980b9';
+  undoButton.onmouseout = () => undoButton.style.background = '#3498db';
+
+  brushControls.appendChild(undoButton);
+
+  // Add color picker
+  const colorPicker = document.createElement('input');
+  colorPicker.type = 'color';
+  colorPicker.value = '#000000';
+  colorPicker.style.cssText = `
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 15px;
+  `;
+
+  brushControls.appendChild(colorPicker);
+
+  const brushSlider = document.createElement('input');
+  brushSlider.type = 'range';
+  brushSlider.min = '1';
+  brushSlider.max = '500';
+  brushSlider.value = '20';
+  brushSlider.style.cssText = `
+    width: 150px;
+    accent-color: #2ecc71;
+  `;
+
+  const brushSizeInput = document.createElement('input');
+  brushSizeInput.type = 'number';
+  brushSizeInput.value = '20';
+  brushSizeInput.min = '1';
+  brushSizeInput.max = '500';
+  brushSizeInput.style.cssText = `
+    width: 60px;
+    padding: 5px;
+    border: 1px solid #2ecc71;
+    border-radius: 4px;
+    background: #151f28;
+    color: white;
+  `;
+
+  const brushLabel = document.createElement('span');
+  brushLabel.textContent = 'Tamanho:';
+  brushLabel.style.cssText = `
+    color: white;
+    font-size: 14px;
+  `;
+
+  brushControls.appendChild(brushLabel);
+  brushControls.appendChild(brushSlider);
+  brushControls.appendChild(brushSizeInput);
+
+  const cursorPreview = document.createElement('div');
+  cursorPreview.style.cssText = `
+    position: absolute;
+    pointer-events: none;
+    border: 2px solid white;
+    border-radius: 50%;
+    display: none;
+    z-index: 1001;
+  `;
+
+  // Add buttons container
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.style.cssText = `
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  `;
+
+  const confirmButton = document.createElement('button');
+  confirmButton.textContent = 'Confirmar';
+  confirmButton.style.cssText = `
+    padding: 10px 20px;
+    background: #2ecc71;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+  `;
+  confirmButton.onmouseover = () => confirmButton.style.background = '#27ae60';
+  confirmButton.onmouseout = () => confirmButton.style.background = '#2ecc71';
+
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = 'Cancelar';
+  cancelButton.style.cssText = `
+    padding: 10px 20px;
+    background: #e74c3c;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+  `;
+  cancelButton.onmouseover = () => cancelButton.style.background = '#c0392b';
+  cancelButton.onmouseout = () => cancelButton.style.background = '#e74c3c';
+
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = '×';
+  closeButton.style.cssText = `
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001;
+  `;
+
+  const canvasContainer = document.createElement('div');
+  canvasContainer.style.cssText = `
+    position: relative;
+    display: inline-block;
+  `;
+
+  const paintCanvasElement = document.createElement('canvas');
+  paintCanvasElement.id = 'modal-paint-canvas';
+
+  canvasContainer.appendChild(paintCanvasElement);
+  canvasContainer.appendChild(cursorPreview);
+  canvasScrollContainer.appendChild(canvasContainer);
+  modalContent.appendChild(closeButton);
+  modalContent.appendChild(canvasScrollContainer);
+  modalContent.appendChild(brushControls);
+  buttonsContainer.appendChild(confirmButton);
+  buttonsContainer.appendChild(cancelButton);
+  modalContainer.appendChild(modalContent);
+  modalContainer.appendChild(buttonsContainer);
+  document.body.appendChild(modalContainer);
+
+  // Get original image dimensions
+  const originalWidth = activeObject._element.naturalWidth || activeObject.width;
+  const originalHeight = activeObject._element.naturalHeight || activeObject.height;
+
+  // Create canvas with original dimensions
+  const paintCanvas = new fabric.Canvas('modal-paint-canvas', {
+    width: originalWidth,
+    height: originalHeight,
+    selection: false,
+    preserveObjectStacking: true,
+    enableRetinaScaling: true,
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high'
+  });
+
+  // Calculate initial zoom to fit the viewport
+  const containerWidth = canvasScrollContainer.clientWidth - 40; // Account for padding
+  const containerHeight = canvasScrollContainer.clientHeight - 40;
+  const initialZoom = Math.min(
+    containerWidth / originalWidth,
+    containerHeight / originalHeight
+  );
+
+  activeObject.clone((clonedObj) => {
+    clonedObj.set({
+      left: originalWidth / 2,
+      top: originalHeight / 2,
+      scaleX: 1,
+      scaleY: 1,
+      originX: 'center',
+      originY: 'center'
+    });
+
+    // Apply initial zoom
+    paintCanvas.setZoom(initialZoom);
+    paintCanvas.absolutePan(new fabric.Point(
+      (containerWidth - originalWidth * initialZoom) / 2,
+      (containerHeight - originalHeight * initialZoom) / 2
+    ));
+
+    const saveToHistory = () => {
+      if (currentHistoryIndex < MAX_HISTORY - 1) {
+        paintHistory = paintHistory.slice(0, currentHistoryIndex + 1);
+
+        clonedObj.clone((historyObj) => {
+          currentHistoryIndex++;
+          paintHistory.push(historyObj);
+
+          if (paintHistory.length > MAX_HISTORY) {
+            paintHistory.shift();
+            currentHistoryIndex--;
+          }
+
+          undoButton.disabled = currentHistoryIndex <= 0;
+        });
+      }
+    };
+
+    saveToHistory();
+
+    paintCanvas.add(clonedObj);
+    paintCanvas.setActiveObject(clonedObj);
+
+    // Set up paint brush
+    paintCanvas.freeDrawingBrush = new fabric.PencilBrush(paintCanvas);
+    paintCanvas.freeDrawingBrush.width = parseInt(brushSlider.value);
+    paintCanvas.freeDrawingBrush.color = colorPicker.value;
+    paintCanvas.isDrawingMode = true;
+
+    paintCanvas.on('mouse:up', () => {
+      if (paintCanvas.isDrawingMode) {
+        saveToHistory();
+      }
+    });
+
+    const undo = () => {
+      if (currentHistoryIndex > 0) {
+        currentHistoryIndex--;
+        const previousState = paintHistory[currentHistoryIndex];
+
+        paintCanvas.remove(clonedObj);
+        previousState.clone((restoredObj) => {
+          clonedObj = restoredObj;
+          clonedObj.set({
+            left: paintCanvas.width / 2,
+            top: paintCanvas.height / 2,
+            originX: 'center',
+            originY: 'center'
+          });
+          paintCanvas.add(clonedObj);
+          paintCanvas.setActiveObject(clonedObj);
+          paintCanvas.renderAll();
+        });
+
+        undoButton.disabled = currentHistoryIndex <= 0;
+      }
+    };
+
+    undoButton.addEventListener('click', undo);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'z') {
+        undo();
+        e.preventDefault();
+      }
+    });
+
+    function updateBrushSize(size) {
+      const intSize = Math.min(Math.max(parseInt(size), 1), 500);
+      paintCanvas.freeDrawingBrush.width = intSize;
+      brushSlider.value = intSize;
+      brushSizeInput.value = intSize;
+
+      const zoom = paintCanvas.getZoom();
+      const adjustedSize = intSize * zoom;
+      cursorPreview.style.width = adjustedSize + 'px';
+      cursorPreview.style.height = adjustedSize + 'px';
+    }
+
+    // Color picker event listener
+    colorPicker.addEventListener('input', (e) => {
+      paintCanvas.freeDrawingBrush.color = e.target.value;
+      cursorPreview.style.borderColor = e.target.value;
+    });
+
+    brushSlider.addEventListener('input', (e) => {
+      updateBrushSize(e.target.value);
+    });
+
+    brushSizeInput.addEventListener('input', (e) => {
+      updateBrushSize(e.target.value);
+    });
+
+    brushSizeInput.addEventListener('blur', (e) => {
+      updateBrushSize(e.target.value);
+    });
+
+    canvasContainer.addEventListener('mousemove', (e) => {
+      const rect = canvasContainer.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const zoom = paintCanvas.getZoom();
+      const adjustedSize = paintCanvas.freeDrawingBrush.width * zoom;
+
+      cursorPreview.style.display = 'block';
+      cursorPreview.style.left = (x - adjustedSize / 2) + 'px';
+      cursorPreview.style.top = (y - adjustedSize / 2) + 'px';
+      cursorPreview.style.width = adjustedSize + 'px';
+      cursorPreview.style.height = adjustedSize + 'px';
+      cursorPreview.style.borderColor = colorPicker.value;
+    });
+
+    canvasContainer.addEventListener('mouseleave', () => {
+      cursorPreview.style.display = 'none';
+    });
+
+    paintCanvas.on('mouse:wheel', (opt) => {
+      const delta = opt.e.deltaY;
+      let zoom = paintCanvas.getZoom();
+      zoom *= 0.999 ** delta;
+      zoom = Math.min(Math.max(0.1, zoom), 4);
+      const point = new fabric.Point(opt.e.offsetX, opt.e.offsetY);
+      paintCanvas.zoomToPoint(point, zoom);
+
+      const adjustedSize = paintCanvas.freeDrawingBrush.width * zoom;
+      cursorPreview.style.width = adjustedSize + 'px';
+      cursorPreview.style.height = adjustedSize + 'px';
+
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+
+   confirmButton.addEventListener('click', () => {
+      // Create a new canvas with original dimensions
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = originalWidth;
+      tempCanvas.height = originalHeight;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.imageSmoothingEnabled = true;
+      tempCtx.imageSmoothingQuality = 'high';
+
+      // Create group with all elements at original scale
+      const group = new fabric.Group([
+        clonedObj,
+        ...paintCanvas.getObjects().filter(obj => obj !== clonedObj)
+      ], {
+        originX: 'center',
+        originY: 'center'
+      });
+
+      // Render at original size
+      const sourceCanvas = group.toCanvasElement({
+        multiplier: 1,
+        width: originalWidth,
+        height: originalHeight
+      });
+
+  tempCtx.drawImage(sourceCanvas, 0, 0);
+
+      // Create new image maintaining original properties
+      fabric.Image.fromURL(tempCanvas.toDataURL('image/png', 1.0), (newImg) => {
+        newImg.set({
+          ...originalProps,
+          width: originalWidth,
+          height: originalHeight
+        });
+
+        canvas.remove(activeObject);
+        canvas.add(newImg);
+        canvas.setActiveObject(newImg);
+        canvas.requestRenderAll();
+
+        tempCanvas.remove();
+        sourceCanvas.remove();
+        closeModal();
+      }, { crossOrigin: 'anonymous' });
+    });
+
+    const closeModal = () => {
+      paintCanvas.dispose();
+      document.body.removeChild(modalContainer);
+    };
+
+    closeButton.addEventListener('click', closeModal);
+    cancelButton.addEventListener('click', closeModal);
+    modalContainer.addEventListener('click', (e) => {
+      if (e.target === modalContainer) {
+        closeModal();
+      }
+    });
+
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+  });
+});
+
+
     });
   </script>
 </body>
