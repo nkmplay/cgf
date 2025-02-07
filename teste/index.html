@@ -256,6 +256,21 @@
         display: none;
       }
     }
+	m: 20px;
+    }
+
+    .custom-alert-button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .custom-alert-button:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 <body>
@@ -314,6 +329,12 @@
       <div class="a4-page">
         <!-- Primeira página -->
       </div>
+    </div>
+  </div>
+  <div id="customAlertModal" class="custom-alert-modal">
+    <div class="custom-alert-content">
+      <div id="customAlertMessage" class="custom-alert-message"></div>
+      <button onclick="closeCustomAlert()" class="custom-alert-button">OK</button>
     </div>
   </div>
 
