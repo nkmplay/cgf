@@ -2,747 +2,566 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editor de Página</title>
+  <title>Editor A4</title>
   <style>
-    * {
+    body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-    }
-
-    .container {
       display: flex;
       min-height: 100vh;
     }
 
-    .sidebar {
-      width: 300px;
-      background-color: #333;
-      color: white;
+    .container {
+      display: flex;
+      width: 100%;
+    }
+
+    .left-menu {
+      width: 200px;
+      background-color: #f0f0f0;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .menu-item {
-      margin-bottom: 20px;
+    .range-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
 
-    .menu-item label {
-      display: block;
-      margin-bottom: 5px;
+    .range-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
-    .menu-item input[type="number"],
-    .menu-item select {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+    .range-group input {
+      width: 50px;
     }
 
-    .menu-item input[type="checkbox"] {
-      margin-right: 8px;
+    .pages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 0;
+      overflow-y: auto;
     }
 
-    .button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+    .a4-page {
+      width: 210mm;
+      height: 297mm;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      transition: all 0.3s ease;
+      border: 1px solid black;
     }
 
-    .button:hover {
-      background-color: #45a049;
-    }
-
-    .button.yellow {
-      background-color: #FFD700;
-      color: black;
-    }
-
-    .button.yellow:hover {
-      background-color: #FFC400;
-    }
-
-    .invert-size {
-      background-color: #ff9800;
-    }
-
-    .invert-size:hover {
-      background-color: #f57c00;
-    }
-
-    .file-upload {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-    }
-
-    .file-upload input[type="file"] {
-      display: none;
+    .a4-page.horizontal {
+      width: 297mm;
+      height: 210mm;
     }
 
     .orientation-buttons {
       display: flex;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
-    .orientation-btn {
+    .orientation-buttons button {
       flex: 1;
-      padding: 10px;
-      background-color: #666;
-      color: white;
-      border: none;
+      padding: 8px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
       border-radius: 4px;
       cursor: pointer;
     }
 
-    .orientation-btn:hover {
-      background-color: #555;
-    }
-
-    .orientation-btn.active {
+    .orientation-buttons button.active {
       background-color: #4CAF50;
+      color: white;
+      border-color: #45a049;
     }
 
-    .orientation-btn.active:hover {
+    .style-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .style-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .style-group label {
+      min-width: 60px;
+    }
+
+    .style-group input {
+      width: 100%;
+    }
+
+    .style-group input[type="color"] {
+      width: 50px;
+    }
+
+    button {
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .save-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    .save-button:hover {
       background-color: #45a049;
     }
 
-    .page-container {
-      flex: 1;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      overflow: auto;
-    }
-
-    .page {
-      background-color: white;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      position: relative;
-      border: 1px solid #ddd;
-      margin: 0;
-      padding: 0;
-    }
-
-    .page img {
-      object-fit: cover;
-      display: block;
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
-    }
-
-    .number-container {
-      position: absolute;
-      cursor: move;
-      user-select: none;
-      background-color: rgba(255, 255, 255, 0.8);
-      padding: 5px;
-      border: 1px solid #ccc;
-      z-index: 2;
-    }
-
-    .pdf-container .number-container {
-      background-color: transparent;
-      border: none;
-      padding: 0;
-    }
-
-    .number-content {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-
-    .resize-handle {
-      width: 10px;
-      height: 10px;
-      background-color: #4CAF50;
-      position: absolute;
-    }
-
-    .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
-    .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
-    .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
-    .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
-
-    .generate-pdf {
-      margin-top: 20px;
+    .print-button {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      padding: 10px 20px;
       background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
     }
 
-    .generate-pdf:hover {
+    .print-button:hover {
       background-color: #1976D2;
     }
 
-    .delete-btn {
+    .draggable-number {
       position: absolute;
-      top: -20px;
-      right: -20px;
-      width: 20px;
-      height: 20px;
-      background-color: #ff4444;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      line-height: 1;
+      cursor: move;
+      user-select: none;
+      padding: 5px;
+      font-size: 14px;
     }
 
-    .delete-btn:hover {
-      background-color: #cc0000;
+    .draggable-number:hover {
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
-    .menu-item input[type="color"] {
+    .number-id {
+      font-size: 10px;
+      color: #666;
+      position: absolute;
+      top: -15px;
+      left: 0;
+    }
+
+    .background-reference {
+      position: fixed;
+      visibility: hidden;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      height: 40px;
-      padding: 2px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    /* Add new styles for PDF container */
-    .pdf-container {
-      margin: 0;
-      padding: 0;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
       display: flex;
       flex-direction: column;
-      gap: 0;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      color: white;
+      font-size: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
     }
 
-    .pdf-page {
-      margin: 0;
-      padding: 0;
-      page-break-after: always;
+    .loading-overlay.active {
+      opacity: 1;
+      pointer-events: all;
     }
 
-    .pdf-container .number-container .resize-handle,
-    .pdf-container .number-container .delete-btn {
-      display: none !important;
+    .loading-text {
+      margin-bottom: 20px;
+    }
+
+    .progress-bar {
+      width: 300px;
+      height: 20px;
+      background-color: #444;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #4CAF50;
+      transition: width 0.3s ease;
     }
 
     @media print {
-      .sidebar {
+      .left-menu, .save-button, .print-button {
+        display: none;
+      }
+      
+      .container {
+        display: block;
+      }
+      
+      .pages-container {
+        padding: 0;
+      }
+      
+      .a4-page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        border: none;
+      }
+
+      .number-id {
         display: none;
       }
 
-      .page-container {
-        padding: 0;
-        margin: 0;
+      .page-number {
+        display: none;
       }
 
-      .page {
-        box-shadow: none;
-        margin: 0;
-        padding: 0;
-        border: none;
+      .loading-overlay {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
+  <div class="loading-overlay">
+    <div class="loading-text">Carregando...</div>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+  <div id="backgroundContainer" class="background-reference"></div>
   <div class="container">
-    <div class="sidebar">
-      <div class="menu-item">
-        <label class="file-upload">
-          <input type="file" id="imageUpload" accept="image/*">
-          Enviar Imagem
-        </label>
+    <div class="left-menu">
+      <input type="file" id="imageInput" accept="image/*">
+      
+      <div class="orientation-buttons">
+        <button id="verticalOrientation" class="active">A4 Vertical</button>
+        <button id="horizontalOrientation">A4 Horizontal</button>
       </div>
-
-      <div class="menu-item">
-        <div class="orientation-buttons">
-          <button id="verticalBtn" class="orientation-btn active">Folha A4 Vertical</button>
-          <button id="horizontalBtn" class="orientation-btn">Folha A4 Horizontal</button>
-        </div>
-      </div>
-
-      <div class="menu-item">
-        <label>Fonte:
+      
+      <div class="style-options">
+        <div class="style-group">
+          <label>Fonte:</label>
           <select id="fontFamily">
             <option value="Arial">Arial</option>
             <option value="Times New Roman">Times New Roman</option>
             <option value="Courier New">Courier New</option>
             <option value="Georgia">Georgia</option>
             <option value="Verdana">Verdana</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Tahoma">Tahoma</option>
           </select>
-        </label>
+        </div>
+        <div class="style-group">
+          <label>Tamanho:</label>
+          <input type="number" id="fontSize" value="14" min="8" max="72">
+        </div>
+        <div class="style-group">
+          <label>Cor:</label>
+          <input type="color" id="numberColor" value="#000000">
+        </div>
       </div>
-
-      <div class="menu-item">
-        <label>Tamanho da fonte:
-          <input type="number" id="fontSize" value="16" min="8" max="72" step="1">
-        </label>
-      </div>
-
-      <div class="menu-item">
-        <label>
-          <input type="checkbox" id="boldText">
-          Negrito
-        </label>
-      </div>
-
-      <div class="menu-item">
-        <label>Cor do texto:
-          <input type="color" id="textColor" value="#000000">
-        </label>
-      </div>
-
-      <div class="menu-item">
-        <label>Iniciar em:
-          <input type="number" id="startNumber" value="1" min="0" step="1">
-        </label>
-      </div>
-
-      <div class="menu-item">
-        <label>Terminar em:
-          <input type="number" id="endNumber" value="100" min="0" step="1">
-        </label>
-      </div>
-
-      <div class="menu-item">
-        <button id="addNumber" class="button yellow">Adicionar Número</button>
-      </div>
-
-      <div class="menu-item">
-        <button id="generatePdfBtn" class="button generate-pdf">Gerar PDF</button>
+      
+      <button id="addNumber">Adicionar Número</button>
+      <div class="range-inputs">
+        <div class="range-group">
+          <label>Inicio:</label>
+          <input type="number" id="startNumber" value="1" min="1">
+        </div>
+        <div class="range-group">
+          <label>Fim:</label>
+          <input type="number" id="endNumber" value="2" min="1">
+        </div>
       </div>
     </div>
-
-    <div class="page-container">
-      <div class="page" id="page">
+    <div class="pages-container" id="pagesContainer">
+      <div class="a4-page">
+        <!-- Primeira página -->
       </div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
   <script>
-    // Global storage for number templates
-    window.numberTemplates = [];
+    let selectedElement = null;
+    let numberGroups = [];
+    let lastId = 0;
+    let backgroundImage = null;
+    let isHorizontal = false;
+    let backgroundImageUrl = '';
 
-    window.generatePDF = async function() {
-      try {
-        if (window.numberTemplates.length === 0) {
-          alert('Por favor, adicione pelo menos um número primeiro.');
-          return;
-        }
+    function generateId() {
+      return ++lastId;
+    }
 
-        // Find the highest end number among all templates
-        const maxEnd = Math.max(...window.numberTemplates.map(t => t.endNum));
-        const isLandscape = document.getElementById('horizontalBtn').classList.contains('active');
+    document.getElementById('addNumber').addEventListener('click', () => {
+      const startInput = document.getElementById('startNumber');
+      const endInput = document.getElementById('endNumber');
+      const start = parseInt(startInput.value);
+      const end = parseInt(endInput.value);
+      const fontSize = document.getElementById('fontSize').value;
+      const color = document.getElementById('numberColor').value;
+      const fontFamily = document.getElementById('fontFamily').value;
+      
+      if (start > end) {
+        alert('O número inicial deve ser menor que o final');
+        return;
+      }
 
-        // Create PDF document
-        const pdfDoc = await PDFLib.PDFDocument.create();
-        pdfDoc.registerFontkit(fontkit);
+      const numberId = generateId();
+      const number = document.createElement('div');
+      number.className = 'draggable-number';
+      number.textContent = start;
+      number.style.left = '50px';
+      number.style.top = '50px';
+      number.style.fontSize = `${fontSize}px`;
+      number.style.color = color;
+      number.style.fontFamily = fontFamily;
+      number.dataset.start = start;
+      number.dataset.end = end;
+      number.dataset.id = numberId;
+      number.dataset.fontSize = fontSize;
+      number.dataset.color = color;
+      number.dataset.fontFamily = fontFamily;
+      
+      if (!document.body.classList.contains('printing')) {
+        const idLabel = document.createElement('div');
+        idLabel.className = 'number-id';
+        idLabel.textContent = `#${numberId}`;
+        number.appendChild(idLabel);
+      }
+      
+      makeDraggable(number);
+      numberGroups.push({
+        id: numberId,
+        element: number,
+        start,
+        end,
+        position: { x: '50px', y: '50px' },
+        fontSize,
+        color,
+        fontFamily
+      });
+      
+      updatePages();
+    });
 
-        // Load standard fonts
-        const arialFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-        const timesFont = await pdfDoc.embedFont(PDFLib.StandardFonts.TimesRoman);
-        const courierFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Courier);
-
-        const fontMap = {
-          'Arial': arialFont,
-          'Times New Roman': timesFont,
-          'Courier New': courierFont,
-          'Georgia': timesFont,
-          'Verdana': arialFont
-        };
-
-        const pageWidth = isLandscape ? PDFLib.PageSizes.A4[1] : PDFLib.PageSizes.A4[0];
-        const pageHeight = isLandscape ? PDFLib.PageSizes.A4[0] : PDFLib.PageSizes.A4[1];
-
-        // Get background image if exists
-        let backgroundImage = null;
-        const pageElement = document.getElementById('page');
-        const imgElement = pageElement.querySelector('img');
+    function updatePages() {
+      const pagesContainer = document.getElementById('pagesContainer');
+      pagesContainer.innerHTML = '';
+      
+      const maxPages = Math.max(...numberGroups.map(group => group.end - group.start + 1));
+      
+      for (let pageIndex = 0; pageIndex < maxPages; pageIndex++) {
+        const page = document.createElement('div');
+        page.className = `a4-page${isHorizontal ? ' horizontal' : ''}`;
         
-        if (imgElement) {
-          try {
-            const response = await fetch(imgElement.src);
-            const imageData = await response.arrayBuffer();
-            
-            try {
-              backgroundImage = await pdfDoc.embedPng(imageData);
-            } catch (pngError) {
-              try {
-                backgroundImage = await pdfDoc.embedJpg(imageData);
-              } catch (jpgError) {
-                console.error('Failed to embed image:', jpgError);
-                alert('Erro ao processar a imagem. Por favor, tente uma imagem diferente.');
-                return;
-              }
-            }
-          } catch (fetchError) {
-            console.error('Failed to fetch image:', fetchError);
-            alert('Erro ao carregar a imagem. Por favor, tente novamente.');
-            return;
-          }
+        if (backgroundImageUrl) {
+          page.style.backgroundImage = `url(${backgroundImageUrl})`;
         }
-
-        // Calculate current numbers for each template based on page number
-        function getCurrentNumbers(pageIndex) {
-          return window.numberTemplates.map(template => {
-            const range = template.endNum - template.startNum + 1;
-            const currentNum = template.startNum + pageIndex;
-            if (currentNum <= template.endNum) {
-              return {
-                template,
-                number: currentNum
-              };
-            }
-            return null;
-          }).filter(item => item !== null);
-        }
-
-        // Calculate total pages needed
-        const totalPages = Math.max(...window.numberTemplates.map(t => t.endNum - t.startNum + 1));
-
-        // Create pages with numbers
-        for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-          const numbersForPage = getCurrentNumbers(pageIndex);
+        
+        numberGroups.forEach(group => {
+          const currentNumber = group.start + pageIndex;
           
-          if (numbersForPage.length === 0) continue;
-
-          const page = pdfDoc.addPage([pageWidth, pageHeight]);
-
-          if (backgroundImage) {
-            try {
-              page.drawImage(backgroundImage, {
-                x: 0,
-                y: 0,
-                width: pageWidth,
-                height: pageHeight
-              });
-            } catch (drawError) {
-              console.error('Failed to draw image:', drawError);
-            }
-          }
-
-          // Draw all numbers for this page
-          numbersForPage.forEach(({ template, number }) => {
-            const font = fontMap[template.fontFamily] || arialFont;
+          if (currentNumber <= group.end) {
+            const cloneNumber = document.createElement('div');
+            cloneNumber.className = 'draggable-number';
+            cloneNumber.style.left = group.position.x;
+            cloneNumber.style.top = group.position.y;
+            cloneNumber.style.fontSize = `${group.fontSize}px`;
+            cloneNumber.style.color = group.color;
+            cloneNumber.style.fontFamily = group.fontFamily;
+            cloneNumber.textContent = currentNumber;
             
-            // Convert template positions from pixels to points
-            const pxToPoints = 0.75;
-            const x = parseFloat(template.left) * pxToPoints;
-            const y = pageHeight - (parseFloat(template.top) * pxToPoints) - (parseFloat(template.fontSize) * pxToPoints);
-            
-            try {
-              page.drawText(number.toString(), {
-                x: x,
-                y: y,
-                size: parseFloat(template.fontSize),
-                font: font,
-                color: PDFLib.rgb(
-                  parseInt(template.textColor.slice(1,3), 16) / 255,
-                  parseInt(template.textColor.slice(3,5), 16) / 255,
-                  parseInt(template.textColor.slice(5,7), 16) / 255
-                )
-              });
-            } catch (textError) {
-              console.error('Failed to draw text:', textError);
+            if (pageIndex === 0) {
+              if (!document.body.classList.contains('printing')) {
+                const idLabel = document.createElement('div');
+                idLabel.className = 'number-id';
+                idLabel.textContent = `#${group.id}`;
+                cloneNumber.appendChild(idLabel);
+              }
+              cloneNumber.dataset.id = group.id;
+              makeDraggable(cloneNumber);
+              group.element = cloneNumber;
             }
-          });
-        }
-
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'numeros.pdf';
-        link.click();
-        URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error('PDF generation failed:', error);
-        alert('Erro ao gerar o PDF. Por favor, tente novamente.');
-      }
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const page = document.getElementById('page');
-      const imageUpload = document.getElementById('imageUpload');
-      const addNumberBtn = document.getElementById('addNumber');
-      const startNumberInput = document.getElementById('startNumber');
-      const endNumberInput = document.getElementById('endNumber');
-      const generatePdfBtn = document.getElementById('generatePdfBtn');
-      const verticalBtn = document.getElementById('verticalBtn');
-      const horizontalBtn = document.getElementById('horizontalBtn');
-      const fontFamilySelect = document.getElementById('fontFamily');
-      const fontSizeInput = document.getElementById('fontSize');
-      const boldTextCheckbox = document.getElementById('boldText');
-      const textColorInput = document.getElementById('textColor');
-
-      // A4 dimensions in cm
-      const A4_WIDTH = 21;
-      const A4_HEIGHT = 29.7;
-
-      // Converter cm para px (assumindo 96 DPI)
-      const cmToPx = (cm) => cm * 37.795275591;
-
-      function updatePageSize() {
-        const isVertical = verticalBtn.classList.contains('active');
-        const width = cmToPx(isVertical ? A4_WIDTH : A4_HEIGHT);
-        const height = cmToPx(isVertical ? A4_HEIGHT : A4_WIDTH);
-
-        page.style.width = `${width}px`;
-        page.style.height = `${height}px`;
-        page.style.padding = '0';
-
-        const img = page.querySelector('img');
-        if (img) {
-          img.style.margin = '0';
-          img.style.width = `${width}px`;
-          img.style.height = `${height}px`;
-        }
-      }
-
-      verticalBtn.addEventListener('click', () => {
-        verticalBtn.classList.add('active');
-        horizontalBtn.classList.remove('active');
-        updatePageSize();
-      });
-
-      horizontalBtn.addEventListener('click', () => {
-        horizontalBtn.classList.add('active');
-        verticalBtn.classList.remove('active');
-        updatePageSize();
-      });
-
-      function createNumberElement() {
-        const container = document.createElement('div');
-        container.className = 'number-container';
-        container.style.width = '100px';
-        container.style.height = '50px';
-        container.style.left = '50px';
-        container.style.top = '50px';
-
-        const content = document.createElement('div');
-        content.className = 'number-content';
-        content.textContent = startNumberInput.value;
-
-        // Apply font styles
-        content.style.fontFamily = fontFamilySelect.value;
-        content.style.fontSize = `${fontSizeInput.value}px`;
-        content.style.fontWeight = boldTextCheckbox.checked ? 'bold' : 'normal';
-        content.style.color = textColorInput.value;
-
-        // Add delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.innerHTML = '×';
-        deleteBtn.addEventListener('click', () => {
-          const index = window.numberTemplates.indexOf(newTemplate);
-          if (index > -1) {
-            window.numberTemplates.splice(index, 1);
+            
+            page.appendChild(cloneNumber);
           }
-          container.remove();
         });
-        container.appendChild(deleteBtn);
+        
+        pagesContainer.appendChild(page);
+      }
+    }
 
-        const handles = ['nw', 'ne', 'sw', 'se'];
-        handles.forEach(pos => {
-          const handle = document.createElement('div');
-          handle.className = `resize-handle ${pos}`;
-          container.appendChild(handle);
-        });
+    const saveButton = document.createElement('button');
+    saveButton.className = 'save-button';
+    saveButton.textContent = 'Salvar Posição';
+    document.body.appendChild(saveButton);
 
-        container.appendChild(content);
-        page.appendChild(container);
-
-        // Create a new template with font properties
-        const newTemplate = {
-          width: container.style.width,
-          height: container.style.height,
-          left: container.style.left,
-          top: container.style.top,
-          startNum: parseInt(startNumberInput.value),
-          endNum: parseInt(endNumberInput.value),
-          fontFamily: fontFamilySelect.value,
-          fontSize: fontSizeInput.value,
-          fontWeight: boldTextCheckbox.checked ? 'bold' : 'normal',
-          textColor: textColorInput.value
+    saveButton.addEventListener('click', () => {
+      numberGroups.forEach(group => {
+        group.position = {
+          x: group.element.style.left,
+          y: group.element.style.top
         };
+      });
+      updatePages();
+    });
 
-        window.numberTemplates.push(newTemplate);
-
-        let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-
-        container.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-
-        function dragStart(e) {
-          if (e.target.classList.contains('resize-handle')) return;
-
-          initialX = e.clientX - container.offsetLeft;
-          initialY = e.clientY - container.offsetTop;
-
-          isDragging = true;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Delete' && selectedElement) {
+        const index = numberGroups.findIndex(group => 
+          group.id === parseInt(selectedElement.dataset.id)
+        );
+        if (index !== -1) {
+          numberGroups.splice(index, 1);
+          updatePages();
         }
+        selectedElement = null;
+      }
+    });
 
-        function drag(e) {
-          if (!isDragging) return;
+    function makeDraggable(element) {
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      
+      element.addEventListener('mousedown', dragMouseDown);
 
-          e.preventDefault();
-
-          currentX = e.clientX - initialX;
-          currentY = e.clientY - initialY;
-
-          const bounds = page.getBoundingClientRect();
-          const containerBounds = container.getBoundingClientRect();
-
-          currentX = Math.max(0, Math.min(currentX, bounds.width - containerBounds.width));
-          currentY = Math.max(0, Math.min(currentY, bounds.height - containerBounds.height));
-
-          container.style.left = currentX + 'px';
-          container.style.top = currentY + 'px';
-
-          // Update template position
-          newTemplate.left = container.style.left;
-          newTemplate.top = container.style.top;
-        }
-
-        function dragEnd() {
-          isDragging = false;
-        }
-
-        // Implement resizing
-        const resizeHandles = container.querySelectorAll('.resize-handle');
-        resizeHandles.forEach(handle => {
-          handle.addEventListener('mousedown', initResize);
+      function dragMouseDown(e) {
+        e.preventDefault();
+        selectedElement = element;
+        
+        document.querySelectorAll('.draggable-number').forEach(el => {
+          el.style.backgroundColor = 'transparent';
         });
-
-        function initResize(e) {
-          e.stopPropagation();
-
-          const handle = e.target;
-          const isLeft = handle.classList.contains('nw') || handle.classList.contains('sw');
-          const isTop = handle.classList.contains('nw') || handle.classList.contains('ne');
-
-          const startX = e.clientX;
-          const startY = e.clientY;
-          const startWidth = parseInt(container.style.width);
-          const startHeight = parseInt(container.style.height);
-          const startLeft = parseInt(container.style.left);
-          const startTop = parseInt(container.style.top);
-
-          function resize(e) {
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-
-            if (isLeft) {
-              const newWidth = startWidth - dx;
-              if (newWidth > 50) {
-                container.style.width = newWidth + 'px';
-                container.style.left = (startLeft + dx) + 'px';
-              }
-            } else {
-              const newWidth = startWidth + dx;
-              if (newWidth > 50) {
-                container.style.width = newWidth + 'px';
-              }
-            }
-
-            if (isTop) {
-              const newHeight = startHeight - dy;
-              if (newHeight > 30) {
-                container.style.height = newHeight + 'px';
-                container.style.top = (startTop + dy) + 'px';
-              }
-            } else {
-              const newHeight = startHeight + dy;
-              if (newHeight > 30) {
-                container.style.height = newHeight + 'px';
-              }
-            }
-
-            // Update template size
-            newTemplate.width = container.style.width;
-            newTemplate.height = container.style.height;
-          }
-
-          function stopResize() {
-            document.removeEventListener('mousemove', resize);
-            document.removeEventListener('mouseup', stopResize);
-          }
-
-          document.addEventListener('mousemove', resize);
-          document.addEventListener('mouseup', stopResize);
-        }
+        element.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+        
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.addEventListener('mousemove', elementDrag);
+        document.addEventListener('mouseup', closeDragElement);
       }
 
-      // Event listeners
-      addNumberBtn.addEventListener('click', createNumberElement);
-      imageUpload.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const img = document.createElement('img');
-            img.src = event.target.result;
-            img.style.display = 'block';
-            img.style.objectFit = 'cover';
-            img.style.margin = '0';
-            img.style.padding = '0';
+      function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+      }
 
-            // Save existing number containers
-            const numberContainers = Array.from(page.querySelectorAll('.number-container'));
-            
-            // Clear page
-            page.innerHTML = '';
-            
-            // Add image first
-            page.appendChild(img);
-            
-            // Re-add number containers
-            numberContainers.forEach(container => {
-              page.appendChild(container);
-            });
+      function closeDragElement() {
+        document.removeEventListener('mousemove', elementDrag);
+        document.removeEventListener('mouseup', closeDragElement);
+      }
+    }
 
-            updatePageSize();
-          };
-          reader.readAsDataURL(file);
-        }
-      });
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          // Store the image URL
+          backgroundImageUrl = event.target.result;
+          
+          // Update the hidden background container
+          const backgroundContainer = document.getElementById('backgroundContainer');
+          backgroundContainer.style.backgroundImage = `url(${backgroundImageUrl})`;
+          
+          // Update all pages to use the background-image property
+          updatePages();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
-      generatePdfBtn.addEventListener('click', window.generatePDF);
+    document.getElementById('verticalOrientation').addEventListener('click', () => {
+      isHorizontal = false;
+      updateOrientationButtons();
+      updatePages();
+    });
 
-      // Initialize page size
-      updatePageSize();
+    document.getElementById('horizontalOrientation').addEventListener('click', () => {
+      isHorizontal = true;
+      updateOrientationButtons();
+      updatePages();
+    });
+
+    function updateOrientationButtons() {
+      document.getElementById('verticalOrientation').classList.toggle('active', !isHorizontal);
+      document.getElementById('horizontalOrientation').classList.toggle('active', isHorizontal);
+    }
+
+    const printButton = document.createElement('button');
+    printButton.className = 'print-button';
+    printButton.textContent = 'Imprimir';
+    document.body.appendChild(printButton);
+
+    printButton.addEventListener('click', async () => {
+      const overlay = document.querySelector('.loading-overlay');
+      const progressFill = document.querySelector('.progress-fill');
+      const loadingText = document.querySelector('.loading-text');
+      
+      overlay.classList.add('active');
+      
+      // Simulate loading progress
+      for (let i = 0; i <= 100; i++) {
+        await new Promise(resolve => setTimeout(resolve, 30)); // Adjust timing as needed
+        progressFill.style.width = `${i}%`;
+        loadingText.textContent = `Carregando... ${i}%`;
+      }
+      
+      // Small delay after reaching 100% before printing
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      document.body.classList.add('printing');
+      overlay.classList.remove('active');
+      
+      // Reset progress for next time
+      setTimeout(() => {
+        progressFill.style.width = '0%';
+        loadingText.textContent = 'Carregando...';
+      }, 1000);
+      
+      window.print();
+      document.body.classList.remove('printing');
     });
   </script>
 </body>
