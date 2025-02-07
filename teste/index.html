@@ -2,7 +2,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editor A4</title>
+  <title>Numeração</title>
   <style>
     body {
       margin: 0;
@@ -329,6 +329,26 @@
       return ++lastId;
     }
 
+    	   // ---------- alerta personalizado -------------------------------------------
+		function showCustomAlert(message) {
+		  const modal = document.getElementById('customAlertModal');
+		  const messageElement = document.getElementById('customAlertMessage');
+		  messageElement.textContent = message;
+		  modal.style.display = 'flex';
+		}
+
+		function closeCustomAlert() {
+		  const modal = document.getElementById('customAlertModal');
+		  modal.style.display = 'none';
+		}
+
+		document.getElementById('customAlertModal').addEventListener('click', function (e) {
+		  if (e.target === this) {
+			closeCustomAlert();
+		  }
+		});
+
+
     document.getElementById('addNumber').addEventListener('click', () => {
       const startInput = document.getElementById('startNumber');
       const endInput = document.getElementById('endNumber');
@@ -339,7 +359,7 @@
       const fontFamily = document.getElementById('fontFamily').value;
       
       if (start > end) {
-        alert('O número inicial deve ser menor que o final');
+        showCustomAlert('O número inicial deve ser menor que o final');
         return;
       }
 
@@ -498,14 +518,11 @@
       if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
-          // Store the image URL
           backgroundImageUrl = event.target.result;
           
-          // Update the hidden background container
           const backgroundContainer = document.getElementById('backgroundContainer');
           backgroundContainer.style.backgroundImage = `url(${backgroundImageUrl})`;
           
-          // Update all pages to use the background-image property
           updatePages();
         };
         reader.readAsDataURL(file);
@@ -541,20 +558,17 @@
       
       overlay.classList.add('active');
       
-      // Simulate loading progress
       for (let i = 0; i <= 100; i++) {
-        await new Promise(resolve => setTimeout(resolve, 30)); // Adjust timing as needed
+        await new Promise(resolve => setTimeout(resolve, 30)); 
         progressFill.style.width = `${i}%`;
         loadingText.textContent = `Carregando... ${i}%`;
       }
       
-      // Small delay after reaching 100% before printing
       await new Promise(resolve => setTimeout(resolve, 500));
       
       document.body.classList.add('printing');
       overlay.classList.remove('active');
       
-      // Reset progress for next time
       setTimeout(() => {
         progressFill.style.width = '0%';
         loadingText.textContent = 'Carregando...';
