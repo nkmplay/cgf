@@ -1,890 +1,639 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-  <base href="https://example.com">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Editor de Imagem com Fabric.js</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Página</title>
   <style>
-    body {
+    * {
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: Arial, sans-serif;
       background-color: #f0f0f0;
     }
 
-    .main-container {
+    .container {
       display: flex;
-      flex-grow: 1;
-      overflow: hidden;
-    }
-
-    .top-menu {
-      background-color: #2c3e50;
-      padding: 5px 10px;
-      display: flex;
-      align-items: center;
-      color: #ecf0f1;
-    }
-
-    .menu-buttons {
-      display: flex;
-      gap: 10px;
-      margin-right: 20px;
-    }
-
-    .menu-button {
-      background: none;
-      border: none;
-      color: #ecf0f1;
-      padding: 5px 10px;
-      cursor: pointer;
-      border-radius: 3px;
-    }
-
-    .menu-button:hover {
-      background-color: #34495e;
-    }
-
-    .dimension-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .dimension-input {
-      width: 60px;
-      padding: 3px;
-      border: 1px solid #34495e;
-      border-radius: 3px;
-      background-color: #34495e;
-      color: #ecf0f1;
-    }
-
-    .dimension-input:focus {
-      outline: none;
-      background-color: #3d566e;
+      min-height: 100vh;
     }
 
     .sidebar {
-      width: 60px;
-      background-color: #2c3e50;
-      color: #ecf0f1;
-      padding: 10px;
-      box-sizing: border-box;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
+      width: 300px;
+      background-color: #333;
+      color: white;
+      padding: 20px;
     }
 
-    .sidebar ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      flex-grow: 1;
+    .menu-item {
+      margin-bottom: 20px;
     }
 
-    .sidebar li {
-      margin-bottom: 15px;
+    .menu-item label {
+      display: block;
+      margin-bottom: 5px;
     }
 
-    .sidebar button {
+    .menu-item input[type="number"],
+    .menu-item select {
       width: 100%;
-      padding: 5px;
-      background-color: #34495e;
-      color: #ecf0f1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .menu-item input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: background-color 0.3s ease;
-      font-size: 8px;
+    }
+
+    .button:hover {
+      background-color: #45a049;
+    }
+
+    .invert-size {
+      background-color: #ff9800;
+    }
+
+    .invert-size:hover {
+      background-color: #f57c00;
+    }
+
+    .file-upload {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
       text-align: center;
     }
 
-    .sidebar button svg {
-      margin-bottom: 4px;
-    }
-
-    .sidebar button:hover {
-      background-color: #3d566e;
-    }
-
-    #container {
-      background-color: #e0e0e0;
-      flex-grow: 1;
-    }
-
-    .layers-panel {
-      width: 200px;
-      background-color: #2c3e50;
-      color: #ecf0f1;
-      padding: 10px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      border-left: 1px solid #34495e;
-    }
-
-    .layers-title {
-      font-size: 12px;
-      font-weight: bold;
-      padding: 5px;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #34495e;
-    }
-
-    .layers-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      flex-grow: 1;
-    }
-
-    .layer-item {
-      padding: 8px;
-      margin: 2px 0;
-      background-color: #34495e;
-      border-radius: 4px;
-      cursor: move;
-      user-select: none;
-      font-size: 12px;
-      position: relative;
-      transition: transform 0.2s;
-    }
-
-    .layer-item.selected {
-      background-color: #3498db;
-    }
-
-    .layer-item.dragging {
-      opacity: 0.5;
-      background-color: #2c3e50;
-    }
-
-    .layer-item.drag-over {
-      border-top: 2px solid #3498db;
-      transform: translateY(2px);
-    }
-
-    .layer-item.drag-over-bottom {
-      border-bottom: 2px solid #3498db;
-      transform: translateY(-2px);
-    }
-
-    .selection-rect {
-      position: absolute;
-      border: 1px solid #0099ff;
-      background: rgba(0, 153, 255, 0.1);
-      pointer-events: none;
-    }
-
-    textarea.text-edit {
-      position: absolute;
-      border: none;
-      padding: 0px;
-      margin: 0px;
-      overflow: hidden;
-      background: none;
-      outline: none;
-      resize: none;
-      line-height: 1;
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-      color: #000;
-    }
-
-    .dropdown {
-      position: relative;
-    }
-
-    .dropdown-toggle {
-      background: none;
-      border: none;
-      color: #ecf0f1;
-      padding: 5px 10px;
-      cursor: pointer;
-      border-radius: 3px;
-    }
-
-    .dropdown-menu {
+    .file-upload input[type="file"] {
       display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      background-color: #34495e;
-      min-width: 120px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      z-index: 1000;
     }
 
-    .dropdown:hover .dropdown-menu {
+    .page-container {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      overflow: auto;
+    }
+
+    .page {
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+      border: 1px solid #ddd;
+    }
+
+    .page img {
+      object-fit: cover;
       display: block;
     }
 
-    .dropdown-menu button {
-      width: 100%;
-      text-align: left;
-      background: none;
-      border: none;
-      color: #ecf0f1;
-      padding: 10px;
-      cursor: pointer;
+    .number-container {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 5px;
+      border: 1px solid #ccc;
     }
 
-    .dropdown-menu button:hover {
-      background-color: #3d566e;
-    }
-
-    .text-styling-controls {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      margin-left: 20px;
-    }
-
-    select.dimension-input {
-      padding: 3px;
-      border: 1px solid #34495e;
-      border-radius: 3px;
-      background-color: #34495e;
-      color: #ecf0f1;
-    }
-
-    input.dimension-input[type="color"] {
-      padding: 3px;
-      border: 1px solid #34495e;
-      border-radius: 3px;
-      background-color: #34495e;
-      color: #ecf0f1;
-    }
-    .print-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 800px;
-      height: 600px;
-      background-color: white;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      z-index: 1000;
-      display: none;
-    }
-    .print-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
+    .number-content {
       width: 100%;
       height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      z-index: 999;
-      display: none;
-    }
-    .print-modal-content {
       display: flex;
-      width: 100%;
-      height: 100%;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
     }
-    .print-modal-canvas, .print-modal-sidebar {
-      box-sizing: border-box;
-      padding: 10px;
+
+    .resize-handle {
+      width: 10px;
+      height: 10px;
+      background-color: #4CAF50;
+      position: absolute;
     }
-    .print-modal-canvas {
-      background-color: #f0f0f0;
+
+    .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+    .generate-pdf {
+      margin-top: 20px;
+      background-color: #2196F3;
     }
-    .print-modal-sidebar {
-      background-color: #e0e0e0;
+
+    .generate-pdf:hover {
+      background-color: #1976D2;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 20px;
+      height: 20px;
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .delete-btn:hover {
+      background-color: #cc0000;
+    }
+
+    @media print {
+      .sidebar {
+        display: none;
+      }
+      
+      .page-container {
+        padding: 0;
+      }
+      
+      .page {
+        box-shadow: none;
+        margin: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="top-menu">
-    <div class="menu-buttons">
-      <div class="menu-button dropdown">
-        <button class="dropdown-toggle">Arquivo</button>
-        <div class="dropdown-menu">
-          <button id="print-button">Imprimir</button>
-        </div>
-      </div>
-      <button class="menu-button">Editar</button>
-      <button class="menu-button">Formas</button>
-    </div>
-    <div class="dimension-controls">
-      <span>&#x2194;</span>
-      <input type="number" id="width-input" class="dimension-input" step="0.1" placeholder="L (cm)">
-      <button id="swap-dimensions" class="menu-button">&#x21c5;</button>
-      <span>&#x2195;</span>
-      <input type="number" id="height-input" class="dimension-input" step="0.1" placeholder="A (cm)">
-      <button id="lock-ratio" class="menu-button">&#x1f513;</button>
-    </div>
-    <div class="text-styling-controls">
-      <select id="font-select" class="dimension-input">
-        <option value="Arial">Arial</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Helvetica">Helvetica</option>
-        <option value="Times New Roman">Times New Roman</option>
-      </select>
-      <input type="color" id="text-color-picker" class="dimension-input">
-      <input type="number" id="font-size-input" class="dimension-input" min="8" max="72" value="20">
-    </div>
-    <select id="printer-select" class="dimension-input">
-      <option value="">Selecione uma impressora</option>
-    </select>
-  </div>
-  <div class="main-container">
+  <div class="container">
     <div class="sidebar">
-      <ul>
-        <li>
-          <button id="insert-image">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 19V5H3V19H21Z" stroke="currentColor" stroke-width="2" fill="none"/>
-              <circle cx="8.5" cy="12.5" r="2.5" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M21 19L16 14L12 18L8 14L3 19" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            Inserir
-          </button>
-          <input type="file" id="image-upload" accept="image/*" multiple style="display: none;">
-        </li>
-        <li>
-          <button id="insert-text">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4H20V20H4V4Z" stroke="currentColor" stroke-width="2" fill="none"/>
-              <text x="12" y="16" text-anchor="middle" fill="currentColor" font-size="12">T</text>
-            </svg>
-            Texto
-          </button>
-        </li>
-      </ul>
+      <div class="menu-item">
+        <label class="file-upload">
+          <input type="file" id="imageUpload" accept="image/*">
+          Enviar Imagem
+        </label>
+      </div>
+      
+      <div class="menu-item">
+        <label>Largura (cm):
+          <input type="number" id="width" value="21" min="1" step="0.1">
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <button id="invertSize" class="button invert-size">Inverter Tamanho da folha</button>
+      </div>
+
+      <div class="menu-item">
+        <label>Altura (cm):
+          <input type="number" id="height" value="29.7" min="1" step="0.1">
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <label>Margem interna (cm):
+          <input type="number" id="margin" value="0.5" min="0" step="0.1">
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <button id="addNumber" class="button">Adicionar Número</button>
+      </div>
+
+      <div class="menu-item">
+        <label>Fonte:
+          <select id="fontFamily">
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Verdana">Verdana</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <label>Tamanho da fonte:
+          <input type="number" id="fontSize" value="16" min="8" max="72" step="1">
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <label>
+          <input type="checkbox" id="boldText">
+          Negrito
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <label>Iniciar em:
+          <input type="number" id="startNumber" value="1" min="0" step="1">
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <label>Terminar em:
+          <input type="number" id="endNumber" value="100" min="0" step="1">
+        </label>
+      </div>
+
+      <div class="menu-item">
+        <button id="generatePdfBtn" class="button generate-pdf">Gerar PDF</button>
+      </div>
     </div>
-    <canvas id="canvas"></canvas>
-    <div class="layers-panel">
-      <div class="layers-title">Camadas</div>
-      <ul class="layers-list"></ul>
-    </div>
-  </div>
-  <div class="print-modal-overlay" id="print-modal-overlay">
-    <div class="print-modal" id="print-modal">
-      <div class="print-modal-content">
-        <div class="print-modal-canvas" style="width: 600px; height: 100%;">
-          <!-- Canvas content will be dynamically populated here -->
-        </div>
-        <div class="print-modal-sidebar" style="width: 200px; height: 100%;">
-		  <h3>Impressão</h3>
-		  <label for="printer-select-modal">Selecione a impressora:</label>
-		  <select id="printer-select-modal" class="dimension-input">
-			<option value="">Selecione uma impressora</option>
-		  </select>
-		  <button id="print-confirm-button" class="menu-button">Imprimir</button>
-		</div>
+
+    <div class="page-container">
+      <div class="page" id="page">
       </div>
     </div>
   </div>
 
   <script>
+    // Global storage for number templates
+    window.numberTemplates = [];
+
+    window.generatePDF = function() {
+      if (window.numberTemplates.length === 0) {
+        alert('Por favor, adicione pelo menos um número primeiro.');
+        return;
+      }
+
+      // Find the maximum end number to determine total pages needed
+      const maxEnd = Math.max(...window.numberTemplates.map(t => t.endNum));
+      const minStart = Math.min(...window.numberTemplates.map(t => t.startNum));
+      
+      const printWindow = window.open('', '_blank');
+      const page = document.getElementById('page');
+      const basePageHtml = page.cloneNode(true);
+      
+      // Remove any existing number containers from the base page
+      const existingNumbers = basePageHtml.querySelectorAll('.number-container');
+      existingNumbers.forEach(num => num.remove());
+
+      // Create HTML content for all pages
+      let pagesHtml = '';
+      
+      // Generate pages from minStart to maxEnd
+      for (let currentPage = minStart; currentPage <= maxEnd; currentPage++) {
+        // Check if any template has a number for this page
+        const hasNumberOnPage = window.numberTemplates.some(template => {
+          const currentNumber = template.startNum + (currentPage - minStart);
+          return currentNumber >= template.startNum && currentNumber <= template.endNum;
+        });
+
+        // Skip page generation if no numbers would appear on this page
+        if (!hasNumberOnPage) continue;
+
+        const pageClone = basePageHtml.cloneNode(true);
+        
+        // For each template, calculate its current number
+        window.numberTemplates.forEach(template => {
+          const numberContainer = document.createElement('div');
+          numberContainer.className = 'number-container';
+          numberContainer.style.width = template.width;
+          numberContainer.style.height = template.height;
+          numberContainer.style.left = template.left;
+          numberContainer.style.top = template.top;
+          
+          const content = document.createElement('div');
+          content.className = 'number-content';
+          content.style.fontFamily = template.fontFamily;
+          content.style.fontSize = `${template.fontSize}px`;
+          content.style.fontWeight = template.fontWeight;
+          
+          // Calculate the current number for this template based on its position in sequence
+          let currentNumber = template.startNum + (currentPage - minStart);
+          
+          // Only show the number if it's within the template's range
+          if (currentNumber >= template.startNum && currentNumber <= template.endNum) {
+            content.textContent = currentNumber;
+          }
+          
+          numberContainer.appendChild(content);
+          pageClone.appendChild(numberContainer);
+        });
+        
+        pagesHtml += `<div class="pdf-page">${pageClone.outerHTML}</div>`;
+      }
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <style>
+              body { margin: 0; padding: 20px; }
+              .pdf-page { 
+                margin-bottom: 20px;
+              }
+              .pdf-page:last-child {
+                margin-bottom: 0;
+              }
+              .page {
+                background-color: white;
+                position: relative;
+                margin: 0 auto;
+              }
+              .number-container {
+                position: absolute;
+                background-color: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .number-content {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+              }
+              img {
+                display: block;
+                object-fit: cover;
+              }
+              @media print {
+                body { margin: 0; padding: 0; }
+                .pdf-page { 
+                  margin: 0;
+                  page-break-after: always;
+                }
+                .pdf-page:last-child {
+                  page-break-after: avoid;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            ${pagesHtml}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
-      // ---------- Configurações Iniciais -------------------------------------------
-      const sidebarWidth = 250;
-      const topMenuHeight = document.querySelector('.top-menu').offsetHeight;
-      const ROTATION_SNAP_ANGLE = 15;
-      const canvas = new fabric.Canvas('canvas', {
-        width: window.innerWidth - sidebarWidth,
-        height: window.innerHeight - topMenuHeight,
-        selection: true,
-        preserveObjectStacking: true,
-        rotationCursor: 'crosshair',
-        snapAngle: ROTATION_SNAP_ANGLE * (Math.PI / 180)
-      });
+      const page = document.getElementById('page');
+      const widthInput = document.getElementById('width');
+      const heightInput = document.getElementById('height');
+      const marginInput = document.getElementById('margin');
+      const imageUpload = document.getElementById('imageUpload');
+      const addNumberBtn = document.getElementById('addNumber');
+      const startNumberInput = document.getElementById('startNumber');
+      const endNumberInput = document.getElementById('endNumber');
+      const generatePdfBtn = document.getElementById('generatePdfBtn');
+      const invertSizeBtn = document.getElementById('invertSize');
+      const fontFamilySelect = document.getElementById('fontFamily');
+      const fontSizeInput = document.getElementById('fontSize');
+      const boldTextCheckbox = document.getElementById('boldText');
 
-      const cmToPx = 37.795275591;
-      const a4Width = 21 * cmToPx;
-      const a4Height = 29.7 * cmToPx;
-      const initialScale = 0.7;
+      // Converter cm para px (assumindo 96 DPI)
+      const cmToPx = (cm) => cm * 37.795275591;
 
-      // ---------- Criação do Objeto CloudFolha -------------------------------------------
-      const cloudFolha = new fabric.Rect({
-        width: a4Width,
-        height: a4Height,
-        left: (canvas.getWidth() / 2) - (a4Width / 2)- 250,
-        top: (canvas.getHeight() / 2) - (a4Height / 2)+ 100,
-        fill: 'white',
-        stroke: '#ccc',
-        strokeWidth: 1,
-        selectable: false,
-        name: 'CloudFolha'
-      });
+      function updatePageSize() {
+        const width = cmToPx(widthInput.value);
+        const height = cmToPx(heightInput.value);
+        const margin = cmToPx(marginInput.value);
 
-      cloudFolha.set({
-        hoverCursor: 'default'
-      });
+        page.style.width = `${width}px`;
+        page.style.height = `${height}px`;
+        page.style.padding = '0';
 
-      canvas.add(cloudFolha);
-      canvas.sendToBack(cloudFolha);
-
-      canvas.setZoom(initialScale);
-	  canvas.absolutePan({
-        x: -((canvas.getWidth() - a4Width * initialScale) / 2),
-        y: -((canvas.getHeight() - a4Height * initialScale) / 2)
-      });
-
-      // ---------- Eventos de Zoom e Panning -------------------------------------------
-      canvas.on('mouse:wheel', opt => {
-        const delta = opt.e.deltaY;
-        let zoom = canvas.getZoom();
-        zoom *= 0.999 ** delta;
-        zoom = Math.min(Math.max(0.1, zoom), 4);
-        const point = new fabric.Point(opt.e.offsetX, opt.e.offsetY);
-        canvas.zoomToPoint(point, zoom);
-        opt.e.preventDefault();
-        opt.e.stopPropagation();
-      });
-
-      canvas.on('mouse:down', opt => {
-        const evt = opt.e;
-        if (evt.altKey === true) {
-          canvas.isDragging = true;
-          canvas.selection = false;
-          canvas.lastPosX = evt.clientX;
-          canvas.lastPosY = evt.clientY;
+        const img = page.querySelector('img');
+        if (img) {
+          img.style.margin = `${margin}px`;
+          img.style.width = `${width - (margin * 2)}px`;
+          img.style.height = `${height - (margin * 2)}px`;
         }
+      }
+
+      // Add invert size functionality
+      invertSizeBtn.addEventListener('click', () => {
+        const currentWidth = widthInput.value;
+        const currentHeight = heightInput.value;
+        
+        widthInput.value = currentHeight;
+        heightInput.value = currentWidth;
+        
+        updatePageSize();
       });
 
-      canvas.on('mouse:move', opt => {
-        if (canvas.isDragging) {
-          const e = opt.e;
-          const vpt = canvas.viewportTransform;
-          vpt[4] += e.clientX - canvas.lastPosX;
-          vpt[5] += e.clientY - canvas.lastPosY;
-          canvas.requestRenderAll();
-          canvas.lastPosX = e.clientX;
-          canvas.lastPosY = e.clientY;
-        }
-      });
+      function createNumberElement() {
+        const container = document.createElement('div');
+        container.className = 'number-container';
+        container.style.width = '100px';
+        container.style.height = '50px';
+        container.style.left = '50px';
+        container.style.top = '50px';
 
-      canvas.on('mouse:up', () => {
-        canvas.setViewportTransform(canvas.viewportTransform);
-        canvas.isDragging = false;
-        canvas.selection = true;
-      });
+        const content = document.createElement('div');
+        content.className = 'number-content';
+        content.textContent = startNumberInput.value;
+        
+        // Apply font styles
+        content.style.fontFamily = fontFamilySelect.value;
+        content.style.fontSize = `${fontSizeInput.value}px`;
+        content.style.fontWeight = boldTextCheckbox.checked ? 'bold' : 'normal';
 
-      // ---------- Eventos de Rotação e Escala -------------------------------------------
-      canvas.on('object:rotating', opt => {
-        const target = opt.target;
-        target.set({
-          angle: Math.round(target.angle / ROTATION_SNAP_ANGLE) * ROTATION_SNAP_ANGLE
+        // Add delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.addEventListener('click', () => {
+          const index = window.numberTemplates.indexOf(newTemplate);
+          if (index > -1) {
+            window.numberTemplates.splice(index, 1);
+          }
+          container.remove();
         });
-      });
+        container.appendChild(deleteBtn);
 
-	  canvas.on('object:modified', opt => {
-		  const obj = opt.target;
-		  updateDimensionInputs(obj);
-		});
+        const handles = ['nw', 'ne', 'sw', 'se'];
+        handles.forEach(pos => {
+          const handle = document.createElement('div');
+          handle.className = `resize-handle ${pos}`;
+          container.appendChild(handle);
+        });
 
-	  canvas.on('object:scaling', opt => {
-		  const obj = opt.target;
-		  updateDimensionInputs(obj);
-		});
+        container.appendChild(content);
+        page.appendChild(container);
 
-      canvas.on('object:scaling', opt => {
-        const obj = opt.target;
-        if (obj.type === 'i-text') {
-          const fontSizeInput = document.getElementById('font-size-input');
-          const newFontSize = Math.round(obj.fontSize * obj.scaleX);
-          fontSizeInput.value = newFontSize;
-          obj.set({
-            fontSize: newFontSize,
-            scaleX: 1,
-            scaleY: 1
-          });
-          const pxToCm = 1 / cmToPx;
-          const widthInput = document.getElementById('width-input');
-          const heightInput = document.getElementById('height-input');
-          widthInput.value = (obj.width * pxToCm).toFixed(1);
-          heightInput.value = (obj.height * pxToCm).toFixed(1);
-        }
-        const pxToCm = 1 / cmToPx;
-        const widthInput = document.getElementById('width-input');
-        const heightInput = document.getElementById('height-input');
-        widthInput.value = (obj.width * obj.scaleX * pxToCm).toFixed(1);
-        heightInput.value = (obj.height * obj.scaleY * pxToCm).toFixed(1);
-      });
-
-      // ---------- Eventos de Seleção -------------------------------------------
-canvas.on('selection:created', e => {
-  const activeObj = e.selected[0];
-  if (activeObj) {
-    updateDimensionInputs(activeObj);
-    updateLayersList();
-
-    // Show text styling controls only for text objects
-    const textStylingControls = document.querySelector('.text-styling-controls');
-    if (activeObj.type === 'i-text') {
-      textStylingControls.style.display = 'flex';
-      const fontSelect = document.getElementById('font-select');
-      const textColorPicker = document.getElementById('text-color-picker');
-      const fontSizeInput = document.getElementById('font-size-input');
-
-      fontSelect.value = activeObj.fontFamily || 'Arial';
-      textColorPicker.value = activeObj.fill || '#000000';
-      fontSizeInput.value = Math.round(activeObj.fontSize * activeObj.scaleX) || 20;
-
-      fontSelect.addEventListener('change', updateTextStyle);
-      textColorPicker.addEventListener('input', updateTextStyle);
-      fontSizeInput.addEventListener('change', updateTextStyle);
-    } else {
-      textStylingControls.style.display = 'none';
-    }
-  }
-});
-
-      canvas.on('selection:cleared', () => {
-        let selectedShapes = [];
-        updateDimensionInputs(null);
-        updateLayersList();
-        const textStylingControls = document.querySelector('.text-styling-controls');
-        textStylingControls.style.display = 'none';
-      });
-
-      // ---------- Inserção de Imagens -------------------------------------------
-      document.getElementById('insert-image').addEventListener('click', () => {
-        document.getElementById('image-upload').click();
-      });
-
-      document.getElementById('image-upload').addEventListener('change', e => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = f => {
-          fabric.Image.fromURL(f.target.result, img => {
-            img.set({
-              left: cloudFolha.left + cloudFolha.width / 2,
-              top: cloudFolha.top + cloudFolha.height / 2,
-              originX: 'center',
-              originY: 'center'
-            });
-            canvas.add(img);
-            canvas.setActiveObject(img);
-            updateLayersList();
-          });
+        // Create a new template with font properties
+        const newTemplate = {
+          width: container.style.width,
+          height: container.style.height,
+          left: container.style.left,
+          top: container.style.top,
+          startNum: parseInt(startNumberInput.value),
+          endNum: parseInt(endNumberInput.value),
+          fontFamily: fontFamilySelect.value,
+          fontSize: fontSizeInput.value,
+          fontWeight: boldTextCheckbox.checked ? 'bold' : 'normal'
         };
-        reader.readAsDataURL(file);
-      });
 
-	  // ---------- Atualização dos Inputs de Dimensão -------------------------------------------
-function updateDimensionInputs(objects) {
-  const pxToCm = 1 / cmToPx;
-  const widthInput = document.getElementById('width-input');
-  const heightInput = document.getElementById('height-input');
+        window.numberTemplates.push(newTemplate);
 
-  if (!objects) {
-    widthInput.value = (cloudFolha.width * pxToCm).toFixed(1);
-    heightInput.value = (cloudFolha.height * pxToCm).toFixed(1);
-    return;
-  }
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
 
-  const activeObj = canvas.getActiveObject();
-  if (activeObj) {
-    let width, height;
+        container.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
 
-    if (activeObj.type === 'image') {
-      width = activeObj.width * activeObj.scaleX;
-      height = activeObj.height * activeObj.scaleY;
-    } else if (activeObj.type === 'i-text') {
-      width = activeObj.width * activeObj.scaleX;
-      height = activeObj.height * activeObj.scaleY;
-    } else {
-      width = activeObj.width * activeObj.scaleX;
-      height = activeObj.height * activeObj.scaleY;
-    }
-
-    widthInput.value = (width * pxToCm).toFixed(1);
-    heightInput.value = (height * pxToCm).toFixed(1);
-  } else {
-    widthInput.value = '';
-    heightInput.value = '';
-  }
-}
-
-	  // ---------- Eventos de Alteração de Dimensão -------------------------------------------
-      document.getElementById('width-input').addEventListener('change', e => {
-        const newWidthCm = parseFloat(e.target.value);
-        const activeObj = canvas.getActiveObject();
-        if (activeObj) {
-          const newWidth = newWidthCm * cmToPx;
-          activeObj.scaleX = newWidth / activeObj.width;
-          if (isRatioLocked) {
-            activeObj.scaleY = activeObj.scaleX;
-          }
-          if (activeObj.type === 'i-text') {
-            const fontSizeInput = document.getElementById('font-size-input');
-            fontSizeInput.value = Math.round(activeObj.fontSize * activeObj.scaleX);
-          }
-        } else {
-          cloudFolha.set('width', newWidthCm * cmToPx);
+        function dragStart(e) {
+          if (e.target.classList.contains('resize-handle')) return;
+          
+          initialX = e.clientX - container.offsetLeft;
+          initialY = e.clientY - container.offsetTop;
+          
+          isDragging = true;
         }
-        canvas.requestRenderAll();
-      });
 
-      document.getElementById('height-input').addEventListener('change', e => {
-        const newHeightCm = parseFloat(e.target.value);
-        const activeObj = canvas.getActiveObject();
-        if (activeObj) {
-          const newHeight = newHeightCm * cmToPx;
-          activeObj.scaleY = newHeight / activeObj.height;
-          if (isRatioLocked) {
-            activeObj.scaleX = activeObj.scaleY;
-          }
-          if (activeObj.type === 'i-text') {
-            const fontSizeInput = document.getElementById('font-size-input');
-            fontSizeInput.value = Math.round(activeObj.fontSize * activeObj.scaleX);
-          }
-        } else {
-          cloudFolha.set('height', newHeightCm * cmToPx);
+        function drag(e) {
+          if (!isDragging) return;
+
+          e.preventDefault();
+          
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+
+          const bounds = page.getBoundingClientRect();
+          const containerBounds = container.getBoundingClientRect();
+
+          currentX = Math.max(0, Math.min(currentX, bounds.width - containerBounds.width));
+          currentY = Math.max(0, Math.min(currentY, bounds.height - containerBounds.height));
+
+          container.style.left = currentX + 'px';
+          container.style.top = currentY + 'px';
+
+          // Update template position
+          newTemplate.left = container.style.left;
+          newTemplate.top = container.style.top;
         }
-        canvas.requestRenderAll();
-      });
 
-      // ---------- Bloqueio de Proporção e troca de dimensão -------------------------------------------
-	  document.getElementById('swap-dimensions').addEventListener('click', () => {
-  const widthInput = document.getElementById('width-input');
-  const heightInput = document.getElementById('height-input');
+        function dragEnd() {
+          isDragging = false;
+        }
 
-  const tempWidth = widthInput.value;
-  const tempHeight = heightInput.value;
+        // Implement resizing
+        const resizeHandles = container.querySelectorAll('.resize-handle');
+        resizeHandles.forEach(handle => {
+          handle.addEventListener('mousedown', initResize);
+        });
 
-  widthInput.value = tempHeight;
-  heightInput.value = tempWidth;
+        function initResize(e) {
+          e.stopPropagation();
+          
+          const handle = e.target;
+          const isLeft = handle.classList.contains('nw') || handle.classList.contains('sw');
+          const isTop = handle.classList.contains('nw') || handle.classList.contains('ne');
+          
+          const startX = e.clientX;
+          const startY = e.clientY;
+          const startWidth = parseInt(container.style.width);
+          const startHeight = parseInt(container.style.height);
+          const startLeft = parseInt(container.style.left);
+          const startTop = parseInt(container.style.top);
 
-  const activeObj = canvas.getActiveObject();
-  if (activeObj) {
-    const newWidth = parseFloat(widthInput.value) * cmToPx;
-    const newHeight = parseFloat(heightInput.value) * cmToPx;
+          function resize(e) {
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
 
-    activeObj.set({
-      scaleX: newWidth / activeObj.width,
-      scaleY: newHeight / activeObj.height
-    });
-    activeObj.setCoords();
-  } else {
-    const newWidth = parseFloat(widthInput.value) * cmToPx;
-    const newHeight = parseFloat(heightInput.value) * cmToPx;
+            if (isLeft) {
+              const newWidth = startWidth - dx;
+              if (newWidth > 50) {
+                container.style.width = newWidth + 'px';
+                container.style.left = (startLeft + dx) + 'px';
+              }
+            } else {
+              const newWidth = startWidth + dx;
+              if (newWidth > 50) {
+                container.style.width = newWidth + 'px';
+              }
+            }
 
-    cloudFolha.set({
-      width: newWidth,
-      height: newHeight
-    });
+            if (isTop) {
+              const newHeight = startHeight - dy;
+              if (newHeight > 30) {
+                container.style.height = newHeight + 'px';
+                container.style.top = (startTop + dy) + 'px';
+              }
+            } else {
+              const newHeight = startHeight + dy;
+              if (newHeight > 30) {
+                container.style.height = newHeight + 'px';
+              }
+            }
 
-    cloudFolha.set({
-      left: (canvas.getWidth() / 2) - (newWidth / 2) - 250,
-      top: (canvas.getHeight() / 2) - (newHeight / 2) + 50
-    });
-
-    cloudFolha.setCoords();
-  }
-
-  canvas.requestRenderAll();
-});
-
-      let isRatioLocked = false;
-      document.getElementById('lock-ratio').addEventListener('click', () => {
-        isRatioLocked = !isRatioLocked;
-        document.getElementById('lock-ratio').textContent = isRatioLocked ? '🔒' : '🔓';
-      });
-
-      // ---------- Atualização da Lista de Camadas -------------------------------------------
-      function updateLayersList() {
-        const layersList = document.querySelector('.layers-list');
-        layersList.innerHTML = '';
-        canvas.getObjects().forEach((obj, i) => {
-          if (obj === cloudFolha) return;
-          const li = document.createElement('li');
-          li.className = 'layer-item';
-          if (canvas.getActiveObjects().includes(obj)) {
-            li.classList.add('selected');
+            // Update template size
+            newTemplate.width = container.style.width;
+            newTemplate.height = container.style.height;
           }
-          li.textContent = obj.type === 'i-text' ? `Texto ${i}` : `Imagem ${i}`;
-          li.addEventListener('click', () => {
-            canvas.setActiveObject(obj);
-            canvas.requestRenderAll();
-          });
-          layersList.appendChild(li);
-        });
-      }
 
-      // ---------- Inserção de Texto -------------------------------------------
-      document.getElementById('insert-text').addEventListener('click', () => {
-        const text = new fabric.IText('Texto', {
-          left: cloudFolha.left + cloudFolha.width / 2,
-          top: cloudFolha.top + cloudFolha.height / 2,
-          originX: 'center',
-          originY: 'center',
-          fontSize: 20
-        });
-        canvas.add(text);
-        canvas.setActiveObject(text);
-        updateLayersList();
-      });
+          function stopResize() {
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+          }
 
-      // ---------- Atualização do Estilo do Texto -------------------------------------------
-      function updateTextStyle() {
-        const activeObj = canvas.getActiveObject();
-        if (activeObj && activeObj.type === 'i-text') {
-          const fontSelect = document.getElementById('font-select');
-          const textColorPicker = document.getElementById('text-color-picker');
-          const fontSizeInput = document.getElementById('font-size-input');
-          activeObj.set({
-            fontFamily: fontSelect.value,
-            fill: textColorPicker.value,
-            fontSize: parseInt(fontSizeInput.value),
-            scaleX: 1,
-            scaleY: 1
-          });
-          const pxToCm = 1 / cmToPx;
-          const widthInput = document.getElementById('width-input');
-          const heightInput = document.getElementById('height-input');
-          widthInput.value = (activeObj.width * pxToCm).toFixed(1);
-          heightInput.value = (activeObj.height * pxToCm).toFixed(1);
-          canvas.requestRenderAll();
+          document.addEventListener('mousemove', resize);
+          document.addEventListener('mouseup', stopResize);
         }
       }
 
-      // ---------- Criação do Canvas de Impressão -------------------------------------------
-      function createPrintCanvas() {
-        const printCanvas = document.createElement('canvas');
-        const printScale = 3;
-        const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
-        const a4Width = cloudFolha.width;
-        const a4Height = cloudFolha.height;
-        printCanvas.width = a4Width * printScale;
-        printCanvas.height = a4Height * printScale;
-        const printCanvasContext = printCanvas.getContext('2d');
-        printCanvasContext.scale(printScale, printScale);
-        printCanvasContext.fillStyle = 'white';
-        printCanvasContext.fillRect(0, 0, a4Width, a4Height);
-        canvas.getObjects().forEach(obj => {
-          if (obj.name !== 'CloudFolha') {
-            const objClone = fabric.util.object.clone(obj);
-            objClone.set({
-              left: obj.left - cloudFolha.left,
-              top: obj.top - cloudFolha.top
-            });
-            objClone.render(printCanvasContext);
-          }
-        });
-        return printCanvas;
-      }
+      // Event listeners
+      addNumberBtn.addEventListener('click', createNumberElement);
+      widthInput.addEventListener('input', updatePageSize);
+      heightInput.addEventListener('input', updatePageSize);
+      marginInput.addEventListener('input', updatePageSize);
+      generatePdfBtn.addEventListener('click', window.generatePDF);
 
-      // ---------- Eventos de Impressão -------------------------------------------
-document.getElementById('print-button').addEventListener('click', () => {
-  canvas.setZoom(initialScale);
-  canvas.absolutePan({
-    x: -((canvas.getWidth() - a4Width * initialScale) / 2),
-    y: -((canvas.getHeight() - a4Height * initialScale) / 2)
-  });
-
-  const printCanvas = createPrintCanvas();
-
-  const printModalOverlay = document.getElementById('print-modal-overlay');
-  const printModal = document.getElementById('print-modal');
-  printModalOverlay.style.display = 'block';
-  printModal.style.display = 'block';
-
-  const printModalCanvas = printModal.querySelector('.print-modal-canvas');
-
-  printModalCanvas.innerHTML = `
-    <img
-      src="${printCanvas.toDataURL('image/png', 1.0)}"
-      style="
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-        display: block;
-        margin: 0 auto;
-      "
-    >`;
-
-  const printModalSidebar = printModal.querySelector('.print-modal-sidebar');
-  printModalSidebar.innerHTML = `
-    <h3>Impressão</h3>
-    <label for="printer-select-modal">Selecione a impressora:</label>
-    <select id="printer-select-modal" class="dimension-input">
-      <option value="">Selecione uma impressora</option>
-    </select>
-    <button id="print-confirm-button" class="menu-button">Imprimir</button>
-  `;
-
-  // Preenche o combobox de impressoras no modal
-  if (window.printers) {
-    const printerSelectModal = document.getElementById('printer-select-modal');
-    window.printers.forEach(printer => {
-      const option = document.createElement('option');
-      option.value = printer;
-      option.textContent = printer;
-      printerSelectModal.appendChild(option);
-    });
-  }
-
-  // Adiciona o evento de clique no botão de confirmação de impressão
-  document.getElementById('print-confirm-button').addEventListener('click', () => {
-    const selectedPrinter = document.getElementById('printer-select-modal').value;
-    if (selectedPrinter) {
-      // Aqui você pode adicionar a lógica para enviar o trabalho de impressão para a impressora selecionada
-      alert(`Imprimindo na impressora: ${selectedPrinter}`);
-    } else {
-      alert('Por favor, selecione uma impressora.');
-    }
-  });
-});
-
-document.getElementById('print-modal-overlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) {
-    const printModalOverlay = document.getElementById('print-modal-overlay');
-    const printModal = document.getElementById('print-modal');
-    printModalOverlay.style.display = 'none';
-    printModal.style.display = 'none';
-
-    canvas.setZoom(initialScale);
-    canvas.absolutePan({
-      x: -((canvas.getWidth() - a4Width * initialScale) / 2),
-      y: -((canvas.getHeight() - a4Height * initialScale) / 2)
-    });
-
-    canvas.getObjects().forEach(obj => {
-      if (obj.type === 'i-text') {
-        obj.setCoords();
-      }
-    });
-
-    canvas.requestRenderAll();
-  }
-});
-
-      // ---------- Eventos de Redimensionamento da Janela -------------------------------------------
-      window.addEventListener('resize', () => {
-        canvas.setWidth(window.innerWidth - sidebarWidth);
-        canvas.setHeight(window.innerHeight - topMenuHeight);
-        canvas.requestRenderAll();
+      imageUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            img.style.display = 'block';
+            img.style.objectFit = 'cover';
+            
+            page.innerHTML = '';
+            page.appendChild(img);
+            
+            updatePageSize();
+          };
+          reader.readAsDataURL(file);
+        }
       });
 
-      // ---------- Inicialização -------------------------------------------
-      updateDimensionInputs(null);
-      canvas.requestRenderAll();
-
-      // ---------- População do ComboBox de Impressoras -------------------------------------------
-      if (window.printers) {
-        const printerSelect = document.getElementById('printer-select');
-        window.printers.forEach(printer => {
-          const option = document.createElement('option');
-          option.value = printer;
-          option.textContent = printer;
-          printerSelect.appendChild(option);
-        });
-      }
+      // Inicializar tamanho da página
+      updatePageSize();
     });
   </script>
 </body>
