@@ -872,6 +872,22 @@
     position: absolute;
     left: -9999px;
   }
+#export-svg-selected {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    height: 30px;
+}
+
+#export-svg-selected:hover {
+    background-color: #27ae60;
+}
+
+
 </style>
 </head>
 <body>
@@ -1068,6 +1084,7 @@
       <label for="opacity-input">Opacidade:</label>
       <input type="number" id="opacity-input" class="dimension-input" min="1" max="100" step="1">
       <button id="export-png-selected">PNG</button>
+	  <button id="export-svg-selected">SVG</button>
     </div>
   </div>
 
@@ -1623,28 +1640,31 @@ document.getElementById('height-input').addEventListener('change', e => {
     }
 }
 
-      // ---------- Inserção de Texto -------------------------------------------
-      document.getElementById('insert-text').addEventListener('click', () => {
-        const text = new fabric.IText('Texto', {
-          left: cloudFolha.left + cloudFolha.width / 2,
-          top: cloudFolha.top + cloudFolha.height / 2,
-          originX: 'center',
-          originY: 'center',
-          fontSize: 20,
-		  strokeWidth: 0,
-		  paintFirst: 'stroke'
-        });
-        addObject(text);
-        canvas.setActiveObject(text);
-        updateLayersList();
-      });
+     // ---------- Inserção de Texto -------------------------------------------
+document.getElementById('insert-text').addEventListener('click', () => {
+  const text = new fabric.Textbox('Texto', {
+    left: cloudFolha.left + cloudFolha.width / 2,
+    top: cloudFolha.top + cloudFolha.height / 2,
+    originX: 'left',
+    originY: 'top',
+    fontSize: 20,
+    strokeWidth: 0,
+    paintFirst: 'stroke',
+    width: 200,
+    editable: true,
+    splitByGrapheme: false
+  });
+  addObject(text);
+  canvas.setActiveObject(text);
+  updateLayersList();
+});
 
 // ---------- Atualização do Estilo do Texto -------------------------------------------
 function updateTextStylingControls() {
   const activeObjects = canvas.getActiveObjects();
   const textStylingControls = document.querySelector('.text-styling-controls');
   
-  if (activeObjects.length === 1 && activeObjects[0].type === 'i-text') {
+  if (activeObjects.length === 1 && (activeObjects[0].type === 'textbox' || activeObjects[0].type === 'i-text')) {
     const activeObj = activeObjects[0];
     textStylingControls.style.display = 'flex';
     
@@ -1694,7 +1714,7 @@ function updateFont() {
   const fontSelect = document.getElementById('font-select');
   
   activeObjects.forEach(obj => {
-    if (obj.type === 'i-text') {
+    if (obj.type === 'textbox' || obj.type === 'i-text') {
       obj.set('fontFamily', fontSelect.value);
     }
   });
@@ -1706,7 +1726,7 @@ function updateTextColor() {
   const textColorPicker = document.getElementById('text-color-picker');
   
   activeObjects.forEach(obj => {
-    if (obj.type === 'i-text') {
+    if (obj.type === 'textbox' || obj.type === 'i-text') {
       obj.set('fill', textColorPicker.value);
     }
   });
@@ -1719,7 +1739,7 @@ function updateFontSize() {
   const newFontSize = parseInt(fontSizeInput.value);
   
   activeObjects.forEach(obj => {
-    if (obj.type === 'i-text') {
+    if (obj.type === 'textbox' || obj.type === 'i-text') {
       obj.set('fontSize', newFontSize);
       
       // Atualizar dimensões nos inputs
@@ -1739,7 +1759,7 @@ function updateTextStroke() {
   const strokeColor = document.getElementById('stroke-color-picker').value;
 
   activeObjects.forEach(obj => {
-    if (obj.type === 'i-text') {
+    if (obj.type === 'textbox' || obj.type === 'i-text') {
       obj.set({
         stroke: strokeWidth > 0 ? strokeColor : null,
         strokeWidth: strokeWidth,
@@ -1760,7 +1780,7 @@ canvas.on('selection:cleared', () => {
 
 // Garantir que as mudanças no objeto sejam refletidas na interface
 canvas.on('object:modified', (e) => {
-  if (e.target && e.target.type === 'i-text') {
+  if (e.target && (e.target.type === 'textbox' || e.target.type === 'i-text')) {
     updateTextStylingControls();
   }
 });
@@ -2082,7 +2102,7 @@ document.getElementById('duplicate-selected').addEventListener('click', () => {
 function handlePaste(e) {
   const activeObject = canvas.getActiveObject();
 
-  if (activeObject && activeObject.type === 'i-text' && activeObject.isEditing) {
+  if (activeObject && activeObject.type === 'textbox' && activeObject.isEditing) {
     e.preventDefault(); 
 
     if (e && e.clipboardData) {
@@ -2159,15 +2179,18 @@ function handlePaste(e) {
           return;
         } else if (item.type === 'text/plain') {
           item.getAsString(text => {
-            const iText = new fabric.IText(text, {
+            const textbox = new fabric.Textbox(text, {
               left: cloudFolha.left + cloudFolha.width / 2,
               top: cloudFolha.top + cloudFolha.height / 2,
-              originX: 'center',
-              originY: 'center',
-              fontSize: 20
+              originX: 'left',
+              originY: 'top',
+              fontSize: 20,
+              width: 200,
+              editable: true,
+              splitByGrapheme: false
             });
-            addObject(iText);
-            canvas.setActiveObject(iText);
+            addObject(textbox);
+            canvas.setActiveObject(textbox);
             updateLayersList();
           });
           return;
@@ -2197,15 +2220,18 @@ function handlePaste(e) {
           } else if (item.types.includes('text/plain')) {
             item.getType('text/plain').then(textBlob => {
               textBlob.text().then(text => {
-                const iText = new fabric.IText(text, {
+                const textbox = new fabric.Textbox(text, {
                   left: cloudFolha.left + cloudFolha.width / 2,
                   top: cloudFolha.top + cloudFolha.height / 2,
-                  originX: 'center',
-                  originY: 'center',
-                  fontSize: 20
+                  originX: 'left',
+                  originY: 'top',
+                  fontSize: 20,
+                  width: 200,
+                  editable: true,
+                  splitByGrapheme: false
                 });
-                addObject(iText);
-                canvas.setActiveObject(iText);
+                addObject(textbox);
+                canvas.setActiveObject(textbox);
                 updateLayersList();
               });
             });
@@ -2220,6 +2246,7 @@ function handlePaste(e) {
     }
   }
 }
+
 document.addEventListener('paste', (e) => {
   e.preventDefault();
   handlePaste(e);
@@ -2228,7 +2255,6 @@ document.addEventListener('paste', (e) => {
 document.getElementById('paste').addEventListener('click', () => {
   handlePaste();
 });
-
       // ---------- Função para Adicionar Guias Padrão -------------------------------------------
       document.getElementById('add-guides').addEventListener('click', () => {
         addStandardGuides();
@@ -2580,70 +2606,86 @@ function addHorizontalGuide(cmValue) {
 
       // ---------- Implementação de Atalhos de Teclado -------------------------------------------
       document.addEventListener('keydown', (e) => {
-		  const activeObject = canvas.getActiveObject();
+  const activeObject = canvas.getActiveObject();
+  
+  if (activeObject && 
+      (activeObject.type === 'textbox' || activeObject.type === 'i-text') && 
+      activeObject.isEditing) {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      return; 
+    }
+  }
 
-		  if (activeObject && activeObject.isEditing && activeObject.type === 'i-text') {
-			return;
-		  }
+  if (!activeObject?.isEditing) {
+    if (e.code === 'Delete') {
+      e.preventDefault();
+      document.getElementById('delete-selected').click();
+    }
 
-		  if (e.code === 'Delete') {
-			e.preventDefault();
-			document.getElementById('delete-selected').click();
-		  }
-
-		  if (e.ctrlKey && e.code === 'KeyD') {
-			e.preventDefault();
-			document.getElementById('duplicate-selected').click();
-		  }
-		  if (e.ctrlKey && e.code === 'KeyA') {
-			e.preventDefault();
-			document.getElementById('select-all').click();
-		  }
-		  if (e.code === 'F2') {
-			e.preventDefault();
-			document.getElementById('add-guides').click();
-		  }
-		  if (e.ctrlKey && e.code === 'KeyP') {
-			e.preventDefault();
-			document.getElementById('print-button').click();
-		  }
-		});
+    if (e.ctrlKey && e.code === 'KeyD') {
+      e.preventDefault();
+      document.getElementById('duplicate-selected').click();
+    }
+    
+    if (e.ctrlKey && e.code === 'KeyA') {
+      e.preventDefault();
+      document.getElementById('select-all').click();
+    }
+    
+    if (e.code === 'F2') {
+      e.preventDefault();
+      document.getElementById('add-guides').click();
+    }
+    
+    if (e.ctrlKey && e.code === 'KeyP') {
+      e.preventDefault();
+      document.getElementById('print-button').click();
+    }
+  }
+});
 		
 		// ------------ dividir o texto em colunas----------------------------------
-		function splitTextIntoTwoColumns() {
-		  const activeObject = canvas.getActiveObject();
+function splitTextIntoTwoColumns() {
+  const activeObject = canvas.getActiveObject();
+  if (activeObject && (activeObject.type === 'textbox' || activeObject.type === 'i-text')) {
+    const text = activeObject.text;
+    const words = text.split(' ');
+    const middle = Math.ceil(words.length / 2);
+    const firstHalf = words.slice(0, middle).join(' ');
+    const secondHalf = words.slice(middle).join(' ');
+    
+    // Atualiza o texto da primeira coluna
+    activeObject.set('text', firstHalf);
+    activeObject.setCoords();
 
-		  if (activeObject && activeObject.type === 'i-text') {
-			const text = activeObject.text;
-			const words = text.split(' ');
-			const middle = Math.ceil(words.length / 2);
+    // Cria a segunda coluna como Textbox
+    const secondColumn = new fabric.Textbox(secondHalf, {
+      left: activeObject.left + activeObject.width + 20, 
+      top: activeObject.top,
+      fontSize: activeObject.fontSize,
+      fontFamily: activeObject.fontFamily,
+      fill: activeObject.fill,
+      width: activeObject.width, // Mantém a mesma largura da coluna original
+      originX: 'left',
+      originY: 'top',
+      editable: true,
+      splitByGrapheme: false,
+      strokeWidth: activeObject.strokeWidth || 0,
+      stroke: activeObject.stroke || null,
+      paintFirst: 'stroke'
+    });
 
-			const firstHalf = words.slice(0, middle).join(' ');
-			const secondHalf = words.slice(middle).join(' ');
+    canvas.add(secondColumn);
+    canvas.setActiveObject(secondColumn);
+    canvas.requestRenderAll();
+  } else {
+    showCustomAlert("Selecione um texto para dividir.");
+  }
+}
 
-			activeObject.set('text', firstHalf);
-			activeObject.setCoords();
-
-			const secondColumn = new fabric.IText(secondHalf, {
-			  left: activeObject.left + activeObject.width + 20, 
-			  top: activeObject.top,
-			  fontSize: activeObject.fontSize,
-			  fontFamily: activeObject.fontFamily,
-			  fill: activeObject.fill,
-			  originX: 'left',
-			  originY: 'top',
-			});
-
-			canvas.add(secondColumn);
-			canvas.setActiveObject(secondColumn); 
-			canvas.requestRenderAll();
-		  } else {
-		    showCustomAlert("Selecione um texto para dividir.");
-		  }
-		}
-	  	  document.getElementById('split-text').addEventListener('click', () => {
-		  splitTextIntoTwoColumns();
-		});
+document.getElementById('split-text').addEventListener('click', () => {
+  splitTextIntoTwoColumns();
+});
 		
 		// ----------------------------------------- Seção Inicio Mover com Setas do teclado ---------------------------------
 
@@ -4336,7 +4378,7 @@ document.getElementById('export-PDF').addEventListener('click', async () => {
 });
 
 
-// ----------------- Opacidade e exportar png menu superior -----------------------------
+// ----------------- Opacidade e exportar png e svg menu superior -----------------------------
  const generalControls = document.querySelector('.general-controls');
   const opacityInput = document.getElementById('opacity-input');
   const exportPngButton = document.getElementById('export-png-selected');
@@ -4453,7 +4495,101 @@ canvas.on('selection:cleared', () => {
 });
 
 updateOpacity();
-  
+
+document.getElementById('export-svg-selected').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    
+    if (!activeObject) {
+        showCustomAlert('Nenhum objeto selecionado para exportar.');
+        return;
+    }
+
+    // Lista de tipos suportados para exportação SVG
+    const supportedTypes = ['rect', 'circle', 'triangle', 'path', 'i-text', 'textbox'];
+    
+    if (supportedTypes.includes(activeObject.type)) {
+        const tempCanvas = new fabric.Canvas(document.createElement('canvas'));
+        
+        activeObject.clone((clonedObject) => {
+            const bbox = clonedObject.getBoundingRect();
+            
+            // Adiciona padding extra para texto para evitar cortes
+            const padding = (activeObject.type === 'i-text' || activeObject.type === 'textbox') ? 100 : 0;
+            
+            tempCanvas.setWidth(bbox.width + (padding * 2));
+            tempCanvas.setHeight(bbox.height + (padding * 2));
+            
+            // Preserva todas as propriedades importantes do texto
+            if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
+                clonedObject.set({
+                    left: padding,
+                    top: padding,
+                    originX: 'left',
+                    originY: 'top',
+                    // Preserva propriedades específicas do texto
+                    fontFamily: activeObject.fontFamily,
+                    fontSize: activeObject.fontSize,
+                    fontWeight: activeObject.fontWeight,
+                    fontStyle: activeObject.fontStyle,
+                    textAlign: activeObject.textAlign,
+                    lineHeight: activeObject.lineHeight,
+                    underline: activeObject.underline,
+                    overline: activeObject.overline,
+                    linethrough: activeObject.linethrough,
+                    textBackgroundColor: activeObject.textBackgroundColor,
+                    charSpacing: activeObject.charSpacing,
+                    // Preserva propriedades de estilo
+                    fill: activeObject.fill,
+                    stroke: activeObject.stroke,
+                    strokeWidth: activeObject.strokeWidth,
+                    angle: activeObject.angle,
+                    opacity: activeObject.opacity,
+                    flipX: activeObject.flipX,
+                    flipY: activeObject.flipY,
+                    scaleX: activeObject.scaleX,
+                    scaleY: activeObject.scaleY
+                });
+            } else {
+                clonedObject.set({
+                    left: padding,
+                    top: padding,
+                    originX: 'left',
+                    originY: 'top'
+                });
+            }
+            
+            tempCanvas.add(clonedObject);
+            tempCanvas.renderAll();
+            
+            let svgContent = tempCanvas.toSVG({
+                width: bbox.width + (padding * 2),
+                height: bbox.height + (padding * 2),
+                viewBox: {
+                    x: 0,
+                    y: 0,
+                    width: bbox.width + (padding * 2),
+                    height: bbox.height + (padding * 2)
+                }
+            });
+            
+            svgContent = svgContent.replace(/<\?xml[^>]*\?>\s*/g, '');
+            
+            const finalSvg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n${svgContent}`;
+            
+            const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CloudApp_${activeObject.type}.svg`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            tempCanvas.dispose();
+        });
+    } else {
+        showCustomAlert('Selecione uma forma ou texto para exportar como SVG.');
+    }
+});
   // ------------- importar em svg ------------------------------
 
 document.getElementById('import-svg').addEventListener('click', () => {
@@ -5217,10 +5353,9 @@ brushControls.style.cssText = `
   const originalWidth = activeObject._element.naturalWidth || activeObject.width;
   const originalHeight = activeObject._element.naturalHeight || activeObject.height;
 
-  // Create canvas with original dimensions
 const paintCanvas = new fabric.Canvas('modal-paint-canvas', {
-    width: 790,   // Largura fixa do canvas
-    height: 580,  // Altura fixa do canvas
+    width: 790,  
+    height: 580, 
     selection: false,
     preserveObjectStacking: true,
     enableRetinaScaling: true,
@@ -5228,7 +5363,6 @@ const paintCanvas = new fabric.Canvas('modal-paint-canvas', {
     imageSmoothingQuality: 'high'
 });
 
-  // Calculate initial zoom to fit the viewport
   const containerWidth = canvasScrollContainer.clientWidth - 0; // Account for padding
   const containerHeight = canvasScrollContainer.clientHeight - 0;
   const initialZoom = Math.min(
@@ -5254,10 +5388,8 @@ const paintCanvas = new fabric.Canvas('modal-paint-canvas', {
 
     const saveToHistory = () => {
       if (currentHistoryIndex < MAX_HISTORY - 1) {
-        // Remover estados futuros se houver
         paintHistory = paintHistory.slice(0, currentHistoryIndex + 1);
         
-        // Criar uma cópia do estado atual do canvas
         const json = JSON.stringify(paintCanvas.toJSON(['selectable']));
         currentHistoryIndex++;
         paintHistory.push(json);
@@ -5272,14 +5404,12 @@ const paintCanvas = new fabric.Canvas('modal-paint-canvas', {
     };
 
     paintCanvas.add(clonedObj);
-    clonedObj.moveTo(0); // Move a imagem para o índice 0 (fundo)
+    clonedObj.moveTo(0);
     paintCanvas.setActiveObject(clonedObj);
 	
 	requestAnimationFrame(() => {
-      // Salvar o estado inicial após a imagem ser carregada
       saveToHistory();
       
-      // Configurar o pincel após salvar o estado inicial
       paintCanvas.freeDrawingBrush = new fabric.PencilBrush(paintCanvas);
       paintCanvas.freeDrawingBrush.width = parseInt(brushSlider.value);
       paintCanvas.freeDrawingBrush.color = colorPicker.value;
@@ -5523,103 +5653,121 @@ const createNumberMergingModal = () => {
 // Add event listener to the "Mesclagem de Números" button
 document.getElementById('MesclarBtn').addEventListener('click', createNumberMergingModal);
 
-// ---------------------- botão ver detalhes da imagem Dados ----------------------
+// ---------------------- Botão ver detalhes do objeto (Imagem/Texto) ----------------------
 const imageDetailsModal = document.getElementById('cloudphoto-image-details-modal');
-    const imageDetailsContent = document.getElementById('cloudphoto-image-details-content');
-    const modalClose = document.querySelector('.cloudphoto-modal-close');
-    const btnDados = document.getElementById('BtnDados');
+const imageDetailsContent = document.getElementById('cloudphoto-image-details-content');
+const modalClose = document.querySelector('.cloudphoto-modal-close');
+const btnDados = document.getElementById('BtnDados');
 
-    function getImageOrigin(image) {
-        if (image.src && image.src.startsWith('blob:')) return 'Blob URL';
-        if (image.src && image.src.startsWith('data:')) return 'Base64 Data URL';
-        if (image.src) return 'URL';
-        return 'Desconhecido';
-    }
+function getImageOrigin(image) {
+    if (image.src && image.src.startsWith('blob:')) return 'Blob URL';
+    if (image.src && image.src.startsWith('data:')) return 'Base64 Data URL';
+    if (image.src) return 'URL';
+    return 'Desconhecido';
+}
 
-    function showImageDetails(activeObject) {
-    if (!activeObject || activeObject.type !== 'image') return;
+function showObjectDetails(activeObject) {
+    if (!activeObject) return;
 
-    function getImageDetails(image) {
-        // Fabric.js specific properties
-        if (image._originalElement) {
+    let details = {};
+
+    if (activeObject.type === 'image') {
+        function getImageDetails(image) {
+            // Fabric.js specific properties
+            if (image._originalElement) {
+                return {
+                    origin: 'Fabric.js Canvas',
+                    sourceType: image._originalElement.src ? 'Carregado' : 'Criado no Canvas',
+                    sourceDetails: image._originalElement.src || 'Elemento criado diretamente no canvas'
+                };
+            }
+            // Fallback detection
+            if (image.src) {
+                if (image.src.startsWith('blob:')) return {
+                    origin: 'Blob URL',
+                    sourceType: 'Blob',
+                    sourceDetails: image.src
+                };
+                if (image.src.startsWith('data:')) return {
+                    origin: 'Base64 Data URL',
+                    sourceType: 'Base64',
+                    sourceDetails: `${image.src.substring(0, 50)}... (truncado)`
+                };
+                return {
+                    origin: 'URL ou Fonte',
+                    sourceType: 'URL',
+                    sourceDetails: image.src
+                };
+            }
             return {
-                origin: 'Fabric.js Canvas',
-                sourceType: image._originalElement.src ? 'Carregado' : 'Criado no Canvas',
-                sourceDetails: image._originalElement.src || 'Elemento criado diretamente no canvas'
+                origin: 'Desconhecido',
+                sourceType: 'Não identificado',
+                sourceDetails: 'Sem informações de origem'
             };
         }
 
-        // Fallback detection
-        if (image.src) {
-            if (image.src.startsWith('blob:')) return {
-                origin: 'Blob URL',
-                sourceType: 'Blob',
-                sourceDetails: image.src
-            };
-
-            if (image.src.startsWith('data:')) return {
-                origin: 'Base64 Data URL',
-                sourceType: 'Base64',
-                sourceDetails: `${image.src.substring(0, 50)}... (truncado)`
-            };
-
-            return {
-                origin: 'URL ou Fonte',
-                sourceType: 'URL',
-                sourceDetails: image.src
-            };
-        }
-
-        return {
-            origin: 'Desconhecido',
-            sourceType: 'Não identificado',
-            sourceDetails: 'Sem informações de origem'
+        const imageInfo = getImageDetails(activeObject);
+        details = {
+            'Tipo': 'Imagem',
+            'Nome do Arquivo': activeObject.fileName || 'Sem nome',
+            'Dimensões': `${Math.round(activeObject.width)} x ${Math.round(activeObject.height)} px`,
+            'Origem': imageInfo.origin,
+            'Tipo de Fonte': imageInfo.sourceType,
+            'Detalhes da Fonte': imageInfo.sourceDetails,
+            'Escala': `${(activeObject.scaleX * 100).toFixed(2)}%`,
+            'Rotação': `${(activeObject.angle || 0).toFixed(2)}°`,
+            'Posição': `X: ${Math.round(activeObject.left)}, Y: ${Math.round(activeObject.top)}`
+        };
+    } else if (activeObject.type === 'textbox') {
+        details = {
+            'Tipo': 'Texto',
+            'Conteúdo': activeObject.text,
+            'Fonte': activeObject.fontFamily,
+            'Tamanho': `${activeObject.fontSize}px`,
+            'Cor': activeObject.fill,
+            'Alinhamento': activeObject.textAlign,
+            'Estilo': [
+                activeObject.fontWeight === 'bold' ? 'Negrito' : '',
+                activeObject.fontStyle === 'italic' ? 'Itálico' : '',
+                activeObject.underline ? 'Sublinhado' : ''
+            ].filter(Boolean).join(', ') || 'Normal',
+            'Dimensões': `${Math.round(activeObject.width)} x ${Math.round(activeObject.height)} px`,
+            'Escala': `${(activeObject.scaleX * 100).toFixed(2)}%`,
+            'Rotação': `${(activeObject.angle || 0).toFixed(2)}°`,
+            'Posição': `X: ${Math.round(activeObject.left)}, Y: ${Math.round(activeObject.top)}`
         };
     }
-
-    const imageInfo = getImageDetails(activeObject);
-
-    const details = {
-        'Tipo': 'Imagem',
-        'Nome do Arquivo': activeObject.fileName || 'Sem nome',
-        'Dimensões': `${Math.round(activeObject.width)} x ${Math.round(activeObject.height)} px`,
-        'Origem': imageInfo.origin,
-        'Tipo de Fonte': imageInfo.sourceType,
-        'Detalhes da Fonte': imageInfo.sourceDetails,
-        'Escala': `${(activeObject.scaleX * 100).toFixed(2)}%`,
-        'Rotação': `${(activeObject.angle || 0).toFixed(2)}°`,
-        'Posição': `X: ${Math.round(activeObject.left)}, Y: ${Math.round(activeObject.top)}`
-    };
 
     imageDetailsContent.textContent = Object.entries(details)
         .map(([key, value]) => `${key}: ${value}`)
         .join('\n');
-
     imageDetailsModal.style.display = 'flex';
 }
 
-    btnDados.onclick = () => {
+btnDados.onclick = () => {
     const activeObject = canvas.getActiveObject();
-    showImageDetails(activeObject);
+    showObjectDetails(activeObject);
 };
 
-    modalClose.onclick = () => {
-        imageDetailsModal.style.display = 'none';
-    };
+modalClose.onclick = () => {
+    imageDetailsModal.style.display = 'none';
+};
 
-    canvas.on('selection:created', opt => {
-        const activeObject = opt.target;
-        if (activeObject?.type === 'image' && imageDetailsModal.style.display === 'flex') {
-            showImageDetails(activeObject);
-        }
-    });
+canvas.on('selection:created', opt => {
+    const activeObject = opt.target;
+    if ((activeObject?.type === 'image' || activeObject?.type === 'textbox') && 
+        imageDetailsModal.style.display === 'flex') {
+        showObjectDetails(activeObject);
+    }
+});
 
-    canvas.on('selection:updated', opt => {
-        const activeObject = opt.target;
-        if (activeObject?.type === 'image' && imageDetailsModal.style.display === 'flex') {
-            showImageDetails(activeObject);
-        }
-    });
+canvas.on('selection:updated', opt => {
+    const activeObject = opt.target;
+    if ((activeObject?.type === 'image' || activeObject?.type === 'textbox') && 
+        imageDetailsModal.style.display === 'flex') {
+        showObjectDetails(activeObject);
+    }
+});
 	
 	
 // -------------- Brilho Contraste Saturação --------------------------
