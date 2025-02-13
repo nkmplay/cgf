@@ -1020,7 +1020,7 @@
       <div class="separar">┇</div>
     </div>
 
-    <div class="version-number">1.4</div>
+    <div class="version-number">1.5</div>
   </div>
 
   <div class="configferramentas">
@@ -3198,6 +3198,16 @@ document.getElementById('crop-button').addEventListener('click', function() {
   }
 
   function initCropper(fabricCanvas) {
+    // Obter a imagem original em sua resolução máxima
+    const originalImage = new Image();
+    originalImage.src = activeObject.getSrc();
+    
+    const originalDPI = activeObject.toObject().dpi || 300;
+    const originalWidth = activeObject.width;
+    const originalHeight = activeObject.height;
+    const originalScaleX = activeObject.scaleX;
+    const originalScaleY = activeObject.scaleY;
+
     const style = document.createElement('style');
     style.textContent = `
       .crop-modal-overlay {
@@ -3276,7 +3286,7 @@ document.getElementById('crop-button').addEventListener('click', function() {
     
     const image = document.createElement('img');
     image.className = 'crop-image';
-    image.src = activeObject.toDataURL();
+    image.src = activeObject.getSrc();
     
     const buttonsContainer = document.createElement('div');
     buttonsContainer.className = 'crop-buttons';
@@ -3315,38 +3325,76 @@ document.getElementById('crop-button').addEventListener('click', function() {
       });
     };
 
-confirmButton.addEventListener('click', () => {
-  if (!cropper) return;
+    confirmButton.addEventListener('click', () => {
+      if (!cropper) return;
 
-  const croppedCanvas = cropper.getCroppedCanvas();
+      const cropData = cropper.getData();
+      const cropperImageData = cropper.getImageData();
+      
+      // Calcular a proporção entre a área cortada e a imagem original
+      const cropRatioX = cropData.width / cropperImageData.naturalWidth;
+      const cropRatioY = cropData.height / cropperImageData.naturalHeight;
+      
+      // Calcular as novas dimensões mantendo a escala original
+      const newWidth = originalWidth * cropRatioX;
+      const newHeight = originalHeight * cropRatioY;
+      
+      // Criar um canvas temporário com as dimensões proporcionais
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = newWidth;
+      tempCanvas.height = newHeight;
+      const ctx = tempCanvas.getContext('2d');
+      
+      // Desativar a suavização para manter a nitidez
+      ctx.imageSmoothingEnabled = false;
+      
+      // Calcular a área de corte proporcional
+      const sourceX = (cropData.x / cropperImageData.naturalWidth) * originalImage.naturalWidth;
+      const sourceY = (cropData.y / cropperImageData.naturalHeight) * originalImage.naturalHeight;
+      const sourceWidth = (cropData.width / cropperImageData.naturalWidth) * originalImage.naturalWidth;
+      const sourceHeight = (cropData.height / cropperImageData.naturalHeight) * originalImage.naturalHeight;
+      
+      // Desenhar a área cortada mantendo a proporção
+      ctx.drawImage(
+        originalImage,
+        sourceX, sourceY,
+        sourceWidth, sourceHeight,
+        0, 0,
+        newWidth, newHeight
+      );
 
-  fabric.Image.fromURL(croppedCanvas.toDataURL(), (newImg) => {
-    const { left, top, angle } = activeObject;
+      // Criar a nova imagem no Fabric mantendo a escala
+      fabric.Image.fromURL(tempCanvas.toDataURL(), (newImg) => {
+        const { left, top, angle } = activeObject;
+        
+        // Calcular a nova posição mantendo o alinhamento
+        const leftOffset = (cropData.x / cropperImageData.naturalWidth) * (originalWidth * originalScaleX);
+        const topOffset = (cropData.y / cropperImageData.naturalHeight) * (originalHeight * originalScaleY);
+        
+        const newLeft = left - ((originalWidth * originalScaleX) / 2) + leftOffset + ((newWidth * originalScaleX) / 2);
+        const newTop = top - ((originalHeight * originalScaleY) / 2) + topOffset + ((newHeight * originalScaleY) / 2);
 
-    const croppedWidth = croppedCanvas.width;
-    const croppedHeight = croppedCanvas.height;
+        newImg.set({
+          left: newLeft,
+          top: newTop,
+          originX: 'center',
+          originY: 'center',
+          width: newWidth,
+          height: newHeight,
+          scaleX: originalScaleX,
+          scaleY: originalScaleY,
+          angle: angle,
+          dpi: originalDPI
+        });
 
-    newImg.set({
-      left: left,
-      top: top,
-      originX: 'center',
-      originY: 'center',
-      width: croppedWidth, 
-      height: croppedHeight, 
-      scaleX: 1, 
-      scaleY: 1, 
-      angle: angle
+        fabricCanvas.remove(activeObject);
+        fabricCanvas.add(newImg);
+        fabricCanvas.setActiveObject(newImg);
+        fabricCanvas.requestRenderAll();
+      }, { crossOrigin: 'anonymous' });
+
+      cleanup();
     });
-
-    fabricCanvas.remove(activeObject);
-    fabricCanvas.add(newImg);
-    fabricCanvas.setActiveObject(newImg);
-    fabricCanvas.requestRenderAll();
-  });
-
-  cleanup();
-});
-
 
     cancelButton.addEventListener('click', cleanup);
 
