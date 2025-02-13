@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CloudPhoto Editor</title>
@@ -6,6 +9,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://nkmplay.github.io/cgf/scripts/pdf.min.js"></script>
+<script src="https://cloudgraficaweb.github.io/CGVendas/scripts/potrace.js"></script>
+<link rel="stylesheet" href="https://nkmplay.github.io/cgf/scripts/cropper.min.css">
+<script src="https://nkmplay.github.io/cgf/scripts/cropper.min.js"></script>
 <style>
   body {
     margin: 0;
@@ -21,7 +27,7 @@
     display: flex;
     flex-grow: 1;
     overflow: hidden;
-	position: relative;
+    position: relative;
   }
 
   .top-menu {
@@ -124,7 +130,7 @@
     background-color: #243442;
     padding: 5px 10px;
     border-radius: 4px;
-}
+  }
 
   .dimension-input {
     width: 60px;
@@ -363,24 +369,28 @@
     outline: none;
     background-color: #3d566e;
   }
-	#swap-dimensions {
-	  background-color: #5b738a;
-	  padding: 5px 10px;
-	  cursor: pointer;
-	  border-radius: 4px;
-	}
 
-	#swap-dimensions:hover {
-	  background-color: #1e2d3c;
-	}  
-	.text-styling-controls span {
-	  white-space: nowrap;
-	  margin-left: 10px;
-	}
-	.text-styling-controls #font-select {
-	  width: 200px;
-	}
-	#customAlertModal {
+  #swap-dimensions {
+    background-color: #5b738a;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  #swap-dimensions:hover {
+    background-color: #1e2d3c;
+  }
+
+  .text-styling-controls span {
+    white-space: nowrap;
+    margin-left: 10px;
+  }
+
+  .text-styling-controls #font-select {
+    width: 200px;
+  }
+
+  #customAlertModal {
     position: fixed;
     top: 0;
     left: 0;
@@ -391,598 +401,669 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
-}
+  }
 
-.alert-content {
+  .alert-content {
     background: #0f3460;
     padding: 20px;
     border-radius: 8px;
     min-width: 300px;
     border: 2px solid #4a90e2;
-}
+  }
 
-#customAlertMessage {
+  #customAlertMessage {
     color: white;
     text-align: center;
-}
-.tool-button {
-  background-color: #0f3460;
-  color: #fff;
-  border: 2px solid #4a90e2;
-  padding: 8px 8px;
-  border-radius: 4px;
-  width: 100%;
-  cursor: pointer;
-  font-size: 9px;
-  font-weight: 700;
-  height: 50px;
-  margin: 5px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
+  }
 
-.tool-button i {
-  font-size: 12px;
-}
-
-.tool-button.selected {
-  background-color: #4a90e2;
-}
-.dropdown-menu .dropdown-menu {
-  left: 100%;
-  top: 0;
-  margin-left: 1px;
-}
-
-.dropdown-menu .dropdown-toggle::after {
-  content: " ▶";
-  font-size: 0.6em;
-}
-.hidden-canvas {
-  display: none;
-  position: absolute;
-  left: -9999px;
-}
-.imagem-dropdown-menu {
-  width: 200px;
-}
-.ajustes-dropdown-menu {
-  width: 300px; 
-}
-.guias-dropdown-menu {
-  width: 300px; /* Ajuste a largura conforme necessário */
-}
-
-.guide-input {
-  width: 30px; 
-  padding: 3px;
-  border: 1px solid #34495e;
-  border-radius: 3px;
-  background-color: #34495e;
-  color: #ecf0f1;
-}
-
-.guide-option, .guide-interval {
-  display: flex;
-  align-items: center;
-  gap: 10px; /* Ajuste o espaço entre os elementos conforme necessário */
-  padding: 5px 10px;
-}
-
-.guide-option button, .guide-interval label {
-  flex: 1;
-  font-size: 14px;
-}
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  justify-content: center;
-  align-items: center;
-  z-index: 10000;
-}
-
-.modal-content {
-  width: 800px;
-  height: 600px;
-  background-color: #2c3e50;
-  border-radius: 8px;
-  display: flex;
-  overflow: hidden;
-}
-
-.modal-buttons {
+  .tool-button {
+    background-color: #0f3460;
+    color: #fff;
+    border: 2px solid #4a90e2;
+    padding: 8px 8px;
+    border-radius: 4px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 9px;
+    font-weight: 700;
+    height: 50px;
+    margin: 5px 0;
     display: flex;
-    justify-content: space-between; /* Distribui os botões uniformemente */
-    margin-top: auto; /* Faz com que os botões fiquem na parte inferior do modal */
-    padding: 10px; /* Adiciona um pouco de espaço ao redor dos botões */
-}
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
 
-.image-container {
-  width: 600px;
-  height: 600px;
-  background-color: #1e2d3c;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  .tool-button i {
+    font-size: 12px;
+  }
 
-#previewCanvas {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
+  .tool-button.selected {
+    background-color: #4a90e2;
+  }
 
-.controls-container {
-  width: 200px;
-  height: 600px;
-  padding: 20px;
-  background-color: #34495e;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+  .dropdown-menu .dropdown-menu {
+    left: 100%;
+    top: 0;
+    margin-left: 1px;
+  }
 
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
+  .dropdown-menu .dropdown-toggle::after {
+    content: " ▶";
+    font-size: 0.6em;
+  }
 
-.control-group label {
-  color: #ecf0f1;
-  font-size: 14px;
-}
+  .hidden-canvas {
+    display: none;
+    position: absolute;
+    left: -9999px;
+  }
 
-.control-group input[type="number"] {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #2c3e50;
-  border-radius: 4px;
-  background-color: #2c3e50;
-  color: #ecf0f1;
-}
+  .imagem-dropdown-menu {
+    width: 200px;
+  }
 
-.control-group input[type="range"] {
-  width: 100%;
-}
+  .ajustes-dropdown-menu {
+    width: 300px;
+  }
 
-.buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: auto;
-}
+  .guias-dropdown-menu {
+    width: 300px;
+  }
 
-.buttons button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  background-color: #3498db;
-  color: #ecf0f1;
-  cursor: pointer;
-}
+  .guide-input {
+    width: 30px;
+    padding: 3px;
+    border: 1px solid #34495e;
+    border-radius: 3px;
+    background-color: #34495e;
+    color: #ecf0f1;
+  }
 
-.buttons button:hover {
-  background-color: #2980b9;
-}
-.dropdown-menu .dropdown-menu {
-  left: 100%;
-  top: 0;
-  margin-left: 1px;
-}
-
-.dropdown-menu .dropdown-toggle::after {
-  content: " ▶";
-  font-size: 0.6em;
-}
-
-.dropdown-menu .dpi-option {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.dropdown-menu .dpi-option label {
-  font-size: 14px;
-  color: #ecf0f1;
-}
-
-.dropdown-menu .dpi-option input {
-  width: 60px;
-  padding: 5px;
-  border: 1px solid #34495e;
-  border-radius: 3px;
-  background-color: #34495e;
-  color: #ecf0f1;
-}
-
-.dropdown-menu .dpi-option input:focus {
-  outline: none;
-  background-color: #3d566e;
-}
-.dropdown-menu .export-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px; 
-}
-.dropdown-menu .export-option button {
-  flex: 1;
-  padding: 8px 12px;
-  background-color: #34495e;
-  border: none;
-  color: #ecf0f1;
-  cursor: pointer;
-  border-radius: 3px;
-  text-align: left;
-  font-size: 14px;
-}
-.dropdown-menu .export-option button:hover {
-  background-color: #3d566e;
-}
-.dropdown-menu .export-submenu {
-  width: 300px; 
-  padding: 10px; 
-}
-.dropdown-menu .dropdown .dropdown-menu {
-  display: none; 
-  position: absolute;
-  left: 100%; 
-  top: 0;
-  margin-left: 1px;
-  background-color: #34495e;
-  border-radius: 3px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-}
-.dropdown-menu .dropdown:hover .dropdown-menu {
-  display: block;
-}
-.general-controls {
+  .guide-option, .guide-interval {
     display: flex;
     align-items: center;
-    margin-top: 0; /* Remove qualquer margem superior */
-}
+    gap: 10px;
+    padding: 5px 10px;
+  }
 
-.general-controls label {
-  margin-right: 5px;
-}
+  .guide-option button, .guide-interval label {
+    flex: 1;
+    font-size: 14px;
+  }
 
-.general-controls label[for="opacity-input"] {
-    color: #ffffff; /* White text */
-}
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+  }
 
-.general-controls input {
-  width: 50px;
-}
+  .modal-content {
+    width: 800px;
+    height: 600px;
+    background-color: #2c3e50;
+    border-radius: 8px;
+    display: flex;
+    overflow: hidden;
+  }
 
-.general-controls button {
-  margin-left: 5px;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-}
+  .modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    padding: 10px;
+  }
 
-.general-controls button#export-png-selected {
-    background-color: #2ecc71; 
+  .image-container {
+    width: 600px;
+    height: 600px;
+    background-color: #1e2d3c;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #previewCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .controls-container {
+    width: 200px;
+    height: 600px;
+    padding: 20px;
+    background-color: #34495e;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .control-group label {
+    color: #ecf0f1;
+    font-size: 14px;
+  }
+
+  .control-group input[type="number"] {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #2c3e50;
+    border-radius: 4px;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+  }
+
+  .control-group input[type="range"] {
+    width: 100%;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+  }
+
+  .buttons button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #3498db;
+    color: #ecf0f1;
+    cursor: pointer;
+  }
+
+  .buttons button:hover {
+    background-color: #2980b9;
+  }
+
+  .dropdown-menu .dropdown-menu {
+    left: 100%;
+    top: 0;
+    margin-left: 1px;
+  }
+
+  .dropdown-menu .dropdown-toggle::after {
+    content: " ▶";
+    font-size: 0.6em;
+  }
+
+  .dropdown-menu .dpi-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .dropdown-menu .dpi-option label {
+    font-size: 14px;
+    color: #ecf0f1;
+  }
+
+  .dropdown-menu .dpi-option input {
+    width: 60px;
+    padding: 5px;
+    border: 1px solid #34495e;
+    border-radius: 3px;
+    background-color: #34495e;
+    color: #ecf0f1;
+  }
+
+  .dropdown-menu .dpi-option input:focus {
+    outline: none;
+    background-color: #3d566e;
+  }
+
+  .dropdown-menu .export-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .dropdown-menu .export-option button {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: #34495e;
+    border: none;
+    color: #ecf0f1;
+    cursor: pointer;
+    border-radius: 3px;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .dropdown-menu .export-option button:hover {
+    background-color: #3d566e;
+  }
+
+  .dropdown-menu .export-submenu {
+    width: 300px;
+    padding: 10px;
+  }
+
+  .dropdown-menu .dropdown .dropdown-menu {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    margin-left: 1px;
+    background-color: #34495e;
+    border-radius: 3px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+  }
+
+  .dropdown-menu .dropdown:hover .dropdown-menu {
+    display: block;
+  }
+
+  .general-controls {
+    display: flex;
+    align-items: center;
+    margin-top: 0;
+  }
+
+  .general-controls label {
+    margin-right: 5px;
+  }
+
+  .general-controls label[for="opacity-input"] {
+    color: #ffffff;
+  }
+
+  .general-controls input {
+    width: 50px;
+  }
+
+  .general-controls button {
+    margin-left: 5px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+
+  .general-controls button#export-png-selected {
+    background-color: #2ecc71;
     color: #ffffff;
     padding: 7px 10px;
     border-radius: 5px;
     cursor: pointer;
-}
-
-.general-controls button#export-png-selected:hover {
-    background-color: #27ae60; 
-}
-
-.general-controls button:hover {
-  background-color: #0056b3;
-}
-@media print {
-  @page {
-    margin: 0;
   }
-  body {
-    margin: 0;
-    padding: 0;
-  }
-  #print-container img {
-    width: 100vw;
-    height: 100vh;
-    object-fit: contain;
-  }
-}
-.print-container {
-  background-color: #151f28;
-  padding: 20px;
-}
 
-@media print {
- .print-container {
+  .general-controls button#export-png-selected:hover {
+    background-color: #27ae60;
+  }
+
+  .general-controls button:hover {
+    background-color: #0056b3;
+  }
+
+  @media print {
+    @page {
+      margin: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #print-container img {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+    }
+  }
+
+  .print-container {
     background-color: #151f28;
+    padding: 20px;
   }
-}
 
-/* Estilo para remover as setas do input number */
-.numerSemSeta::-webkit-outer-spin-button,
-.numerSemSeta::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+  @media print {
+    .print-container {
+      background-color: #151f28;
+    }
+  }
 
-.numerSemSeta[type=number] {
-  -moz-appearance: textfield;
-}
-.version-number {
-  margin-left: auto;
-  color: yellow;
-  font-size: 12px;
-  padding: 5px 10px;
-}
+  .numerSemSeta::-webkit-outer-spin-button,
+  .numerSemSeta::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
-.configferramentas {
-  position: absolute;
-  bottom: 0;
-  left: 60px; /* Width of sidebar */
-  right: 200px; /* Width of layers panel */
-  height: 40px;
-  background-color: #2c3e50;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  z-index: 100;
-  border-top: 1px solid #34495e;
-}
+  .numerSemSeta[type=number] {
+    -moz-appearance: textfield;
+  }
 
-#canvas {
-  margin-bottom: 40px;
-}
+  .version-number {
+    margin-left: auto;
+    color: yellow;
+    font-size: 12px;
+    padding: 5px 10px;
+  }
 
-.configferramentas button {
-  background: none;
-  border: none;
-  color: #ecf0f1;
-  padding: 5px 10px;
-  margin: 0 5px;
-  cursor: pointer;
-  border-radius: 3px;
-}
+  .configferramentas {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    background-color: #2c3e50;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 100;
+    border-top: 1px solid #34495e;
+  }
 
-.configferramentas button:hover {
-  background-color: #34495e;
-}
+  #canvas {
+    margin-bottom: 40px;
+  }
 
-.configferramentas input {
-  background-color: #34495e;
-  border: 1px solid #455d7a;
-  color: #ecf0f1;
-  padding: 3px 6px;
-  border-radius: 3px;
-  margin: 0 5px;
-}
-		 #cloudphoto-image-details-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
-            justify-content: center;
-            align-items: center;
-        }
+  .configferramentas button {
+    background: none;
+    border: none;
+    color: #ecf0f1;
+    padding: 5px 10px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
 
-        .cloudphoto-modal-content {
-            background-color: #fefefe;
-            padding: 20px;
-            border-radius: 10px;
-            width: 400px;
-            max-height: 80%;
-            overflow-y: auto;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+  .configferramentas button:hover {
+    background-color: #34495e;
+  }
 
-        .cloudphoto-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e0e0e0;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
+  .configferramentas input {
+    background-color: #34495e;
+    border: 1px solid #455d7a;
+    color: #ecf0f1;
+    padding: 3px 6px;
+    border-radius: 3px;
+    margin: 0 5px;
+  }
 
-        .cloudphoto-modal-close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+  #cloudphoto-image-details-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+  }
 
-        .cloudphoto-modal-close:hover {
-            color: #000;
-        }
+  .cloudphoto-modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
 
-        #cloudphoto-image-details-content {
-            word-break: break-all;
-            white-space: pre-wrap;
-        }
-		
+  .cloudphoto-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+
+  .cloudphoto-modal-close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .cloudphoto-modal-close:hover {
+    color: #000;
+  }
+
+  #cloudphoto-image-details-content {
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+
+  #bottom-buttons {
+    display: none;
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+  }
+
+  .hidden-canvas {
+    display: none;
+    position: absolute;
+    left: -9999px;
+  }
 </style>
 </head>
 <body>
   <div class="top-menu">
     <div class="menu-buttons">
-	
-<div class="menu-button dropdown">
-  <button class="dropdown-toggle">Arquivo</button>
-  <div class="dropdown-menu">
-	<button id="openImagePDFBtn">Abrir Imagem | PDF </button>
-    <button id="openDocumentBtn">Abrir Documento</button>
-	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
-    <button id="saveDocumentBtn">Salvar Documento</button>
-	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
-    <div class="dropdown">
-      <button class="dropdown-toggle">⇱ Exportar</button>
-      <div class="dropdown-menu export-submenu">
-        <div class="export-option">
-          <button id="export-png">Exportar como PNG</button>
-          <div class="dpi-option">
-            <label for="dpi-input">DPI:</label>
-            <input type="number" id="dpi-input" value="300" min="72" max="1200">
-          </div>
-        </div>
-		<div class="export-option">
-          <button id="export-JPG">Exportar como JPG</button>
-          <div class="dpi-option">
-            <label for="dpijpg-input">DPI:</label>
-            <input type="number" id="dpijpg-input" value="300" min="72" max="1200">
-          </div>
-        </div>
-		<div class="export-option">
-          <button id="export-PDF">Exportar como PDF</button>
-          <div class="dpi-option">
-            <label for="dpipdf-input">DPI:</label>
-            <input type="number" id="dpipdf-input" value="300" min="72" max="1200">
-          </div>
-        </div>
-      </div>
-    </div>
-	<div class="dropdown">
-      <button class="dropdown-toggle">⇲ Importar</button>
-      <div class="dropdown-menu export-submenu">
-        <div class="export-option">
-          <button id="import-svg">Importar SVG em Camadas</button>
-        </div>
-      </div>
-    </div>
-	
-	<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
-    <button id="print-button">⎙ Imprimir</button>
-  </div>
-</div>
-	  
       <div class="menu-button dropdown">
-		  <button class="dropdown-toggle">Editar</button>
-		  <div class="dropdown-menu">
-			<button id="duplicate-selected">Duplicar Objeto Selecionado</button>
-			<button id="delete-selected">Excluir Objeto Selecionado</button>
-			<button id="select-all">Selecionar Tudo</button>
-			<button id="remove-selection">Remover Seleção</button>
-			<button id="paste">Colar</button>
-			<div class="guide-option">
-			  <button id="organize-objects">Organizar:</button>
-			  <input type="number" id="spacing-input" placeholder="cm" min="0" step="0.1" value="0.2">
-			</div>
-		  </div>
-		</div>
-		
-		<div class="menu-button dropdown">
-		  <button class="dropdown-toggle">Imagem</button>
-		  <div class="dropdown-menu imagem-dropdown-menu">
-			<button class="dropdown-toggle">Ajustes </button>
-			<div class="dropdown-menu ajustes-dropdown-menu">
-			  <button id="filtroscorBtn">Brilho | Contraste | Saturação | Matiz 2 </button>
-			  <button id="Btn-Nitidez">Adicionar Nitidez</button>
-			  <button id="Btn-InverterCor">Inverter Cor</button>
-			  <button id="Btn-PretoBranco">Preto e Branco</button>
-			</div>
-			<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
-			<button id="BtnContrasteAutm">✦ Contraste Automático</button>
-			<button id="BtnCorAutm">✦ Cor Automática</button>
-			<button id="BtnTomAutm">✦Tom Automático</button>
-			<button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
-			<button id="BtnDados">Dados Bruto</button>
-		  </div>
-		</div>
+        <button class="dropdown-toggle">Arquivo</button>
+        <div class="dropdown-menu">
+          <button id="openImagePDFBtn">Abrir Imagem | PDF </button>
+          <button id="openDocumentBtn">Abrir Documento</button>
+          <button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
+          <button id="saveDocumentBtn">Salvar Documento</button>
+          <button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
+          <div class="dropdown">
+            <button class="dropdown-toggle">⇱ Exportar</button>
+            <div class="dropdown-menu export-submenu">
+              <div class="export-option">
+                <button id="export-png">Exportar como PNG</button>
+                <div class="dpi-option">
+                  <label for="dpi-input">DPI:</label>
+                  <input type="number" id="dpi-input" value="300" min="72" max="1200">
+                </div>
+              </div>
+              <div class="export-option">
+                <button id="export-JPG">Exportar como JPG</button>
+                <div class="dpi-option">
+                  <label for="dpijpg-input">DPI:</label>
+                  <input type="number" id="dpijpg-input" value="300" min="72" max="1200">
+                </div>
+              </div>
+              <div class="export-option">
+                <button id="export-PDF">Exportar como PDF</button>
+                <div class="dpi-option">
+                  <label for="dpipdf-input">DPI:</label>
+                  <input type="number" id="dpipdf-input" value="300" min="72" max="1200">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dropdown">
+            <button class="dropdown-toggle">⇲ Importar</button>
+            <div class="dropdown-menu export-submenu">
+              <div class="export-option">
+                <button id="import-svg">Importar SVG em Camadas</button>
+              </div>
+            </div>
+          </div>
+          <button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
+          <button id="print-button">⎙ Imprimir</button>
+        </div>
+      </div>
+      <div class="menu-button dropdown">
+        <button class="dropdown-toggle">Editar</button>
+        <div class="dropdown-menu">
+          <button id="duplicate-selected">Duplicar Objeto Selecionado</button>
+          <button id="delete-selected">Excluir Objeto Selecionado</button>
+          <button id="select-all">Selecionar Tudo</button>
+          <button id="remove-selection">Remover Seleção</button>
+          <button id="paste">Colar</button>
+          <div class="guide-option">
+            <button id="organize-objects">Organizar:</button>
+            <input type="number" id="spacing-input" placeholder="cm" min="0" step="0.1" value="0.2">
+          </div>
+        </div>
+      </div>
 
-		<div class="menu-button dropdown">
-		  <button class="dropdown-toggle">Guias</button>
-		  <div class="dropdown-menu guias-dropdown-menu">
-			<button id="add-guides">Adicionar Guias Padrão</button>
-			<div class="guide-option">
-			  <button id="add-vertical-guide">Guia Vertical</button>
-			  <input type="number" id="vertical-guide-cm" class="guide-input" placeholder="cm" min="0">
-			</div>
-			<div class="guide-option">
-			  <button id="add-horizontal-guide">Guia Horizontal</button>
-			  <input type="number" id="horizontal-guide-cm" class="guide-input" placeholder="cm" min="0">
-			</div>
-			<div class="guide-interval">
-			  <label for="horizontal-interval">Horizontal a cada:</label>
-			  <input type="number" id="horizontal-interval" class="guide-input" placeholder="cm" min="0">
-			</div>
-			<div class="guide-interval">
-			  <label for="vertical-interval">Vertical a cada:</label>
-			  <input type="number" id="vertical-interval" class="guide-input" placeholder="cm" min="0">
-			</div>
-			<button id="delete-all-guides">Apagar Todas as Guias</button>
-		  </div>
-		</div>
-	  
-	  <div class="menu-button dropdown">
-		  <button class="dropdown-toggle">Texto</button>
-		  <div class="dropdown-menu">
-			<button id="split-text">Dividir Texto em 2</button>
-		  </div>
-		</div>
-	  
       <div class="menu-button dropdown">
-		  <button class="dropdown-toggle">Formas</button>
-		  <div class="dropdown-menu">
-			<button class="dropdown-toggle">Inserir </button>
-			<div class="dropdown-menu">
-			  <button id="insert-square">Quadrado</button>
-			  <button id="insert-circle">Circulo</button>
-			  <button id="insert-triangle">Triangulo</button>
-			  <button id="insert-line">Linha</button>
-			</div>
-		  </div>
-		</div>
-		
-		<div class="menu-button dropdown">
-		  <button class="dropdown-toggle">Extra</button>
-		  <div class="dropdown-menu">
-			<button id="MesclarBtn">Mesclagem de Números</button>
-		  </div>
-		</div>
-		
+        <button class="dropdown-toggle">Imagem</button>
+        <div class="dropdown-menu imagem-dropdown-menu">
+          <button class="dropdown-toggle">Ajustes </button>
+          <div class="dropdown-menu ajustes-dropdown-menu">
+            <button id="filtroscorBtn">Brilho | Contraste | Saturação | Matiz 2 </button>
+            <button id="Btn-Nitidez">Adicionar Nitidez</button>
+            <button id="Btn-InverterCor">Inverter Cor</button>
+            <button id="Btn-PretoBranco">Preto e Branco</button>
+          </div>
+          <button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
+          <button id="BtnContrasteAutm">✦ Contraste Automático</button>
+          <button id="BtnCorAutm">✦ Cor Automática</button>
+          <button id="BtnTomAutm">✦Tom Automático</button>
+          <button id="separar">▬▬▬▬▬▬▬▬▬▬▬▬</button>
+          <button id="BtnDados">Dados Bruto</button>
+        </div>
+      </div>
+
+      <div class="menu-button dropdown">
+        <button class="dropdown-toggle">Guias</button>
+        <div class="dropdown-menu guias-dropdown-menu">
+          <button id="add-guides">Adicionar Guias Padrão</button>
+          <div class="guide-option">
+            <button id="add-vertical-guide">Guia Vertical</button>
+            <input type="number" id="vertical-guide-cm" class="guide-input" placeholder="cm" min="0">
+          </div>
+          <div class="guide-option">
+            <button id="add-horizontal-guide">Guia Horizontal</button>
+            <input type="number" id="horizontal-guide-cm" class="guide-input" placeholder="cm" min="0">
+          </div>
+          <div class="guide-interval">
+            <label for="horizontal-interval">Horizontal a cada:</label>
+            <input type="number" id="horizontal-interval" class="guide-input" placeholder="cm" min="0">
+          </div>
+          <div class="guide-interval">
+            <label for="vertical-interval">Vertical a cada:</label>
+            <input type="number" id="vertical-interval" class="guide-input" placeholder="cm" min="0">
+          </div>
+          <button id="delete-all-guides">Apagar Todas as Guias</button>
+        </div>
+      </div>
+
+      <div class="menu-button dropdown">
+        <button class="dropdown-toggle">Texto</button>
+        <div class="dropdown-menu">
+          <button id="split-text">Dividir Texto em 2</button>
+        </div>
+      </div>
+
+      <div class="menu-button dropdown">
+        <button class="dropdown-toggle">Formas</button>
+        <div class="dropdown-menu">
+          <button class="dropdown-toggle">Inserir </button>
+          <div class="dropdown-menu">
+            <button id="insert-square">Quadrado</button>
+            <button id="insert-circle">Circulo</button>
+            <button id="insert-triangle">Triangulo</button>
+            <button id="insert-line">Linha</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-button dropdown">
+        <button class="dropdown-toggle">Extra</button>
+        <div class="dropdown-menu">
+          <button id="MesclarBtn">Mesclagem de Números</button>
+        </div>
+      </div>
+
     </div>
     <div class="dimension-controls">
-	<button id="separar" class="menu-button">Tamanho:</button>
+      <button id="separar" class="menu-button">Tamanho:</button>
       <span>&#x2194;</span>
       <input type="number" id="width-input" class="dimension-input" step="0.1" placeholder="L (cm)">
       <button id="swap-dimensions" class="menu-button">&#x21c5;</button>
       <span>&#x2195;</span>
       <input type="number" id="height-input" class="dimension-input" step="0.1" placeholder="A (cm)">
       <button id="lock-ratio" class="menu-button">&#x1f513;</button>
-	  <div class="separar">┇</div>
+      <div class="separar">┇</div>
     </div>
 
-		<div class="version-number">1.2</div>
+    <div class="version-number">1.2</div>
   </div>
+
+  <div class="configferramentas">
+    <div class="text-styling-controls">
+      <select id="font-select" class="dimension-input">
+        <option value="Arial" style="font-family: Arial;">Arial</option>
+        <option value="Amarillo" style="font-family: Amarillo;">Amarillo</option>
+        <option value="Catalish Huntera" style="font-family: 'Catalish Huntera';">Catalish Huntera</option>
+        <option value="Cream Cake" style="font-family: 'Cream Cake';">Cream Cake</option>
+        <option value="Daily" style="font-family: Daily;">Daily</option>
+        <option value="GROBOLD" style="font-family: GROBOLD;">GROBOLD</option>
+        <option value="Lobster 1.4" style="font-family: 'Lobster 1.4';">Lobster 1.4</option>
+        <option value="Love" style="font-family: Love;">Love</option>
+        <option value="josephsophia" style="font-family: josephsophia;">josephsophia</option>
+        <option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
+        <option value="Brush Script MT" style="font-family: 'Brush Script MT';">Brush Script MT</option>
+        <option value="Bookman Old Style" style="font-family: 'Bookman Old Style';">Bookman Old Style</option>
+        <option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
+        <option value="Courier" style="font-family: Courier;">Courier</option>
+        <option value="Dancing Script" style="font-family: 'Dancing Script';">Dancing Script</option>
+        <option value="Impact" style="font-family: Impact;">Impact</option>
+        <option value="Lucida Handwriting" style="font-family: 'Lucida Handwriting';">Lucida Handwriting</option>
+        <option value="Lucida Sans Unicode" style="font-family: 'Lucida Sans Unicode';">Lucida Sans Unicode</option>
+        <option value="Papyrus" style="font-family: Papyrus;">Papyrus</option>
+        <option value="Segoe Print" style="font-family: 'Segoe Print';">Segoe Print</option>
+        <option value="Segoe Script" style="font-family: 'Segoe Script';">Segoe Script</option>
+        <option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
+        <option value="Trebuchet MS" style="font-family: 'Trebuchet MS';">Trebuchet MS</option>
+        <option value="Verdana" style="font-family: Verdana;">Verdana</option>
+        <option value="Monotype Corsiva" style="font-family: 'Monotype Corsiva';">Monotype Corsiva</option>
+        <option value="Mistral" style="font-family: Mistral;">Mistral</option>
+        <option value="Freestyle Script" style="font-family: 'Freestyle Script';">Freestyle Script</option>
+        <option value="Bradley Hand ITC" style="font-family: 'Bradley Hand ITC';">Bradley Hand ITC</option>
+        <option value="Edwardian Script ITC" style="font-family: 'Edwardian Script ITC';">Edwardian Script ITC</option>
+        <option value="Vivaldi" style="font-family: Vivaldi;">Vivaldi</option>
+        <option value="Rage Italic" style="font-family: 'Rage Italic';">Rage Italic</option>
+      </select>
+      <input type="color" id="text-color-picker" class="dimension-input">
+      <input type="number" id="font-size-input" class="dimension-input numerSemSeta" min="8" max="72" value="20">
+      <span style="color: #ecf0f1; font-size: 14px;">Contorno:</span>
+      <input type="number" id="stroke-width-input" class="dimension-input" min="0" value="0">
+      <input type="color" id="stroke-color-picker" class="dimension-input" value="#000000">
+    </div>
+    <div class="general-controls" style="display: none;">
+      <label for="opacity-input">Opac.:</label>
+      <input type="number" id="opacity-input" class="dimension-input" min="1" max="100" step="1">
+      <button id="export-png-selected">PNG</button>
+    </div>
+  </div>
+
   <div class="main-container">
     <div class="sidebar">
       <ul>
         <li>
           <button id="insert-image" title="Adicione uma imagem">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 19V5H3V19H21Z" stroke="currentColor" stroke-width="2" fill="none"/>
-              <circle cx="8.5" cy="12.5" r="2.5" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path d="M21 19L16 14L12 18L8 14L3 19" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            Imagem
+            <span style="font-size: 24px;">📷</span> Imagem
           </button>
           <input type="file" id="image-upload" accept="image/*" multiple style="display: none;">
         </li>
@@ -995,58 +1076,46 @@
             Texto
           </button>
         </li>
-		<li>
-		  <button id="selectBtn" title="Seleciona e cria uma cópia de partes da imagem">
-			  <span style="font-size: 24px;">⿻</span> Seleção
-			</button>
-		</li>
-		
-		<li>
-      <button id="crop-button" title="Recortar Imagens">
-		  <span style="font-size: 24px;">✂</span> Recortar
-		</button>
-    </li>
-	
-	<li>
-	  <button id="eraser-button" title="Apagar com um pincel em imagens">
-	  <svg width="24" height="16" viewBox="0 0 24 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-		<rect x="4" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-		<rect x="12" y="4" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="currentColor"/>
-		<rect x="4" y="4" width="16" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-	  </svg>
-	  Borracha
-	</button>
-	</li>
-
-	<li>
-	<button id="paint-button" title="Pincel de pintura em imagens">
-		<span style="font-size: 24px;">✎</span> Pincel
-	</button>
-	</li>
-	
-		
-	<li>
-<button id="btnBalde" style="font-size: 9px; color: white; border: none;" title="Pintar Regiões de uma imagem">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="7" y="2" width="10" height="7" rx="1" stroke="white" stroke-width="2" fill="none"/>
-        <rect x="5" y="10" width="14" height="10" rx="3" stroke="white" stroke-width="2" fill="white"/>
-    </svg>
-    Balde
-</button>
-	</li>
-
-	<li>
-	<button id="removeCorCliqueBtn" title="Remover Região de Cor ao Clique">
-		<span style="font-size: 24px;">◯</span> X Cor Clique
-	</button>
-	</li>
-	
-		<li>
-	<button id="removeCorTotalBtn" title="Remover Cor igual Total a cor clicada">
-		<span style="font-size: 24px;">⊗</span> X Cor Total
-	</button>
-	</li>
-			
+        <li>
+          <button id="selectBtn" title="Seleciona e cria uma cópia de partes da imagem">
+            <span style="font-size: 24px; color: #ADD8E6;">⿻</span> Seleção
+          </button>
+        </li>
+        <li>
+          <button id="crop-button" title="Recortar Imagens">
+            <span style="font-size: 24px;">✂</span> Recortar
+          </button>
+        </li>
+        <li>
+          <button id="eraser-button" title="Apagar com uma esponja em imagens">
+            <span style="font-size: 24px;">🧽</span> Borracha
+          </button>
+        </li>
+        <li>
+          <button id="paint-button" title="Pincel de pintura em imagens">
+            <span style="font-size: 24px;">🖌️</span> Pincel
+          </button>
+        </li>
+        <li>
+          <button id="btnBalde" title="Pintar Regiões de uma imagem">
+            <span style="font-size: 24px;">🪣️</span> Balde
+          </button>
+        </li>
+        <li>
+          <button id="removeCorCliqueBtn" title="Remover Cor igual ou Total a cor clicada">
+            <span style="font-size: 24px;">✨</span> Remover Cor
+          </button>
+        </li>
+        <li>
+          <button id="extractRegionsBtn" title="Extrair partes da imagem separadas pela transparência">
+            <span style="font-size: 24px;">⑆</span> Extrair
+          </button>
+        </li>
+        <li>
+          <button id="vectorizePBBtn" title="Vetorizar Imagem selecionada em Preto e Branco">
+            <span style="font-size: 24px;">✑</span> Vetorizar
+          </button>
+        </li>
       </ul>
     </div>
     <canvas id="canvas"></canvas>
@@ -1055,81 +1124,31 @@
       <ul class="layers-list"></ul>
     </div>
   </div>
-  
+
   <div id="customAlertModal" style="display: none;">
-	  <div class="alert-content">
-		<div id="customAlertMessage"></div>
-	  </div>
-	</div>
-	
-
-<div class="configferramentas">
-  <!-- Add your tool configuration controls here -->
-  <div class="text-styling-controls">
-      <select id="font-select" class="dimension-input">
-			<option value="Arial" style="font-family: Arial;">Arial</option>
-			<option value="Amarillo" style="font-family: Amarillo;">Amarillo</option>
-			<option value="Catalish Huntera" style="font-family: 'Catalish Huntera';">Catalish Huntera</option>
-			<option value="Cream Cake" style="font-family: 'Cream Cake';">Cream Cake</option>
-			<option value="Daily" style="font-family: Daily;">Daily</option>
-			<option value="GROBOLD" style="font-family: GROBOLD;">GROBOLD</option>
-			<option value="Lobster 1.4" style="font-family: 'Lobster 1.4';">Lobster 1.4</option>
-			<option value="Love" style="font-family: Love;">Love</option>
-			<option value="josephsophia" style="font-family: josephsophia;">josephsophia</option>
-			<option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
-			<option value="Brush Script MT" style="font-family: 'Brush Script MT';">Brush Script MT</option>
-			<option value="Bookman Old Style" style="font-family: 'Bookman Old Style';">Bookman Old Style</option>
-			<option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
-			<option value="Courier" style="font-family: Courier;">Courier</option>
-			<option value="Dancing Script" style="font-family: 'Dancing Script';">Dancing Script</option>
-			<option value="Impact" style="font-family: Impact;">Impact</option>
-			<option value="Lucida Handwriting" style="font-family: 'Lucida Handwriting';">Lucida Handwriting</option>
-			<option value="Lucida Sans Unicode" style="font-family: 'Lucida Sans Unicode';">Lucida Sans Unicode</option>
-			<option value="Papyrus" style="font-family: Papyrus;">Papyrus</option>
-			<option value="Segoe Print" style="font-family: 'Segoe Print';">Segoe Print</option>
-			<option value="Segoe Script" style="font-family: 'Segoe Script';">Segoe Script</option>
-			<option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
-			<option value="Trebuchet MS" style="font-family: 'Trebuchet MS';">Trebuchet MS</option>
-			<option value="Verdana" style="font-family: Verdana;">Verdana</option>
-			<option value="Monotype Corsiva" style="font-family: 'Monotype Corsiva';">Monotype Corsiva</option>
-			<option value="Mistral" style="font-family: Mistral;">Mistral</option>
-			<option value="Freestyle Script" style="font-family: 'Freestyle Script';">Freestyle Script</option>
-			<option value="Bradley Hand ITC" style="font-family: 'Bradley Hand ITC';">Bradley Hand ITC</option>
-			<option value="Edwardian Script ITC" style="font-family: 'Edwardian Script ITC';">Edwardian Script ITC</option>
-			<option value="Vivaldi" style="font-family: Vivaldi;">Vivaldi</option>
-			<option value="Rage Italic" style="font-family: 'Rage Italic';">Rage Italic</option>
-      </select>
-      <input type="color" id="text-color-picker" class="dimension-input">
-      <input type="number" id="font-size-input" class="dimension-input numerSemSeta" min="8" max="72" value="20">
-	  <span style="color: #ecf0f1; font-size: 14px;">Contorno:</span>
-	  <input type="number" id="stroke-width-input" class="dimension-input" min="0" value="0">
-	  <input type="color" id="stroke-color-picker" class="dimension-input" value="#000000">
+    <div class="alert-content">
+      <div id="customAlertMessage"></div>
     </div>
-		<div class="general-controls" style="display: none;">
-		  <label for="opacity-input">Opac.:</label>
-		  <input type="number" id="opacity-input" class="dimension-input" min="1" max="100" step="1">
-		  <button id="export-png-selected">PNG</button>
-		</div>
-</div>
+  </div>
 
- <div id="cloudphoto-image-details-modal">
-        <div class="cloudphoto-modal-content">
-            <div class="cloudphoto-modal-header">
-                <h3>Dados da Imagem</h3>
-                <span class="cloudphoto-modal-close">&times;</span>
-            </div>
-            <pre id="cloudphoto-image-details-content"></pre>
-        </div>
+  <div id="cloudphoto-image-details-modal">
+    <div class="cloudphoto-modal-content">
+      <div class="cloudphoto-modal-header">
+        <h3>Dados da Imagem</h3>
+        <span class="cloudphoto-modal-close">&times;</span>
+      </div>
+      <pre id="cloudphoto-image-details-content"></pre>
     </div>
+  </div>
 
-<div id="bottom-buttons" style="display: none; position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000;">
-  <button id="save-button">Salvar</button>
-  <button id="finish-button">Finalizar</button>
-</div>
-	<canvas id="hiddenCanvas" class="hidden-canvas"></canvas>
-	
-	
-<script src="https://nkmplay.github.io/cgf/ferramentas/modalselect.js"></script>
+  <div id="bottom-buttons" style="display: none; position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000;">
+    <button id="save-button">Salvar</button>
+    <button id="finish-button">Finalizar</button>
+  </div>
+
+  <canvas id="hiddenCanvas" class="hidden-canvas"></canvas>
+
+  <script src="https://nkmplay.github.io/cgf/ferramentas/modalselect.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // ---------- Configurações Iniciais -------------------------------------------
@@ -2952,23 +2971,35 @@ document.getElementById('insert-square').addEventListener('click', () => {
     return Math.max(MIN_RADIUS, Math.min(radius, MAX_RADIUS));
   }
 
-  controlPoint.on('moving', function (e) {
-    controlPoint.set({ 
-      left: square.left - square.width * square.scaleX / 2 + 10 
+controlPoint.on('moving', function (e) {
+    controlPoint.set({
+        left: square.left - square.width * square.scaleX / 2 + 10
     });
 
     const deltaY = controlPoint.top - (square.top - square.height * square.scaleY / 2 + 10);
-
     let radius = normalizeCornerRadius(square, deltaY);
 
-    square.set({ rx: radius, ry: radius });
-
-    controlPoint.set({
-      top: square.top - square.height * square.scaleY / 2 + 10 + radius
+    square.set({
+        rx: radius,
+        ry: radius
     });
 
+    controlPoint.set({
+        top: square.top - square.height * square.scaleY / 2 + 10 + radius
+    });
+
+    square.set({
+        width: square.width * square.scaleX,
+        height: square.height * square.scaleY,
+        scaleX: 1,
+        scaleY: 1
+    });
+
+    square.setCoords();
+
     canvas.requestRenderAll();
-  });
+});
+
 
   controlPoint.on('mouseup', function () {
     updateControlPointPosition();
@@ -3141,275 +3172,192 @@ document.getElementById('saveDocumentBtn').addEventListener('click', function ()
 });
 
 // ---------------- ferramenta de corte ---------------------------
-let cropMode = false; 
-let cropRect = null; 
-let originalImage = null; 
-let cropButtons = null;
+let cropper = null;
+let modalElement = null;
 
-function createCropButtons() {
-  const cropButtonsContainer = document.createElement('div');
-  cropButtonsContainer.className = 'crop-buttons';
-  cropButtonsContainer.style.display = 'none';
-  cropButtonsContainer.style.position = 'fixed';
-  cropButtonsContainer.style.zIndex = '1000';
-  cropButtonsContainer.style.textAlign = 'center';
-  cropButtonsContainer.style.left = '50%';
-  cropButtonsContainer.style.transform = 'translateX(-50%)';
-  cropButtonsContainer.style.bottom = '20px';
-
-  const confirmButton = document.createElement('button');
-  confirmButton.id = 'crop-confirm';
-  confirmButton.textContent = 'Confirmar';
-  confirmButton.style.background = 'green';
-  confirmButton.style.color = 'white';
-  confirmButton.style.border = 'none';
-  confirmButton.style.padding = '8px 16px';
-  confirmButton.style.margin = '5px';
-  confirmButton.style.borderRadius = '5px';
-  confirmButton.style.cursor = 'pointer';
-  confirmButton.addEventListener('click', applyCrop);
-
-  const cancelButton = document.createElement('button');
-  cancelButton.id = 'crop-cancel';
-  cancelButton.textContent = 'Cancelar';
-  cancelButton.style.background = 'red';
-  cancelButton.style.color = 'white';
-  cancelButton.style.border = 'none';
-  cancelButton.style.padding = '8px 16px';
-  cancelButton.style.margin = '5px';
-  cancelButton.style.borderRadius = '5px';
-  cancelButton.style.cursor = 'pointer';
-  cancelButton.addEventListener('click', cancelCrop);
-
-  cropButtonsContainer.appendChild(confirmButton);
-  cropButtonsContainer.appendChild(cancelButton);
-
-  document.body.appendChild(cropButtonsContainer);
-
-  return cropButtonsContainer;
-}
-
-function activateCropMode() {
-  const activeObject = canvas.getActiveObject();
-  if (!activeObject || activeObject.type !== 'image') {
+document.getElementById('crop-button').addEventListener('click', function() {
+  const fabricCanvas = canvas;
+  const activeObject = fabricCanvas.getActiveObject();
+  
+  if (!activeObject || !(activeObject instanceof fabric.Image)) {
     showCustomAlert('Selecione uma imagem para recortar.');
     return;
   }
 
-  cropMode = true;
-  originalImage = activeObject;
+  function initCropper(fabricCanvas) {
+    const style = document.createElement('style');
+    style.textContent = `
+      .crop-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
 
-  canvas.forEachObject(obj => {
-    if (obj.name === 'CloudFolha') {
-      obj.selectable = false;
-      obj.evented = false;
-    } else if (obj !== originalImage) {
-      obj.selectable = false;
-      obj.evented = false;
-    }
-  });
+      .crop-modal {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 90vw;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
 
-  const imgBounds = originalImage.getBoundingRect(true);
+      .crop-container {
+        max-height: 70vh;
+        overflow: hidden;
+      }
 
-  cropRect = new fabric.Rect({
-    left: imgBounds.left,
-    top: imgBounds.top,
-    width: imgBounds.width,
-    height: imgBounds.height,
-    fill: 'rgba(0, 0, 0, 0)',
-    stroke: 'blue',
-    strokeWidth: 1,
-    hasControls: true,
-    hasBorders: true,
-    lockRotation: true,
-    selectable: true,
-    evented: true,
-    originX: 'left',
-    originY: 'top',
-    transparentCorners: false,
-    cornerColor: 'blue',
-    cornerStyle: 'rect',
-    cornerSize: 10,
-    padding: 0,
-    lockUniScaling: false
-  });
+      .crop-image {
+        max-width: 100%;
+        display: block;
+      }
 
-  // Handle clicks outside canvas
-  const handleOutsideClick = (e) => {
-    const canvasEl = canvas.getElement();
-    const rect = canvasEl.getBoundingClientRect();
-    const isInCanvas = e.clientX >= rect.left && 
-                      e.clientX <= rect.right && 
-                      e.clientY >= rect.top && 
-                      e.clientY <= rect.bottom;
+      .crop-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .crop-button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
+
+      .crop-confirm {
+        background: #4CAF50;
+        color: white;
+      }
+
+      .crop-cancel {
+        background: #f44336;
+        color: white;
+      }
+
+      .crop-button:hover {
+        opacity: 0.9;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const modal = document.createElement('div');
+    modal.className = 'crop-modal-overlay';
     
-    // Allow clicks on crop buttons
-    if (cropButtons && cropButtons.contains(e.target)) {
-      return;
-    }
+    const modalContent = document.createElement('div');
+    modalContent.className = 'crop-modal';
+    
+    const cropContainer = document.createElement('div');
+    cropContainer.className = 'crop-container';
+    
+    const image = document.createElement('img');
+    image.className = 'crop-image';
+    image.src = activeObject.toDataURL();
+    
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'crop-buttons';
+    
+    const confirmButton = document.createElement('button');
+    confirmButton.className = 'crop-button crop-confirm';
+    confirmButton.textContent = 'Confirmar';
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'crop-button crop-cancel';
+    cancelButton.textContent = 'Cancelar';
+    
+    buttonsContainer.appendChild(confirmButton);
+    buttonsContainer.appendChild(cancelButton);
+    cropContainer.appendChild(image);
+    modalContent.appendChild(cropContainer);
+    modalContent.appendChild(buttonsContainer);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+    modalElement = modal;
 
-    if (!isInCanvas) {
-      cancelCrop();
-      document.removeEventListener('mousedown', handleOutsideClick);
-    }
-  };
+    image.onload = () => {
+      cropper = new Cropper(image, {
+        viewMode: 1,
+        dragMode: 'move',
+        aspectRatio: NaN,
+        autoCropArea: 1,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: false,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+      });
+    };
 
-  document.addEventListener('mousedown', handleOutsideClick);
+confirmButton.addEventListener('click', () => {
+  if (!cropper) return;
 
-  canvas.on('mouse:down', function(e) {
-    if (e.target === cropRect) {
-      cropRect.lockUniScaling = false;
-    }
-  });
+  const croppedCanvas = cropper.getCroppedCanvas();
 
-  canvas.on('object:scaling', function(e) {
-    if (e.target === cropRect) {
-      cropRect.lockUniScaling = e.e.shiftKey;
-    }
-  });
+  fabric.Image.fromURL(croppedCanvas.toDataURL(), (newImg) => {
+    const { left, top, angle } = activeObject;
 
-  cropButtons = createCropButtons();
-  cropButtons.style.display = 'block';
+    const croppedWidth = croppedCanvas.width;
+    const croppedHeight = croppedCanvas.height;
 
-  canvas.add(cropRect);
-  canvas.bringToFront(cropRect);
-  canvas.setActiveObject(cropRect);
-
-  canvas.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-  canvas.renderAll();
-}
-
-function applyCrop() {
-  if (!cropRect || !originalImage) return;
-
-  const angle = fabric.util.degreesToRadians(originalImage.angle);
-  const imgElement = originalImage.getElement();
-
-  const imgBounds = originalImage.getBoundingRect(true);
-  const cropBounds = cropRect.getBoundingRect(true);
-
-  const scaleX = originalImage.scaleX;
-  const scaleY = originalImage.scaleY;
-
-  const tempCanvas = document.createElement('canvas');
-  const tempCtx = tempCanvas.getContext('2d');
-
-  tempCanvas.width = imgBounds.width;
-  tempCanvas.height = imgBounds.height;
-
-  tempCtx.translate(imgBounds.width / 2, imgBounds.height / 2);
-  tempCtx.rotate(angle);
-  
-  const scaledWidth = originalImage.width * scaleX;
-  const scaledHeight = originalImage.height * scaleY;
-  tempCtx.drawImage(
-    imgElement,
-    -scaledWidth / 2,
-    -scaledHeight / 2,
-    scaledWidth,
-    scaledHeight
-  );
-
-  const cropCanvas = document.createElement('canvas');
-  const cropCtx = cropCanvas.getContext('2d');
-  
-  cropCanvas.width = cropBounds.width;
-  cropCanvas.height = cropBounds.height;
-
-  const dx = cropBounds.left - (imgBounds.left);
-  const dy = cropBounds.top - (imgBounds.top);
-
-  cropCtx.drawImage(
-    tempCanvas,
-    dx,
-    dy,
-    cropBounds.width,
-    cropBounds.height,
-    0,
-    0,
-    cropBounds.width,
-    cropBounds.height
-  );
-
-  fabric.Image.fromURL(cropCanvas.toDataURL(), newImg => {
     newImg.set({
-      left: cropBounds.left + cropBounds.width / 2,
-      top: cropBounds.top + cropBounds.height / 2,
+      left: left,
+      top: top,
       originX: 'center',
       originY: 'center',
-      angle: 0
+      width: croppedWidth, 
+      height: croppedHeight, 
+      scaleX: 1, 
+      scaleY: 1, 
+      angle: angle
     });
 
-    canvas.remove(originalImage);
-    canvas.remove(cropRect);
-    canvas.add(newImg);
-
-    canvas.forEachObject(obj => {
-      if (obj.name === 'CloudFolha') {
-        obj.selectable = false;
-        obj.evented = false;
-      } else {
-        obj.selectable = true;
-        obj.evented = true;
-      }
-    });
-
-    canvas.off('mouse:down');
-    canvas.off('object:scaling');
-    canvas.off('mouse:up');
-
-    if (cropButtons) {
-      document.body.removeChild(cropButtons);
-      cropButtons = null;
-    }
-
-    canvas.backgroundColor = '#151f28';
-    canvas.setActiveObject(newImg);
-    canvas.requestRenderAll();
-
-    cropMode = false;
-    cropRect = null;
-    originalImage = null;
-  });
-}
-
-function cancelCrop() {
-  if (cropRect) {
-    canvas.remove(cropRect);
-  }
-
-  canvas.off('mouse:down');
-  canvas.off('object:scaling');
-  canvas.off('mouse:up');
-
-  if (cropButtons) {
-    document.body.removeChild(cropButtons);
-    cropButtons = null;
-  }
-
-  canvas.forEachObject(obj => {
-    if (obj.name !== 'CloudFolha') {
-      obj.selectable = true;
-      obj.evented = true;
-    }
+    fabricCanvas.remove(activeObject);
+    fabricCanvas.add(newImg);
+    fabricCanvas.setActiveObject(newImg);
+    fabricCanvas.requestRenderAll();
   });
 
-  canvas.backgroundColor = '#151f28';
-  canvas.setActiveObject(originalImage);
-  canvas.requestRenderAll();
-
-  cropMode = false;
-  cropRect = null;
-  originalImage = null;
-}
-
-document.getElementById('crop-button').addEventListener('click', activateCropMode);
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && cropMode) {
-    cancelCrop();
-  }
+  cleanup();
 });
 
+
+    cancelButton.addEventListener('click', cleanup);
+
+    function handleEsc(e) {
+      if (e.key === 'Escape') {
+        cleanup();
+      }
+    }
+    document.addEventListener('keydown', handleEsc);
+
+    function cleanup() {
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+      document.body.removeChild(modal);
+      modalElement = null;
+      document.removeEventListener('keydown', handleEsc);
+      style.remove();
+    }
+  }
+
+  initCropper(fabricCanvas);
+});
 // ---------------------------- contraste Automático --------------------------------------------------
 
 function applyAutoContrast() {
@@ -6436,6 +6384,725 @@ document.getElementById('btnBalde').addEventListener('click', () => {
   });
 });
 // ----------- fim balde --------------------
+
+// ------------------- remover cor ao clique e cor total --------------------------
+function initializeColorRemoval() {
+    const style = `
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-container {
+            background-color: white;
+            width: 800px;
+            height: 600px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-content {
+			flex: 1;
+			position: relative;
+			overflow: hidden;
+			background-color: #151f28;
+		}
+
+        .modal-canvas-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-controls {
+            padding: 16px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .modal-slider-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-slider-container input[type="range"] {
+            width: 150px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .modal-btn-primary {
+            background-color: #4a90e2;
+            color: white;
+        }
+
+        .modal-btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.9;
+        }
+
+        .modal-removal-type {
+            display: flex;
+            gap: 8px;
+            margin-right: 16px;
+        }
+    `;
+
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = style;
+    document.head.appendChild(styleSheet);
+
+    const modalHTML = `
+        <div id="colorRemovalModal" class="modal-overlay">
+            <div class="modal-container">
+                <div class="modal-content">
+                    <div class="modal-canvas-container">
+                        <canvas id="modalCanvas"></canvas>
+                    </div>
+                </div>
+                <div class="modal-controls">
+                    <div class="modal-removal-type">
+                        <button id="modal-click-removal" class="modal-btn modal-btn-primary">Remover por Clique</button>
+                        <button id="modal-total-removal" class="modal-btn modal-btn-secondary">Remover Total</button>
+                    </div>
+                    <div class="modal-slider-container">
+                        <label for="modal-detection-level">Sensibilidade:</label>
+                        <input type="range" id="modal-detection-level" min="1" max="200" value="30">
+                        <span id="modal-slider-value">30</span>
+                        <button id="modal-undo-btn" class="modal-btn modal-btn-secondary">Desfazer</button>
+                    </div>
+                    <div class="modal-buttons">
+                        <button id="modal-save-btn" class="modal-btn modal-btn-primary">Salvar</button>
+                        <button id="modal-cancel-btn" class="modal-btn modal-btn-secondary">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    let modalFabricCanvas = null;
+    let originalImage = null;
+    let tolerance = 30;
+    let isColorRemovalActive = true;
+    let isTotalColorRemovalActive = false;
+    let undoStack = [];
+    let currentZoom = 1;
+
+    function initializeModalCanvas() {
+    const modalCanvas = document.getElementById('modalCanvas');
+    modalFabricCanvas = new fabric.Canvas('modalCanvas', {
+        selection: false
+    });
+
+    // Capturar o container do canvas para o evento de scroll
+    const canvasContainer = document.querySelector('.modal-canvas-container');
+    
+    canvasContainer.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const delta = e.deltaY;
+        let zoom = modalFabricCanvas.getZoom();
+        
+        // Ajustar o fator de zoom
+        if (delta > 0) {
+            zoom *= 0.9; // Zoom out
+        } else {
+            zoom *= 1.1; // Zoom in
+        }
+        
+        // Limitar o zoom entre 0.1 e 20
+        zoom = Math.min(Math.max(0.1, zoom), 20);
+        
+        // Obter a posição do mouse em relação ao canvas
+        const pointer = modalFabricCanvas.getPointer(e);
+        
+        // Aplicar o zoom no ponto do mouse
+        modalFabricCanvas.zoomToPoint(pointer, zoom);
+        
+        currentZoom = zoom;
+    }, { passive: false });
+
+    modalFabricCanvas.on('mouse:down', function(options) {
+        if (isColorRemovalActive || isTotalColorRemovalActive) {
+            const pointer = modalFabricCanvas.getPointer(options.e);
+            const zoomAdjustedPointer = {
+                x: pointer.x / currentZoom,
+                y: pointer.y / currentZoom
+            };
+            handleColorRemoval(options, zoomAdjustedPointer);
+        }
+    });
+}
+
+    function saveToUndoStack() {
+        if (modalFabricCanvas) {
+            const state = modalFabricCanvas.toJSON();
+            undoStack.push(state);
+            if (undoStack.length > 20) {
+                undoStack.shift();
+            }
+        }
+    }
+
+    function findImageBounds(imageData) {
+        const width = imageData.width;
+        const height = imageData.height;
+        let minX = width;
+        let minY = height;
+        let maxX = 0;
+        let maxY = 0;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const index = (y * width + x) * 4;
+                const alpha = imageData.data[index + 3];
+                if (alpha > 0) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        return {
+            left: minX,
+            top: minY,
+            right: maxX,
+            bottom: maxY,
+            width: maxX - minX + 1,
+            height: maxY - minY + 1
+        };
+    }
+
+    function cropTransparentEdges(imageElement) {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = imageElement.width;
+        tempCanvas.height = imageElement.height;
+        tempCtx.drawImage(imageElement, 0, 0);
+
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const bounds = findImageBounds(imageData);
+
+        // Create new canvas with cropped dimensions
+        const croppedCanvas = document.createElement('canvas');
+        const croppedCtx = croppedCanvas.getContext('2d');
+        croppedCanvas.width = bounds.width;
+        croppedCanvas.height = bounds.height;
+
+        // Draw cropped image
+        croppedCtx.drawImage(
+            imageElement,
+            bounds.left, bounds.top, bounds.width, bounds.height,
+            0, 0, bounds.width, bounds.height
+        );
+
+        return {
+            dataUrl: croppedCanvas.toDataURL(),
+            bounds: bounds
+        };
+    }
+
+    function openColorRemovalModal(sourceObject) {
+        const modal = document.getElementById('colorRemovalModal');
+        modal.style.display = 'flex';
+        
+        if (!modalFabricCanvas) {
+            initializeModalCanvas();
+        }
+
+        isColorRemovalActive = true;
+        isTotalColorRemovalActive = false;
+        undoStack = [];
+        currentZoom = 1;
+        
+        document.getElementById('modal-click-removal').classList.add('modal-btn-primary');
+        document.getElementById('modal-click-removal').classList.remove('modal-btn-secondary');
+        document.getElementById('modal-total-removal').classList.remove('modal-btn-primary');
+        document.getElementById('modal-total-removal').classList.add('modal-btn-secondary');
+
+        originalImage = sourceObject;
+        fabric.Image.fromURL(originalImage._element.src, function(img) {
+            const containerWidth = 800;
+            const containerHeight = 600 - 70;
+            const scale = Math.min(
+                containerWidth / img.width,
+                containerHeight / img.height
+            );
+
+            modalFabricCanvas.setWidth(containerWidth);
+            modalFabricCanvas.setHeight(containerHeight);
+
+            img.set({
+                scaleX: scale,
+                scaleY: scale,
+                left: (containerWidth - img.width * scale) / 2,
+                top: (containerHeight - img.height * scale) / 2,
+                selectable: false,
+                hoverCursor: 'crosshair'
+            });
+
+            modalFabricCanvas.clear();
+            modalFabricCanvas.add(img);
+            modalFabricCanvas.renderAll();
+            
+            saveToUndoStack();
+        });
+    }
+
+    function closeColorRemovalModal() {
+        const modal = document.getElementById('colorRemovalModal');
+        modal.style.display = 'none';
+        isColorRemovalActive = false;
+        isTotalColorRemovalActive = false;
+        modalFabricCanvas.defaultCursor = 'default';
+    }
+
+    document.getElementById('modal-detection-level').addEventListener('input', function() {
+        tolerance = parseInt(this.value);
+        document.getElementById('modal-slider-value').textContent = this.value;
+    });
+
+    document.getElementById('removeCorCliqueBtn').addEventListener('click', function() {
+        const selectedImage = canvas.getActiveObject();
+        if (selectedImage && selectedImage.type === 'image') {
+            openColorRemovalModal(selectedImage);
+        }
+    });
+
+    document.getElementById('modal-click-removal').addEventListener('click', function() {
+        isColorRemovalActive = true;
+        isTotalColorRemovalActive = false;
+        modalFabricCanvas.defaultCursor = 'crosshair';
+        this.classList.remove('modal-btn-secondary');
+        this.classList.add('modal-btn-primary');
+        document.getElementById('modal-total-removal').classList.remove('modal-btn-primary');
+        document.getElementById('modal-total-removal').classList.add('modal-btn-secondary');
+    });
+
+    document.getElementById('modal-total-removal').addEventListener('click', function() {
+        isTotalColorRemovalActive = true;
+        isColorRemovalActive = false;
+        modalFabricCanvas.defaultCursor = 'crosshair';
+        this.classList.remove('modal-btn-secondary');
+        this.classList.add('modal-btn-primary');
+        document.getElementById('modal-click-removal').classList.remove('modal-btn-primary');
+        document.getElementById('modal-click-removal').classList.add('modal-btn-secondary');
+    });
+
+    document.getElementById('modal-save-btn').addEventListener('click', function() {
+        if (originalImage && modalFabricCanvas) {
+            const modalImage = modalFabricCanvas.getObjects()[0];
+            
+            // Process the image to remove transparent edges
+            const croppedImage = cropTransparentEdges(modalImage._element);
+            
+            fabric.Image.fromURL(croppedImage.dataUrl, function(img) {
+                // Calculate new scale to maintain visual size
+                const originalWidth = originalImage.width * originalImage.scaleX;
+                const originalHeight = originalImage.height * originalImage.scaleY;
+                const newScaleX = originalWidth / img.width;
+                const newScaleY = originalHeight / img.height;
+
+                img.set({
+                    left: originalImage.left,
+                    top: originalImage.top,
+                    scaleX: newScaleX,
+                    scaleY: newScaleY,
+                    angle: originalImage.angle,
+                    name: originalImage.name
+                });
+                
+                canvas.remove(originalImage);
+                canvas.add(img);
+                
+                const cloudFolha = canvas.getObjects().find(obj => obj.id === 'CloudFolha');
+                if (cloudFolha) {
+                    canvas.sendToBack(cloudFolha);
+                }
+                
+                canvas.renderAll();
+                updateLayersList();
+                closeColorRemovalModal();
+            });
+        }
+    });
+
+    document.getElementById('modal-cancel-btn').addEventListener('click', closeColorRemovalModal);
+
+    document.getElementById('modal-undo-btn').addEventListener('click', function() {
+        if (undoStack.length > 0) {
+            const previousState = undoStack.pop();
+            modalFabricCanvas.loadFromJSON(previousState, function() {
+                modalFabricCanvas.renderAll();
+            });
+        }
+    });
+
+    function handleColorRemoval(options, zoomAdjustedPointer) {
+    const image = modalFabricCanvas.getObjects()[0];
+
+    if (image && image.type === 'image') {
+        saveToUndoStack();
+
+        const imageElement = image._element;
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = imageElement.width;
+        tempCanvas.height = imageElement.height;
+        tempCtx.drawImage(imageElement, 0, 0, imageElement.width, imageElement.height);
+
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Calculate the inverse transform matrix
+        const transform = modalFabricCanvas.viewportTransform;
+        
+        // Get the actual pointer position in the original image coordinates
+        const imageX = Math.round(((options.e.offsetX - transform[4]) / transform[0] - image.left) / image.scaleX);
+        const imageY = Math.round(((options.e.offsetY - transform[5]) / transform[3] - image.top) / image.scaleY);
+        
+        const index = (imageY * imageData.width + imageX) * 4;
+        const targetColor = {
+            r: imageData.data[index],
+            g: imageData.data[index + 1],
+            b: imageData.data[index + 2],
+            a: imageData.data[index + 3]
+        };
+
+        if (isTotalColorRemovalActive) {
+            removeTotalColor(imageData, targetColor);
+        } else {
+            removeColorArea(imageData, targetColor, {x: imageX, y: imageY});
+        }
+
+        tempCtx.putImageData(imageData, 0, 0);
+
+        fabric.Image.fromURL(tempCanvas.toDataURL(), function(img) {
+            img.set({
+                left: image.left,
+                top: image.top,
+                scaleX: image.scaleX,
+                scaleY: image.scaleY,
+                selectable: false,
+                hoverCursor: 'crosshair'
+            });
+            modalFabricCanvas.remove(image);
+            modalFabricCanvas.add(img);
+            modalFabricCanvas.renderAll();
+        });
+    }
+}
+
+    function getColorAtPosition(imageData, pointer, obj) {
+        const x = Math.round((pointer.x - obj.left) / obj.scaleX);
+        const y = Math.round((pointer.y - obj.top) / obj.scaleY);
+        const index = (y * imageData.width + x) * 4;
+        return {
+            r: imageData.data[index],
+            g: imageData.data[index + 1],
+            b: imageData.data[index + 2],
+            a: imageData.data[index + 3]
+        };
+    }
+
+    function removeTotalColor(imageData, targetColor) {
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const r = imageData.data[i];
+            const g = imageData.data[i + 1];
+            const b = imageData.data[i + 2];
+
+            if (
+                Math.abs(r - targetColor.r) <= tolerance &&
+                Math.abs(g - targetColor.g) <= tolerance &&
+                Math.abs(b - targetColor.b) <= tolerance
+            ) {
+                imageData.data[i + 3] = 0;
+            }
+        }
+    }
+
+    function removeColorArea(imageData, targetColor, startPoint) {
+        const width = imageData.width;
+        const height = imageData.height;
+        const stack = [[startPoint.x, startPoint.y]];
+        const visited = new Set();
+
+        while (stack.length > 0) {
+            const [x, y] = stack.pop();
+            const key = `${x},${y}`;
+
+            if (visited.has(key)) continue;
+            if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+            const index = (y * width + x) * 4;
+            const r = imageData.data[index];
+            const g = imageData.data[index + 1];
+            const b = imageData.data[index + 2];
+
+            if (
+                Math.abs(r - targetColor.r) <= tolerance &&
+                Math.abs(g - targetColor.g) <= tolerance &&
+                Math.abs(b - targetColor.b) <= tolerance
+            ) {
+                imageData.data[index + 3] = 0;  // Make pixel transparent
+                visited.add(key);
+
+                // Add neighboring pixels
+                stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+            }
+        }
+    }
+}
+
+initializeColorRemoval();
+
+// ---------------- fim de seção ---------------------------------------
+
+// ---------------- extrair imagem --------------------------------------
+
+document.getElementById('extractRegionsBtn').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    openExtractRegionsModal(canvas, activeObject);
+});
+
+function openExtractRegionsModal(canvas, activeObject) {
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para extrair as regiões.');
+        return;
+    }
+
+    const imgElement = activeObject.getElement();
+    const canvasTemp = document.createElement('canvas');
+    const ctxTemp = canvasTemp.getContext('2d');
+    canvasTemp.width = imgElement.width;
+    canvasTemp.height = imgElement.height;
+    ctxTemp.drawImage(imgElement, 0, 0);
+
+    const imageData = ctxTemp.getImageData(0, 0, canvasTemp.width, canvasTemp.height);
+    const visited = new Set();
+    const regions = [];
+
+    const minRegionSize = 10;
+
+    for (let y = 0; y < canvasTemp.height; y++) {
+        for (let x = 0; x < canvasTemp.width; x++) {
+            const pos = (y * canvasTemp.width + x) * 4;
+            const alpha = imageData.data[pos + 3];
+
+            if (alpha > 0 && !visited.has(`${x},${y}`)) {
+                const region = findRegion(imageData, x, y, canvasTemp.width, canvasTemp.height, visited);
+                if (region.pixels.length > 0) {
+                    const width = region.bounds.maxX - region.bounds.minX + 1;
+                    const height = region.bounds.maxY - region.bounds.minY + 1;
+                    if (width >= minRegionSize && height >= minRegionSize) {
+                        regions.push(region);
+                        addRegionToCanvas(region, imgElement);
+                    }
+                }
+            }
+        }
+    }
+
+    showCustomAlert(`Extraídas ${regions.length} regiões da imagem.`);
+}
+
+function findRegion(imageData, startX, startY, width, height, visited) {
+    const pixels = [];
+    const queue = [[startX, startY]];
+    let minX = startX, minY = startY, maxX = startX, maxY = startY;
+    while (queue.length > 0) {
+        const [x, y] = queue.shift();
+        const key = `${x},${y}`;
+
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        const pos = (y * width + x) * 4;
+        if (imageData.data[pos + 3] > 0) {
+            pixels.push([x, y]);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+
+            const neighbors = [
+                [x + 1, y], [x - 1, y],
+                [x, y + 1], [x, y - 1]
+            ];
+            for (const [nx, ny] of neighbors) {
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    const npos = (ny * width + nx) * 4;
+                    if (imageData.data[npos + 3] > 0) {
+                        queue.push([nx, ny]);
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        pixels,
+        bounds: { minX, minY, maxX, maxY }
+    };
+}
+
+function addRegionToCanvas(region, imgElement) {
+    const canvasTemp = document.createElement('canvas');
+    const ctxTemp = canvasTemp.getContext('2d');
+    const width = region.bounds.maxX - region.bounds.minX + 1;
+    const height = region.bounds.maxY - region.bounds.minY + 1;
+
+    canvasTemp.width = width;
+    canvasTemp.height = height;
+
+    ctxTemp.drawImage(imgElement,
+        region.bounds.minX, region.bounds.minY, width, height,
+        0, 0, width, height);
+
+    const imageData = ctxTemp.getImageData(0, 0, width, height);
+    const pixels = new Set(region.pixels.map(([x, y]) => `${x - region.bounds.minX},${y - region.bounds.minY}`));
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            if (!pixels.has(`${x},${y}`)) {
+                const pos = (y * width + x) * 4;
+                imageData.data[pos + 3] = 0;
+            }
+        }
+    }
+
+    ctxTemp.putImageData(imageData, 0, 0);
+
+    fabric.Image.fromURL(canvasTemp.toDataURL(), function (img) {
+        img.set({
+            left: region.bounds.minX,
+            top: region.bounds.minY,
+            originX: 'left',
+            originY: 'top',
+            selectable: true,
+            evented: true
+        });
+        canvas.add(img);
+        canvas.renderAll();
+    });
+}
+
+// ------------------------- vetorizar pb -----------------------
+function saveState() {
+    if (canvas) {
+        canvas.history = canvas.history || [];
+        const json = canvas.toJSON();
+        canvas.history.push(json);
+    }
+}
+
+document.getElementById('vectorizePBBtn').addEventListener('click', async () => {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject || activeObject.type !== 'image') {
+        showCustomAlert('Selecione uma imagem para vetorizar.');
+        return;
+    }
+
+    const cloudFolha = canvas.getObjects().find(obj => obj.name === 'CloudFolha');
+    if (!cloudFolha) {
+        showCustomAlert('Folha "CloudFolha" não encontrada.');
+        return;
+    }
+
+    const centerX = cloudFolha.left + (cloudFolha.width * cloudFolha.scaleX) / 2;
+    const centerY = cloudFolha.top + (cloudFolha.height * cloudFolha.scaleY) / 2;
+    const imgElement = activeObject.getElement();
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = imgElement.width;
+    tempCanvas.height = imgElement.height;
+    const ctx = tempCanvas.getContext('2d');
+    ctx.drawImage(imgElement, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        const threshold = 128;
+        data[i] = data[i + 1] = data[i + 2] = brightness > threshold ? 255 : 0;
+    }
+    ctx.putImageData(imageData, 0, 0);
+
+    tempCanvas.toBlob(blob => {
+        Potrace.loadImageFromFile(new File([blob], "image.png", { type: "image/png" }));
+        Potrace.process(() => {
+            const svgContent = Potrace.getSVG(1, { turdsize: 2, alphamax: 1, optcurve: true, detail: 5 });
+            fabric.loadSVGFromString(svgContent, (objects, options) => {
+                try {
+                    const pathData = objects.filter(obj => obj.type === 'path')
+                        .map(obj => obj.path.map(point => point.join(' ')).join(' '))
+                        .join(' ');
+
+                    if (!pathData) {
+                        showCustomAlert('Nenhum caminho foi gerado pelo Potrace.');
+                        return;
+                    }
+
+                    const path = new fabric.Path(pathData, {
+                        left: centerX,
+                        top: centerY,
+                        fill: 'black',
+                        stroke: 'black',
+                        strokeWidth: 1,
+                        selectable: true,
+                        evented: true
+                    });
+
+                    path.center();
+                    canvas.add(path);
+                    canvas.renderAll();
+                    saveState();
+                } catch (error) {
+                    console.error('Erro ao processar o SVG:', error);
+                    showCustomAlert('Ocorreu um erro ao vetorizar a imagem.');
+                }
+            });
+        });
+    }, 'image/png');
+});
+
+
     });
   </script>
 </body>
